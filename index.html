@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Spirit of the Woods - Tic Tac Toe</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="game-container">
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen active">
+      <div class="title-container">
+        <h1 class="game-title">Spirit of the Woods</h1>
+        <p class="subtitle">A Peaceful Journey of Shells &amp; Feathers</p>
+      </div>
+
+      <div class="menu-container">
+        <button class="menu-btn play-btn" onclick="showGameModeSelection()"><span class="btn-icon">🦅</span><span>Begin Journey</span></button>
+        <button class="menu-btn settings-btn" onclick="showSettings()"><span class="btn-icon">⚙️</span><span>Settings</span></button>
+        <button class="menu-btn stats-btn" onclick="showStats()"><span class="btn-icon">📊</span><span>Your Path</span></button>
+      </div>
+
+      <div class="decorative-border"></div>
+    </div>
+
+    <!-- Game Mode Selection -->
+    <div id="game-mode-screen" class="screen">
+      <div class="screen-header"><h2>Choose Your Path</h2></div>
+      <div class="game-mode-container">
+        <button class="mode-btn" onclick="startSinglePlayer()"><span class="mode-icon">🎯</span><span class="mode-title">Single Player</span><span class="mode-desc">Challenge the Spirit</span></button>
+        <button class="mode-btn" onclick="startTwoPlayer()"><span class="mode-icon">👥</span><span class="mode-title">Two Players</span><span class="mode-desc">Share the Journey</span></button>
+      </div>
+      <button class="back-btn" onclick="showStartScreen()">Return to Lodge</button>
+    </div>
+
+    <!-- Settings -->
+    <div id="settings-screen" class="screen">
+      <div class="screen-header"><h2>Sacred Settings</h2></div>
+      <div class="settings-container">
+        <div class="setting-item">
+          <label class="setting-label">Sound Effects</label>
+          <div class="toggle-container">
+            <input type="checkbox" id="audio-toggle" checked />
+            <label for="audio-toggle" class="toggle-switch"></label>
+          </div>
+        </div>
+        <div class="setting-item">
+          <label class="setting-label">Music</label>
+          <div class="toggle-container">
+            <input type="checkbox" id="music-toggle" checked />
+            <label for="music-toggle" class="toggle-switch"></label>
+          </div>
+        </div>
+        <div class="setting-item">
+          <label class="setting-label">Spirit Challenge (Single Player)</label>
+          <div class="difficulty-selector">
+            <button class="diff-btn active" data-level="easy">Gentle</button>
+            <button class="diff-btn" data-level="medium">Balanced</button>
+            <button class="diff-btn" data-level="hard">Wise</button>
+          </div>
+        </div>
+        <div class="setting-item">
+          <label class="setting-label">Player 1 Symbol</label>
+          <div class="symbol-selector">
+            <button class="symbol-btn active" data-symbol="shell">🐚 Shell</button>
+            <button class="symbol-btn" data-symbol="feather">🪶 Feather</button>
+          </div>
+        </div>
+      </div>
+      <button class="back-btn" onclick="showStartScreen()">Return to Lodge</button>
+    </div>
+
+    <!-- Stats -->
+    <div id="stats-screen" class="screen">
+      <div class="screen-header"><h2>Your Sacred Journey</h2></div>
+      <div class="stats-scroll-container">
+        <div class="stats-container">
+          <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-value" id="wins-count">0</div><div class="stat-label">Victories</div></div>
+          <div class="stat-card"><div class="stat-icon">🤝</div><div class="stat-value" id="draws-count">0</div><div class="stat-label">Balance</div></div>
+          <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-value" id="losses-count">0</div><div class="stat-label">Lessons</div></div>
+          <div class="stat-card full-width"><div class="stat-icon">🎮</div><div class="stat-value" id="total-games">0</div><div class="stat-label">Total Journeys</div></div>
+        </div>
+        <div class="stats-buttons">
+          <button class="reset-stats-btn" onclick="resetStats()">Clear Path</button>
+          <button class="back-btn" onclick="showStartScreen()">Return to Lodge</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+      <div class="game-header">
+        <div class="score-display">
+          <span class="score-label" id="player1-label">Shell: </span><span id="player1-score">0</span>
+          <span class="score-separator">|</span>
+          <span class="score-label" id="player2-label">Feather: </span><span id="player2-score">0</span>
+        </div>
+        <div class="turn-indicator" id="turn-indicator">Your Turn</div>
+      </div>
+
+      <div id="game-board" class="game-board">
+        <canvas id="game-canvas"></canvas>
+        <div id="board-overlay" class="board-overlay">
+          <div class="cell" data-index="0"></div>
+          <div class="cell" data-index="1"></div>
+          <div class="cell" data-index="2"></div>
+          <div class="cell" data-index="3"></div>
+          <div class="cell" data-index="4"></div>
+          <div class="cell" data-index="5"></div>
+          <div class="cell" data-index="6"></div>
+          <div class="cell" data-index="7"></div>
+          <div class="cell" data-index="8"></div>
+        </div>
+      </div>
+
+      <div class="game-controls">
+        <button class="control-btn" onclick="resetGame()">New Journey</button>
+        <button class="control-btn" onclick="showStartScreen()">Return Home</button>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="game-modal" class="modal">
+      <div class="modal-content">
+        <h3 id="modal-title">Victory!</h3>
+        <p id="modal-message">The spirits smile upon you</p>
+        <div class="modal-buttons">
+          <button class="modal-btn" onclick="startNewGame()">New Game</button>
+          <button class="modal-btn" onclick="showStartScreen()">Main Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio (fallback sources left as-is) -->
+  <audio id="gameplay-music" loop preload="auto">
+    <source src="SHELLS & FEATHERS MINI GAME/gameplay.mp3" type="audio/mpeg" />
+    <source src="gameplay.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="button-select" preload="auto">
+    <source src="SHELLS & FEATHERS MINI GAME/button_select.mp3" type="audio/mpeg" />
+    <source src="button_select.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="player-select" preload="auto">
+    <source src="SHELLS & FEATHERS MINI GAME/player_select.mp3" type="audio/mpeg" />
+    <source src="player_select.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="opponent-select" preload="auto">
+    <source src="SHELLS & FEATHERS MINI GAME/opponent_select.mp3" type="audio/mpeg" />
+    <source src="opponent_select.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="newgame-sound" preload="auto">
+    <source src="SHELLS & FEATHERS MINI GAME/newgame.mp3" type="audio/mpeg" />
+    <source src="newgame.mp3" type="audio/mpeg" />
+  </audio>
+  <audio id="victory-sound" preload="auto">
+    <source src="SHELLS & FEATHERS MINI GAME/victory.mp3" type="audio/mpeg" />
+    <source src="victory.mp3" type="audio/mpeg" />
+  </audio>
+
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>
