@@ -1,19 +1,57 @@
 # Spirit of the Woods: Upgrade Plan
 
-**Stage 0: audit and baseline.** No gameplay changes were made in this stage.
-
 | | |
 |---|---|
 | Audited commit | `main` @ `f7c626d` ("Add files via upload") |
 | Feature branch | `claude/hopeful-hawking-ummjv2` (branched from that commit) |
-| Audit date | 2026-10-23 |
-| Live site | https://officialinspire.github.io/SHELLS-FEATHERS/ (`index.html` and `index.js` byte-identical to `main`) |
+| Stage 0: audit and baseline smoke test | `d97fc97` (2026-10-23) |
+| Stage 1: module refactor, lifecycle, save migration | the commit that adds this section (see §0) |
+| Live site | https://officialinspire.github.io/SHELLS-FEATHERS/ still serves v1 from `main`. Nothing from this branch is merged or deployed. |
 
-The existing Shells & Feathers tic-tac-toe game must stay playable at every step of the upgrade. Each stage below ends with the smoke test green and the game deployable as is.
+The existing Shells & Feathers tic-tac-toe game must stay playable at every step of the upgrade. Each stage ends with every test green and the game deployable as is.
+
+Sections 1–3 are the audit of v1 and stay as they were written, as a record of what v1 did. Sections 4–6 describe the current code.
 
 ---
 
-## 1. Current architecture
+## 0. Status after Stage 1
+
+**Done in Stage 1.**
+- `index.js` is split into ES modules under `src/` (§4), with explicit lifecycles for screens, matches, timers and music fades.
+- Phaser has been removed.
+- The v1 stats record is migrated into a validated, versioned save (§5) without being erased.
+
+Gameplay, text, timings, sounds and the AI are unchanged, apart from the fixes in the table below:
+- The new AI was compared with v1's on all 4,194 positions where the AI moves, for every difficulty and five random seeds: 62,910 comparisons, 0 differences.
+- Screenshots of every screen on `main` and on the branch (desktop and Pixel 5, with animations frozen) are pixel-identical. The one exception is anti-aliasing on the board's outer border on the phone game screen; with no canvas layer underneath, the border rasterizes slightly differently.
+
+**Phaser decision: removed.** It drew nothing (pieces, highlights and animations are all DOM/CSS). Its render loop ran at 60 fps even on menus, and a blocked CDN stopped every match from starting. Giving it a real purpose would mean redrawing the board in canvas, which is a design decision for the Spirit of the Woods stage. If that stage wants canvas effects, add them as an optional layer that loads lazily and is never needed for input (§4).
+
+| ID | Finding (see §3) | Status |
+|---|---|---|
+| S1 | Corrupt stats brick the board | **Fixed.** Repaired or reset, never thrown. Unreadable values are copied to `<key>:corrupt`. |
+| S2 | Storage that throws | **Fixed.** Play continues with in-memory records; the result modal always opens. |
+| A1 | AI keeps playing after Return Home | **Fixed.** Leaving disposes the match's timers. |
+| A2 | Result modal reopens after a quick restart | **Fixed.** Same mechanism. |
+| A3 | AI timer carried into the next game | **Fixed.** Same mechanism. |
+| D1 | Board depends on the Phaser CDN | **Fixed.** Phaser removed; the game makes no off-site requests except web fonts. |
+| M1 | Overlapping fades pause the music | **Fixed.** One fade at a time; a new fade cancels the old one. |
+| M2 | Victory track bleeds into the next game | **Fixed.** Stopped when its match ends (New Game, New Journey, leaving). |
+| ST2 | Settings not saved | **Fixed.** Saved in the v2 save file. |
+| X2 | Double click sound, dead `beforeunload` fade | **Fixed.** README updated too. |
+| X3 | Settings change a live game | **Fixed.** Settings are read when a match starts. |
+| P1 | 6 × 404 from dead audio paths | **Fixed.** Dead `<source>` entries removed. |
+| P2 | Heavy preloads | Partly. Phaser (306 KB plus the render loop) is gone; `gameplay.mp3` still preloads. |
+| ST1 | Mixed stat semantics | Data fixed, display unchanged. New games are recorded per mode and difficulty (§5). "Your Path" still shows v1 totals until the design stage decides what to show. |
+| L1, L2, T1 | Landscape, settings scrolling, page-wide touch block | **Open** (layout stage). The touch block is now added when the game screen opens and removed when it closes; same effect as v1. |
+| L3 | Hidden overflow (new, found by the tests) | **Open** (layout stage). The 200%-size animated `body::before` makes the document scrollable by script even though users can't scroll it. Playwright's scroll-into-view moved the whole page by up to ~400 px in mobile emulation, on `main` and the branch alike. |
+| P3, X1 | Unused assets and CSS; accessibility | **Open.** |
+
+**Trade-off: `file://`.** Browsers don't load ES modules from `file://`, so opening `index.html` straight from disk no longer works. Serve the folder instead (`python3 -m http.server`). GitHub Pages is unaffected.
+
+---
+
+## 1. v1 architecture (as audited)
 
 ### 1.1 Files
 
@@ -82,7 +120,9 @@ Delayed work uses bare `setTimeout`/`setInterval` calls that are never cancelled
 
 ---
 
-## 2. Current behavior (observed)
+## 2. v1 behavior (as audited)
+
+Stage 1 keeps all of this. The differences are listed in §0: settings are now saved, stale timers and fades are gone, and the victory track stops when its match ends.
 
 Observed in headless Chromium (Playwright 1.63.0) against a local static server, at desktop size (1280×800) and with phone emulation: iPhone SE 320×568, a 360×640 Android, Pixel 5 393×727, and iPhone 12 landscape 750×340. AI strength was checked by loading the unmodified `index.js` into a Node VM and enumerating every game.
 
@@ -124,7 +164,9 @@ Observed in headless Chromium (Playwright 1.63.0) against a local static server,
 
 ---
 
-## 3. Problems found
+## 3. Problems found in v1
+
+Current status of each finding: §0.
 
 Severity: **High** means it breaks play or loses data. **Medium** means it is visibly wrong. **Low** means hygiene or performance. Every item marked *repro* was reproduced in the browser during the audit; *inspection* items come from reading the code.
 
@@ -159,179 +201,188 @@ Severity: **High** means it breaks play or loses data. **Medium** means it is vi
 
 ---
 
-## 4. Proposed module boundaries
 
-Constraints: stay a static site with **no build step**, so GitHub Pages keeps working unchanged. Use native ES modules (`<script type="module">`), which every browser that can run the game today supports.
+## 4. Module boundaries (implemented in Stage 1)
+
+The site is still static with **no build step**. `index.html` loads `src/main.js` as a native ES module, and Pages serves the files as they are. There are no runtime dependencies.
 
 ```
-index.html               markup only; data-action attributes instead of onclick
-styles.css               (later: split base / screens / board if it helps)
+index.html               markup only; buttons declare data-action="…" (no inline handlers)
+styles.css               unchanged except the removed #game-canvas rule
 src/
-  main.js                boot: load storage → apply settings → wire UI → show start
-  core/                  pure, no DOM / timers / storage / audio; unit-tested in Node
-    rules.js             LINES, winnerOf(board) → {symbol, line} | null, isFull, legalMoves
-    ai.js                chooseMove(board, { ai, human, difficulty, rng }) → index
-    match.js             createMatch({ mode, p1Symbol, difficulty }) → play(i), turn,
-                         result, id; emits 'move' | 'end' exactly once per event
-  services/
-    storage.js           safe storage wrapper, schema v2, migrate(), validate()
-    audio.js             AudioDirector: one music channel with cancellable fades,
-                         SFX that stop on new match, unlock-on-gesture, lazy music load
-    scheduler.js         after(ms, fn, { owner }) / cancel(owner); owner = match id or screen
-  ui/
-    screens.js           show(id), back navigation, focus management, modal open/close
-    board-view.js        render(match), cells as <button>, click + keyboard → match.play
-    hud.js, settings-view.js, stats-view.js
-assets/audio/*.mp3, assets/img/*.png   (moved in the cleanup stage, single source per <audio>)
+  main.js                entry: createApp(...).init()
+  app/                   navigation and app composition
+    app.js               builds the shared services, screens and session; one delegated
+                         click listener maps data-action → action
+    navigation.js        shows one .screen at a time; runs leave() on the old screen,
+                         then enter(...args) on the new one
+    settings-screen.js   toggles, difficulty, symbol: shows saved values, saves changes
+    stats-screen.js      "Your Path" totals and Clear Path
+  shared/                used by any game; no DOM except the <audio> elements
+    storage.js           guarded localStorage access (never throws) + readJson
+    save-data.js         v2 save schema: defaults, validation, v1 migration (pure)
+    profile.js           loads/repairs/migrates the save; settings and records API
+    audio.js             music with one cancellable fade at a time; sound effects
+    timers.js            createTimerScope(): after(ms, fn) / dispose()
+  games/shells-feathers/ the game
+    rules.js             lines, winner, full board, empty cells (pure)
+    ai.js                the Spirit: chooseMove(board, {ai, human, difficulty, rng}) (pure)
+    match.js             one game's state: turn, play(i), result, outcome (pure)
+    session.js           runs matches on the game screen: Spirit turns, results,
+                         session score, sounds (no DOM; talks to view.js)
+    view.js              board cells, turn indicator, score, result modal (DOM)
 ```
 
-**Rules**
+**Dependency rules.**
+- `games/*/rules|ai|match` are pure.
+- `session.js` takes its view, audio, profile, clock and random source as parameters, so the unit tests run it with fakes.
+- Only `view.js` and `app/*` touch the DOM.
+- Only `storage.js` touches `localStorage`.
+- Only `audio.js` touches `<audio>` elements.
+- One exception, chosen on purpose: `shared/save-data.js` imports the game's symbol and difficulty lists, because the save file stores this game's records.
 
-1. `core/*` imports nothing from `ui/` or `services/`. All randomness goes through an injected `rng`, so AI tests are deterministic.
-2. Only `ui/*` touches the DOM. Only `services/storage.js` touches `localStorage`. Only `services/audio.js` touches `HTMLAudioElement`.
-3. Every delayed action (AI think time, result modal, music restart) goes through `scheduler` with the current **match id** as owner. Starting, restarting or abandoning a match calls `cancel(oldId)`. This is the structural fix for A1–A3: a callback can't act on a match that no longer exists.
-4. Audio keeps one active fade per channel. Starting a fade cancels the previous one. "Is music supposed to be playing" is a state, not inferred from volume. Fixes M1 and M2.
-5. **Phaser: remove it** as part of the refactor, since it renders nothing (fixes D1 and part of P2). If the Spirit of the Woods design stage wants canvas effects, bring it back as an optional `ui/effects` layer: self-hosted or pinned with SRI, loaded lazily, never on the input path, and with the board working if it fails to load.
-6. Touch handling: drop the document-level `touchmove` blocker. Use `touch-action: manipulation` on the board and cells instead, and let screens scroll (`overflow-y:auto`, `min-height: 100dvh` with a `100vh` fallback).
+**Initialization and teardown.**
+- `createApp({ doc, win }).init()` runs once:
+  - loads the profile (and migrates it);
+  - binds the delegated click listener, the cells and the settings controls;
+  - renders the stats;
+  - arms the "first click starts the music" listener.
+- **Navigation:** `nav.show(id)` always calls the current screen's `leave()` before the next screen's `enter()`.
+  - The game screen's `enter(mode)` adds the touch-scroll block and calls `session.enter(mode)`.
+  - Its `leave()` calls `session.leave()` and removes the touch block.
+  - So *any* way off the game screen (Return Home, Main Menu) tears the match down.
+- **Matches:** every match gets its own timer scope, and `teardownMatch()` runs first in `startMatch()` and in `leave()`. Teardown:
+  - disposes the match's timers (Spirit move, result modal, music restart);
+  - closes the result modal;
+  - stops the victory sound;
+  - clears the Spirit-thinking lock.
 
-**Order of work** (each step ships independently and keeps the smoke test green)
+  A disposed scope ignores later `after()` calls, so nothing from an old match can fire. This covers "New Journey" (`restart()`), "New Game" (`playAgain()`) and leaving (`leave()`).
+- **Music:** `audio.js` keeps one fade timer. Starting a fade cancels the running one. `startMusic()` while music is playing ramps back up from the current volume (v1 dropped it to silence first). `stopMusic()` pauses only when its own fade finishes.
 
-1. **Core extraction.** Move rules and AI into `src/core`, unit-test them (including the exhaustive "Wise never loses" check), and point `index.js` at them. No visible change.
-2. **Storage service and migration** (section 5). Fixes S1, S2, ST2, and makes ST1 fixable.
-3. **Scheduler, match and audio.** Fixes A1–A3, M1, M2. Write a failing browser test for each bug first.
-4. **Layout and input.** Fixes L1, L2, T1, and the zoom part of X1. Add the viewport reachability check (section 6).
-5. **Cleanup.** Remove Phaser, fix audio sources, move assets, decide about the unused PNGs, update the README, and choose `.nojekyll` or not (P1–P3, X2, D1).
-6. **Spirit of the Woods design work** starts on top of this base. Gameplay changes are out of scope until then.
+**Remaining order of work.**
+1. **Layout and input:** L1, L2, L3, T1, and the zoom part of X1. Add the viewport reachability check (§6.3).
+2. **Cleanup:** decide about the unused PNGs and CSS (P3), music preloading (P2), and `.nojekyll`.
+3. **Spirit of the Woods design work.** Gameplay changes (including what "Your Path" shows, ST1) belong here.
 
 ---
 
-## 5. Storage migration approach
+## 5. Save format and migration (implemented in Stage 1)
 
-### 5.1 New schema (v2)
+### 5.1 Schema (v2)
 
 Key: `spiritOfTheWoods:v2`
 
 ```json
 {
   "version": 2,
-  "settings": { "sfx": true, "music": true, "difficulty": "easy", "player1Symbol": "shell" },
-  "stats": {
-    "single": {
-      "easy":   { "wins": 0, "losses": 0, "draws": 0 },
-      "medium": { "wins": 0, "losses": 0, "draws": 0 },
-      "hard":   { "wins": 0, "losses": 0, "draws": 0 }
-    },
-    "twoPlayer": { "player1Wins": 0, "player2Wins": 0, "draws": 0 },
-    "legacy": { "wins": 0, "losses": 0, "draws": 0, "totalGames": 0 }
+  "settings": { "sfx": true, "music": true },
+  "shellsFeathers": {
+    "settings": { "difficulty": "easy", "player1Symbol": "shell" },
+    "stats": {
+      "single": {
+        "easy":   { "wins": 0, "losses": 0, "draws": 0 },
+        "medium": { "wins": 0, "losses": 0, "draws": 0 },
+        "hard":   { "wins": 0, "losses": 0, "draws": 0 }
+      },
+      "twoPlayer": { "player1Wins": 0, "player2Wins": 0, "draws": 0 },
+      "legacy": { "wins": 0, "losses": 0, "draws": 0, "totalGames": 0 }
+    }
   },
   "migratedFrom": null
 }
 ```
 
-- `legacy` holds the v1 numbers as they were, because v1 can't be split by mode or difficulty. "Your Path" shows **legacy + new buckets** so that nobody's totals drop after the upgrade. New screens can show per-difficulty records for games played after the upgrade.
-- Unknown fields are preserved on write, so a newer version can roll back to an older one without data loss.
+- App-wide settings (sound, music) sit at the top level. Shells & Feathers settings and records sit under `shellsFeathers`, leaving room for more Spirit of the Woods games.
+- `legacy` holds the v1 numbers as they were: v1 can't be split by mode or difficulty. `migratedFrom` is `1` when the save came from v1.
+- "Your Path" shows `summarizeStats()`: legacy plus every new bucket, in v1 terms (Victories include two-player wins). Existing players see the same numbers after the upgrade.
+- Unknown fields are kept when the save is repaired and written, so data from a newer build survives a round trip through this one.
 
-### 5.2 Load algorithm (never throws)
+### 5.2 Loading (`profile.js` `loadSave`, never throws)
 
-1. **Probe storage** inside `try/catch` (set, get and remove a probe key). If that fails, use an in-memory store for the session and keep playing. Optionally show a subtle "progress won't be saved" note.
-2. **Read v2.** `JSON.parse` inside `try/catch`, then `validate()`:
-   - Counts become non-negative safe integers. Numeric strings are accepted. `NaN`, negatives, `null` and non-numbers become 0.
-   - Enums (`difficulty`, `player1Symbol`) fall back to their defaults.
-   - Booleans fall back to `true`.
+1. Read the v1 key `spiritOfTheWoodsStats`.
+   - Readable values are repaired: numeric strings are accepted; negatives, `NaN`, `Infinity`, `null` and non-numbers become 0; `totalGames` is at least wins + losses + draws.
+   - Unreadable values (bad JSON, or not an object) are **copied** to `spiritOfTheWoodsStats:corrupt`.
+   - The v1 key itself is never changed by loading.
+2. Read `spiritOfTheWoods:v2`. If it is a v2 object, repair it field by field:
+   - counts as above;
+   - unknown enum values reset to defaults;
+   - non-boolean toggles reset to `true`.
 
-   If v2 is valid, use it.
-3. **If v2 is missing,** read the v1 key `spiritOfTheWoodsStats` and validate it the same way, with `totalGames = max(totalGames, wins + losses + draws)`. Build v2 with that `legacy` bucket and `migratedFrom: 1`, then write v2.
-4. **If v2 is present but corrupt,** copy the raw string to `spiritOfTheWoods:v2:corrupt` (one slot, overwritten each time) for support and debugging. Then fall back to step 3, or to defaults if there is no usable v1.
-5. **Leave the v1 key in place.** Never delete it during migration, so a deploy rollback still finds the old stats.
+   If the v1 record holds **more games** than v2 (an older build kept playing after a rollback), the difference is added to `legacy`, once. Use the result.
+3. If v2 is unreadable, copy it to `spiritOfTheWoods:v2:corrupt`.
+4. Build a new v2: migrated from v1 if usable (`migratedFrom: 1`), otherwise defaults. Write it.
+
+`storage.js` guards every call. If storage is blocked, reads return nothing and writes report failure; the game keeps its records in memory for the session and logs one console warning.
 
 ### 5.3 Writes
 
-- Write after each finished game and each settings change, inside `try/catch`. A failed write is logged once and **never blocks the UI**: the result modal must still appear (S2).
-- **Dual-write during transition:** also write the v1 aggregate shape (`wins` = all single wins + all two-player wins, as v1 counted) to the v1 key, for the first releases after the upgrade. A rollback then shows current totals. Stop dual-writing once the new build is proven, and leave the v1 key frozen.
+- **When:** settings changes and every finished game write the v2 save.
+- **Dual-write:** finished games and Clear Path also write the v1-shaped totals to `spiritOfTheWoodsStats`. An older build, after a rollback, then shows the player's current totals. On the next load of this build the totals match and nothing is double-counted.
+- **Clear Path:** an explicit player action. It is the only thing that lowers the numbers.
 
-### 5.4 Migration tests (table-driven, `node --test`)
+### 5.4 Checks
 
-| Input | Expected |
-|---|---|
-| nothing stored | defaults, v2 written |
-| v1 `{"wins":3,"losses":1,"draws":2,"totalGames":6}` | `legacy` = same, `migratedFrom: 1`, v1 key untouched |
-| v1 malformed JSON / `null` / `[]` / `"str"` | defaults, no throw, v1 key untouched |
-| v1 `{}` | legacy all 0 |
-| v1 `{"wins":"3","totalGames":"3"}` | legacy wins 3, totalGames 3 |
-| v1 negative / `1e309` / `NaN`-producing values | clamped to 0 or a safe integer |
-| v1 `totalGames` < sum of parts | `totalGames` = sum |
-| valid v2 | returned unchanged (including unknown fields) |
-| corrupt v2 + valid v1 | backup slot written, re-migrated from v1 |
-| `getItem` throws | in-memory store, defaults, no throw |
-| `setItem` throws | load still succeeds; later saves fail quietly |
-| v2 with bad enums | enums reset, counts kept |
+`tests/unit/migration.test.mjs` covers:
+- the table from the audit plan: nothing stored, valid v1, odd v1 values, unreadable v1, valid v2 with unknown fields, corrupt v2 plus v1, bad v2 fields;
+- the rollback fold-in (without double counting);
+- the dual-write;
+- Clear Path;
+- settings validation;
+- storage that throws on every call, a storage getter that throws, and write-only failure (quota).
+
+`tests/browser/storage.test.mjs` repeats the important cases in the real page.
 
 ---
 
 ## 6. Test plan
 
-### 6.1 Baseline smoke check (added in this stage)
-
-`tests/gameplay.smoke.test.mjs`, run with `npm test`:
+### 6.1 Automated tests (current)
 
 ```sh
 npm ci
 npx playwright install chromium   # skip if PLAYWRIGHT_BROWSERS_PATH already provides it
-npm test
+npm test                          # = npm run test:unit && npm run test:browser
 ```
 
-It starts a dependency-free static server on the repo root (Linux, so paths are case-sensitive like Pages) and drives headless Chromium at 390×844. It covers:
+**Unit tests** (`tests/unit`, plain `node --test`, no browser, about 1 s). Timers run on a fake clock, so every pending callback is visible.
 
-- **Two-player game:** Player 1 takes the top row. Turn order and indicator are correct after each move, and a tap on an occupied cell is ignored.
-- **Result:** modal shows "Player 1 Wins!" with the right message, winning cells 0/1/2 are highlighted, and the session score reads 1–0.
-- **New Game:** clears the board and the modal, and keeps the session score.
-- **Persistence:** after Return Home and a **page reload**, "Your Path" shows 1 victory and 1 total.
-- **Single player (Gentle):** the "You / Spirit" labels appear, the turn goes "Spirit's Turn" → "Your Turn", and the AI makes exactly one move.
-- **Overall:** no uncaught page errors, and no same-origin 404s (apart from the known dead `SHELLS & FEATHERS MINI GAME/` paths).
+| File | Covers |
+|---|---|
+| `session.test.mjs` | **Reset and stale callbacks.** "New Journey" cancels the pending Spirit move, and the new match gets its full 800 ms. Leaving during the Spirit's turn records nothing and plays nothing. The result modal never opens after restart, New Game or leave, and opens exactly once if the player stays. New Game stops the victory sound and restarts music after 300 ms; that restart is cancelled by a restart. The Spirit moves exactly once and the player can't move during its turn. Session score resets per mode and survives restarts. Results land in the right buckets. Settings apply from the next match. |
+| `migration.test.mjs` | Save format, migration and malformed storage (§5.4). |
+| `timers-audio.test.mjs` | Timer scopes (dispose cancels and ignores later calls; scopes are independent). Music fades: draw → New Game and music off→on keep music playing; no dip when already playing; fade-out pauses; toggles respected. |
+| `rules-ai.test.mjs` | Lines, draws, illegal moves, outcomes. **Wise never loses**: all 569 human lines give 183 draws and 386 AI wins, as v1 measured. Win-before-block. Gentle and Balanced with a fixed random source. |
 
-It only uses player-visible DOM, never `gameState` or the storage key. It should keep passing unchanged through the refactor and the v2 storage migration. It needs network access to jsDelivr until Phaser is removed (D1).
+**Browser tests** (`tests/browser`, Playwright + Chromium against a built-in static server). Every off-site request is blocked, which proves the game is self-contained. Each test also asserts no page errors and no missing files.
 
-It was validated by mutation: it fails if win detection is broken, if the AI never moves, or if stats are not saved.
+| File | Covers |
+|---|---|
+| `gameplay.smoke.test.mjs` | The Stage 0 baseline, assertions unchanged. |
+| `full-games.test.mjs` | Single player played to a result against Gentle, Balanced and Wise; Wise reproduces v1's exact audited game. Two players: Player 2 win then draw, session score and stats. Feather as Player 1. |
+| `lifecycle.test.mjs` | Audit bugs A1, A2 (plus Return Home), A3, M1, M2 reproduced in the real UI and shown fixed. |
+| `storage.test.mjs` | v1 player upgrades and keeps records (including after more games and a reload; v1 key untouched by the migration, then mirrored). Malformed, `null` and `{}` v1 values. Corrupt v2 rebuilt from v1. Storage that throws. Settings surviving a reload. |
 
-### 6.2 Unit tests (`node --test`, no dependencies), from step 1 onward
+### 6.2 How Stage 1 was verified beyond the suite
 
-- `rules`: all 8 lines win, no false positives, draw = full board with no winner, and `legalMoves`.
-- `ai`:
-  - Wise never loses: enumerate all human lines (the audit's 569-line result is the baseline: 0 human wins).
-  - Gentle and Balanced only return legal moves.
-  - Balanced with a seeded `rng` hits the 70/30 split.
-  - Wise wins immediately when it can, and blocks.
-- `match`: alternating turns, Player 1 starts, moves after the end are rejected, `end` fires once, and two-player and single-player results map correctly to stats buckets.
-- `storage`: the table in section 5.4.
-- `scheduler`: `cancel(owner)` drops pending callbacks; run with `node:test` `mock.timers`.
+- **AI:** v1's `index.js` (from `main`) was loaded in a Node VM and compared with `src/games/shells-feathers/ai.js` on every AI-to-move position, for both symbol assignments, every difficulty and five seeded random sources. 62,910 comparisons, 0 differences.
+- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.
+- **Mutation check:** key safeguards were removed one at a time (timer disposal on teardown, fade cancellation, the storage guards, the v1 migration). The suite failed each time.
 
-### 6.3 Browser regression tests (same harness, one per bug, written failing first)
+### 6.3 Next: viewport reachability check (layout stage)
 
-| Bug | Steps | Pass condition |
-|---|---|---|
-| A1 | Wise; human blunders so the AI has a winning reply; Return Home within 800 ms; wait 2 s | Start screen, no modal, stats unchanged |
-| A2 | 2P win; New Journey within 800 ms; wait 1 s | No modal over the fresh board |
-| A3 | Move, New Journey, move | AI replies after ≥ 750 ms |
-| M1 | 2P draw → New Game; also Music off→on in 200 ms | Music element playing |
-| M2 | Win → New Game | `victory.mp3` paused |
-| S1 / S2 | Seed malformed / `null` / `{}`; stub storage to throw | Cells playable, modal appears, stats numeric |
-| T1 | Dispatch `touchmove` on header and controls | Not `defaultPrevented` |
-| D1 | Block `cdn.jsdelivr.net` | Game fully playable (once Phaser is removed or optional) |
+For each screen, at 320×568, 360×640, 390×844, 393×727, 750×340, 844×390, 768×1024 and 1280×800: every button, toggle and cell is either inside the viewport or reachable by scrolling an ancestor. This catches L1 and L2, and guards the design stage. It should also assert that the document can't be scrolled by script (L3).
 
-### 6.4 Viewport reachability check
-
-For each screen, at 320×568, 360×640, 390×844, 393×727, 750×340, 844×390, 768×1024 and 1280×800: every button, toggle and cell is either inside the viewport or reachable by scrolling an ancestor. This catches L1 and L2 and guards the design stage.
-
-### 6.5 Manual checklist (real devices, before each deploy)
+### 6.4 Manual checklist (real devices, before each deploy)
 
 - [ ] iOS Safari and Android Chrome, portrait and landscape: full game in both modes; settings and stats fully reachable; bottom buttons not under browser toolbars.
-- [ ] Audio: the first tap starts music; mute toggles take effect immediately; music continues after win, draw, New Game and Main Menu; no victory bleed; music pauses when the tab is backgrounded (once added).
+- [ ] Audio: the first tap starts music; mute toggles take effect immediately; music continues after win, draw, New Game and Main Menu; no victory bleed.
 - [ ] Rotate mid-game: board state kept, layout fits.
 - [ ] Private or incognito window: game playable; stats behave sensibly.
-- [ ] Upgrade path: a browser with real v1 stats keeps its totals after deploy.
+- [ ] Upgrade path: a browser with real v1 stats keeps its totals after deploy, and they appear in "Your Path".
 - [ ] Throttled 3G: time to first playable board.
-- [ ] Pages URL after deploy: no 404s in DevTools, and assets load with case-correct paths.
+- [ ] Pages URL after deploy: no 404s in DevTools; `src/*.js` served as JavaScript; assets load with case-correct paths.
 
-### 6.6 CI (proposed for a later stage, not added here)
+### 6.5 CI (proposed, not added yet)
 
 A GitHub Actions workflow on `pull_request`: `npm ci`, then `npx playwright install --with-deps chromium`, then `npm test`. It leaves the existing Pages deployment untouched.

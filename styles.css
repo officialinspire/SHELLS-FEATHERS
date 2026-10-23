@@ -451,12 +451,6 @@ body::before {
     border: 3px solid var(--dark-brown);
 }
 
-#game-canvas {
-    width: 100%;
-    height: 100%;
-    border-radius: 15px;
-}
-
 .board-overlay {
     position: absolute;
     top: 10px;

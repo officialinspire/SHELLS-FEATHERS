@@ -1,10 +1,13 @@
 {
   "name": "shells-feathers",
   "private": true,
-  "description": "Spirit of the Woods: Shells & Feathers (static site, no build step). Dev tooling only.",
+  "type": "module",
+  "description": "Spirit of the Woods: Shells & Feathers (static site, no build step). Dev tooling only; the game has no runtime dependencies.",
   "scripts": {
-    "test": "node --test tests/gameplay.smoke.test.mjs",
-    "test:smoke": "node --test tests/gameplay.smoke.test.mjs"
+    "test": "npm run test:unit && npm run test:browser",
+    "test:unit": "node --test tests/unit/*.test.mjs",
+    "test:browser": "node --test tests/browser/*.test.mjs",
+    "test:smoke": "node --test tests/browser/gameplay.smoke.test.mjs"
   },
   "engines": {
     "node": ">=20"

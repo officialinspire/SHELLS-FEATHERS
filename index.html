@@ -19,9 +19,9 @@
       </div>
 
       <div class="menu-container">
-        <button class="menu-btn play-btn" onclick="showGameModeSelection()"><span class="btn-icon">🦅</span><span>Begin Journey</span></button>
-        <button class="menu-btn settings-btn" onclick="showSettings()"><span class="btn-icon">⚙️</span><span>Settings</span></button>
-        <button class="menu-btn stats-btn" onclick="showStats()"><span class="btn-icon">📊</span><span>Your Path</span></button>
+        <button class="menu-btn play-btn" data-action="show-modes"><span class="btn-icon">🦅</span><span>Begin Journey</span></button>
+        <button class="menu-btn settings-btn" data-action="show-settings"><span class="btn-icon">⚙️</span><span>Settings</span></button>
+        <button class="menu-btn stats-btn" data-action="show-stats"><span class="btn-icon">📊</span><span>Your Path</span></button>
       </div>
 
       <div class="decorative-border"></div>
@@ -31,10 +31,10 @@
     <div id="game-mode-screen" class="screen">
       <div class="screen-header"><h2>Choose Your Path</h2></div>
       <div class="game-mode-container">
-        <button class="mode-btn" onclick="startSinglePlayer()"><span class="mode-icon">🎯</span><span class="mode-title">Single Player</span><span class="mode-desc">Challenge the Spirit</span></button>
-        <button class="mode-btn" onclick="startTwoPlayer()"><span class="mode-icon">👥</span><span class="mode-title">Two Players</span><span class="mode-desc">Share the Journey</span></button>
+        <button class="mode-btn" data-action="start-single"><span class="mode-icon">🎯</span><span class="mode-title">Single Player</span><span class="mode-desc">Challenge the Spirit</span></button>
+        <button class="mode-btn" data-action="start-two"><span class="mode-icon">👥</span><span class="mode-title">Two Players</span><span class="mode-desc">Share the Journey</span></button>
       </div>
-      <button class="back-btn" onclick="showStartScreen()">Return to Lodge</button>
+      <button class="back-btn" data-action="show-start">Return to Lodge</button>
     </div>
 
     <!-- Settings -->
@@ -71,7 +71,7 @@
           </div>
         </div>
       </div>
-      <button class="back-btn" onclick="showStartScreen()">Return to Lodge</button>
+      <button class="back-btn" data-action="show-start">Return to Lodge</button>
     </div>
 
     <!-- Stats -->
@@ -85,8 +85,8 @@
           <div class="stat-card full-width"><div class="stat-icon">🎮</div><div class="stat-value" id="total-games">0</div><div class="stat-label">Total Journeys</div></div>
         </div>
         <div class="stats-buttons">
-          <button class="reset-stats-btn" onclick="resetStats()">Clear Path</button>
-          <button class="back-btn" onclick="showStartScreen()">Return to Lodge</button>
+          <button class="reset-stats-btn" data-action="reset-stats">Clear Path</button>
+          <button class="back-btn" data-action="show-start">Return to Lodge</button>
         </div>
       </div>
     </div>
@@ -103,7 +103,6 @@
       </div>
 
       <div id="game-board" class="game-board">
-        <canvas id="game-canvas"></canvas>
         <div id="board-overlay" class="board-overlay">
           <div class="cell" data-index="0"></div>
           <div class="cell" data-index="1"></div>
@@ -118,8 +117,8 @@
       </div>
 
       <div class="game-controls">
-        <button class="control-btn" onclick="resetGame()">New Journey</button>
-        <button class="control-btn" onclick="showStartScreen()">Return Home</button>
+        <button class="control-btn" data-action="restart-match">New Journey</button>
+        <button class="control-btn" data-action="show-start">Return Home</button>
       </div>
     </div>
 
@@ -129,40 +128,33 @@
         <h3 id="modal-title">Victory!</h3>
         <p id="modal-message">The spirits smile upon you</p>
         <div class="modal-buttons">
-          <button class="modal-btn" onclick="startNewGame()">New Game</button>
-          <button class="modal-btn" onclick="showStartScreen()">Main Menu</button>
+          <button class="modal-btn" data-action="play-again">New Game</button>
+          <button class="modal-btn" data-action="show-start">Main Menu</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Audio (fallback sources left as-is) -->
+  <!-- Audio -->
   <audio id="gameplay-music" loop preload="auto">
-    <source src="SHELLS & FEATHERS MINI GAME/gameplay.mp3" type="audio/mpeg" />
     <source src="gameplay.mp3" type="audio/mpeg" />
   </audio>
   <audio id="button-select" preload="auto">
-    <source src="SHELLS & FEATHERS MINI GAME/button_select.mp3" type="audio/mpeg" />
     <source src="button_select.mp3" type="audio/mpeg" />
   </audio>
   <audio id="player-select" preload="auto">
-    <source src="SHELLS & FEATHERS MINI GAME/player_select.mp3" type="audio/mpeg" />
     <source src="player_select.mp3" type="audio/mpeg" />
   </audio>
   <audio id="opponent-select" preload="auto">
-    <source src="SHELLS & FEATHERS MINI GAME/opponent_select.mp3" type="audio/mpeg" />
     <source src="opponent_select.mp3" type="audio/mpeg" />
   </audio>
   <audio id="newgame-sound" preload="auto">
-    <source src="SHELLS & FEATHERS MINI GAME/newgame.mp3" type="audio/mpeg" />
     <source src="newgame.mp3" type="audio/mpeg" />
   </audio>
   <audio id="victory-sound" preload="auto">
-    <source src="SHELLS & FEATHERS MINI GAME/victory.mp3" type="audio/mpeg" />
     <source src="victory.mp3" type="audio/mpeg" />
   </audio>
 
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-  <script src="index.js"></script>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>

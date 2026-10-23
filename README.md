@@ -20,7 +20,13 @@ HTML5 + CSS3 (custom board grid + responsive layout)
 
 Vanilla JavaScript (game logic, AI, modal UX)
 
-Phaser.js (for canvas board rendering and scaling)
+Native ES modules (no build step, no runtime dependencies)
 
 Vision:
 Part of Inspire Studios’ ongoing mission to merge ancient motifs with modern code, Spirit of the Woods symbolizes the bridge between natural wisdom and digital intelligence — a game that honors balance, patience, and the rhythm of play itself.
+
+Playing Locally:
+The game loads as ES modules, so serve the folder instead of opening index.html from disk, e.g. `python3 -m http.server` and visit http://localhost:8000.
+
+Tests:
+`npm ci`, then `npx playwright install chromium`, then `npm test` (unit tests in Node plus browser tests in headless Chromium). Code layout, save format and test plan: docs/upgrade-plan.md

@@ -1,0 +1,176 @@
+// Reset and stale-callback checks for the Shells & Feathers session, with a
+// fake clock so every pending timer is visible.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createSession, DELAYS } from '../../src/games/shells-feathers/session.js';
+import { createProfile } from '../../src/shared/profile.js';
+import { openStorage } from '../../src/shared/storage.js';
+import { createFakeClock, createFakeView, createFakeAudio, createMemoryStorage } from '../helpers/fakes.mjs';
+
+function setup({ difficulty = 'easy', player1Symbol = 'shell' } = {}) {
+  const clock = createFakeClock();
+  const view = createFakeView();
+  const audio = createFakeAudio();
+  const profile = createProfile(openStorage(() => createMemoryStorage()));
+  profile.updateGameSettings({ difficulty, player1Symbol });
+  // rng 0 makes Gentle/Balanced pick the first empty cell (and Balanced play its best move).
+  const session = createSession({ view, audio, profile, clock, rng: () => 0 });
+  return { clock, view, audio, profile, session };
+}
+
+// Wise is deterministic: after human 0 -> Spirit 4, human 1 -> Spirit 2, the
+// Spirit threatens 2-4-6. Human 3 ignores it, so the Spirit's next move wins.
+function reachSpiritWinningReply({ session, clock }) {
+  session.selectCell(0);
+  clock.tick(DELAYS.spiritMove);
+  session.selectCell(1);
+  clock.tick(DELAYS.spiritMove);
+  session.selectCell(3);
+}
+
+test('restart ("New Journey") cancels the pending Spirit move and starts a clean match', () => {
+  const { session, clock, view } = setup();
+  session.enter('single');
+  session.selectCell(4);
+  assert.equal(clock.pending, 1, 'Spirit move scheduled');
+
+  session.restart();
+  assert.equal(clock.pending, 0, 'nothing left scheduled');
+  assert.equal(view.pieces, 0);
+  assert.deepEqual(view.turn, { mode: 'single', isPlayer1: true, symbol: 'shell' });
+
+  clock.tick(5_000);
+  assert.equal(view.pieces, 0, 'old Spirit move never lands on the new board');
+
+  // The new match runs on its own full delay.
+  session.selectCell(8);
+  clock.tick(DELAYS.spiritMove - 1);
+  assert.equal(view.pieces, 1);
+  clock.tick(1);
+  assert.equal(view.pieces, 2);
+});
+
+test('leaving during the Spirit\'s turn cancels its move; no result, stats or sounds follow', () => {
+  const { session, clock, view, audio, profile } = setup({ difficulty: 'hard' });
+  session.enter('single');
+  reachSpiritWinningReply({ session, clock });
+  assert.equal(clock.pending, 1);
+  const audioBefore = audio.calls.length;
+
+  session.leave();
+  clock.tick(10_000);
+
+  assert.equal(clock.pending, 0);
+  assert.deepEqual(view.resultsShown, []);
+  assert.equal(view.result, null);
+  assert.equal(profile.statsSummary().totalGames, 0, 'no loss recorded');
+  assert.deepEqual(audio.calls.slice(audioBefore), ['stop:victory-sound'], 'only teardown audio');
+
+  // Selecting a cell after leaving does nothing.
+  session.selectCell(5);
+  assert.equal(view.board[5], null);
+});
+
+test('the result modal of a finished match never opens after restart or leave', () => {
+  for (const exit of ['restart', 'playAgain', 'leave']) {
+    const { session, clock, view, profile } = setup();
+    session.enter('two');
+    for (const i of [0, 3, 1, 4, 2]) session.selectCell(i); // Player 1 wins the top row
+    assert.equal(profile.statsSummary().wins, 1, `${exit}: result recorded at once`);
+    assert.equal(view.result, null, `${exit}: modal waits ${DELAYS.resultModal}ms`);
+
+    clock.tick(DELAYS.resultModal - 1);
+    session[exit]();
+    clock.tick(10_000);
+    assert.deepEqual(view.resultsShown, [], `${exit}: stale modal must not open`);
+  }
+});
+
+test('the result modal opens once, after its delay, when the player stays', () => {
+  const { session, clock, view, audio } = setup();
+  session.enter('two');
+  for (const i of [0, 3, 1, 4, 2]) session.selectCell(i);
+  assert.deepEqual(view.highlighted, [0, 1, 2]);
+  assert.ok(audio.calls.includes('music:stop') && audio.calls.includes('sfx:victory-sound'));
+
+  clock.tick(DELAYS.resultModal);
+  assert.deepEqual(view.result, { outcome: 'player1', winner: 'shell' });
+  clock.tick(10_000);
+  assert.deepEqual(view.resultsShown, ['player1']);
+});
+
+test('"New Game" stops the victory sound, keeps the session score and restarts music after 300ms', () => {
+  const { session, clock, view, audio } = setup();
+  session.enter('two');
+  for (const i of [0, 3, 1, 4, 2]) session.selectCell(i);
+  clock.tick(DELAYS.resultModal);
+  audio.calls.length = 0;
+
+  session.playAgain();
+  assert.equal(view.result, null);
+  assert.equal(view.pieces, 0);
+  assert.deepEqual(view.scores, { player1: 1, player2: 0 });
+  assert.deepEqual(audio.calls, ['music:stop', 'sfx:newgame-sound', 'stop:victory-sound']);
+
+  clock.tick(DELAYS.musicRestart);
+  assert.deepEqual(audio.calls.slice(3), ['music:start']);
+});
+
+test('a "New Game" music restart is cancelled if the match is restarted first', () => {
+  const { session, clock, audio } = setup();
+  session.enter('two');
+  session.playAgain();
+  session.restart();
+  audio.calls.length = 0;
+  clock.tick(1_000);
+  assert.deepEqual(audio.calls, []);
+});
+
+test('the player cannot move during the Spirit\'s turn, and the Spirit moves exactly once', () => {
+  const { session, clock, view } = setup();
+  session.enter('single');
+  session.selectCell(4);
+  session.selectCell(0); // ignored: Spirit's turn
+  assert.equal(view.pieces, 1);
+  clock.tick(DELAYS.spiritMove * 5);
+  assert.equal(view.pieces, 2);
+  assert.equal(view.board.filter((c) => c === 'feather').length, 1);
+});
+
+test('entering a mode resets the session score; restarts keep it', () => {
+  const { session, clock, view } = setup();
+  session.enter('two');
+  for (const i of [0, 3, 1, 4, 2]) session.selectCell(i);
+  session.restart();
+  for (const i of [3, 0, 4, 1, 8, 2]) session.selectCell(i); // Player 2 wins the top row
+  assert.deepEqual(view.scores, { player1: 1, player2: 1 });
+
+  session.leave();
+  session.enter('single');
+  assert.deepEqual(view.scores, { player1: 0, player2: 0 });
+  clock.tick(10_000);
+});
+
+test('results are recorded per mode and difficulty, with v1-style totals', () => {
+  const { session, clock, profile } = setup({ difficulty: 'hard' });
+  session.enter('single');
+  reachSpiritWinningReply({ session, clock });
+  clock.tick(DELAYS.spiritMove);
+  assert.deepEqual(profile.statsSummary(), { wins: 0, losses: 1, draws: 0, totalGames: 1 });
+
+  session.leave();
+  session.enter('two');
+  for (const i of [3, 0, 4, 1, 8, 2]) session.selectCell(i); // Player 2 wins
+  // v1 counted every two-player win as a Victory.
+  assert.deepEqual(profile.statsSummary(), { wins: 1, losses: 1, draws: 0, totalGames: 2 });
+});
+
+test('the symbol and difficulty saved in settings apply from the next match', () => {
+  const { session, clock, view, profile } = setup();
+  profile.updateGameSettings({ player1Symbol: 'feather' });
+  session.enter('single');
+  session.selectCell(0);
+  clock.tick(DELAYS.spiritMove);
+  assert.equal(view.board[0], 'feather');
+  assert.equal(view.board.filter((c) => c === 'shell').length, 1, 'Spirit plays shell');
+});
