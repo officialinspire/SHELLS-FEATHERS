@@ -6,7 +6,8 @@
 | Feature branch | `claude/hopeful-hawking-ummjv2` (branched from that commit) |
 | Stage 0: audit and baseline smoke test | `d97fc97` (2026-10-23) |
 | Stage 1: module refactor, lifecycle, save migration | `2a222c0` |
-| Stage 2: Spirit of the Woods game hub | the commit that adds §0.1 |
+| Stage 2: Spirit of the Woods game hub | `2099f98` |
+| Stage 3: Shells & Feathers match flows, board accessibility, gestures | the commit that adds §0.1 |
 | Live site | https://officialinspire.github.io/SHELLS-FEATHERS/ still serves v1 from `main`. Nothing from this branch is merged or deployed. |
 
 The existing Shells & Feathers tic-tac-toe game must stay playable at every step of the upgrade. Each stage ends with every test green and the game deployable as is.
@@ -17,7 +18,46 @@ Sections 1–3 are the audit of v1 and stay as they were written, as a record of
 
 ## 0. Status
 
-### 0.1 Stage 2: the game hub
+### 0.1 Stage 3: Shells & Feathers inside the hub
+
+The game keeps everything it had:
+- Shell 🐚 and Feather 🪶 pieces;
+- the choice of side;
+- Gentle, Balanced and Wise;
+- local two-player play;
+- its stats.
+
+This stage audited every match flow in the real page, fixed what the audit found, and added checks for each flow.
+
+**Match-flow audit.** Each flow was driven in Chromium, then rechecked after the fixes.
+
+| Flow | Found | Now |
+|---|---|---|
+| First move | Player 1 (you, in single player) moves first. The turn line was the only cue. | Unchanged rule. The status region also says "New round. Your turn." |
+| The Spirit's turn | Empty squares still looked and announced as playable; taps were silently ignored. Where the Spirit moved was never announced. | The board is marked busy and its empty squares unavailable (progress cursor) for the 800 ms. The Spirit's move is announced ("The Spirit placed a feather on row 3, column 1. Your turn."). |
+| Win / draw | After the end, empty squares still said "empty" with a pointer cursor. The winning line was marked by color only. The result was announced only as the title. | The board locks (all squares unavailable; empty ones fade to a dashed outline). Winning squares also get a solid edge and are named "winning line". The status names the line ("Three shells in the top row.") or the draw. |
+| Rematch | Worked. | Unchanged; checked that nothing is re-scored. |
+| Leaving mid-turn, switching games | Worked (Stage 1 timer scopes). | Checked again for Restart, Change Mode, Back, going home and switching to Acorns & Leaves, during the Spirit's turn. |
+| Scoring twice | No double score found, even after two synchronous clicks plus key repeats on the winning square. | Now an explicit rule as well: `session.js` records a round at most once (`scoredMatch`). It backs up the rules, which already refuse moves after the end. Rounds that are restarted or left are never scored. |
+
+**Board accessibility.**
+- The nine squares are buttons, with one tab stop and arrow, Home and End keys. Enter or Space places a piece.
+- Each square's name gives its row, column and contents, and "winning line" where it applies. Taken squares, and every square while the board waits or is over, are `aria-disabled`.
+- A polite status region outside the match screen announces each move, whose turn it is, and the result. It sits outside so that the dialog making the board inert can't cut off the last announcement. The turn line itself is no longer a live region, so nothing is announced twice.
+- **Focus:** a 3 px dark ring outside each square and a cream edge inside. Neither uses box-shadow, so the winning glow can't hide it. Squares no longer transition "all" properties, so the ring appears instantly.
+- **Touch:** squares are at least 60 px on a 320 px-wide phone, and every control in the app is at least 44 × 44 px (checked at four screen sizes).
+
+**Gestures.** There is no `touchmove` blocking anywhere. Stage 3 also removed `overscroll-behavior: none` from `body`, which had disabled pull-to-refresh and overscroll on every screen. The only gesture setting left is `touch-action: manipulation` on the board and its squares: no double-tap zoom delay, while scrolling and pinch zoom still work. A swipe across the board is not taken as a move.
+
+**Phone smoke test.** iPhone SE (320×568), Pixel 7 (412×839) and iPhone 12 landscape (750×340), emulated in Chromium, taps only:
+- hub → setup (Feather, Balanced) → a full game against the Spirit → View Board → Restart;
+- Change Mode → a two-player win → All Games → Your Path.
+
+On all three: no errors, no sideways scrolling, and exactly two games recorded. Screenshots of the waiting, result and final-board states were reviewed.
+
+**Known limit (unchanged).** Two tabs playing at once each keep their own copy of the records, and the last one saved wins. Nothing is double-counted, but one tab's games can be overwritten.
+
+### 0.2 Stage 2: the game hub
 
 The opening screen is now a hub for Spirit of the Woods games.
 
@@ -61,7 +101,7 @@ Settings (sound, music) and Your Path (totals, records per difficulty and two-pl
 | P3 (CSS) | **Fixed.** The unused celebration styles are removed. The unused PNGs remain. |
 | ST1 | **Fixed.** Your Path shows the per-mode breakdown next to the v1-style totals. |
 
-### 0.2 Stage 1: modules, lifecycle, save migration
+### 0.3 Stage 1: modules, lifecycle, save migration
 
 **Done in Stage 1.**
 - `index.js` is split into ES modules under `src/` (§4), with explicit lifecycles for screens, matches, timers and music fades.
@@ -425,10 +465,11 @@ npm test                          # = npm run test:unit && npm run test:browser
 
 | File | Covers |
 |---|---|
-| `session.test.mjs` | **Reset and stale callbacks.** Restart cancels the pending Spirit move, and the new match gets its full 800 ms. Leaving during the Spirit's turn records nothing and plays nothing. The result dialog never opens after Restart, Play Again or leave, and opens exactly once if the player stays. Play Again stops the victory sound and restarts music after 300 ms; that restart is cancelled by a restart. The Spirit moves exactly once and the player can't move during its turn. Session score resets per mode and survives restarts. Results land in the right buckets. Settings apply from the next match. Match info and the result line reach the view. |
+| `session.test.mjs` | **Scoring once:** a round is recorded once whatever follows its last move (taps, Play Again, Restart), including when the Spirit ends it; rounds restarted or left before the end are never recorded. **Board states:** ready → waiting → ready → over; two players never wait. Each move names who made it. **Reset and stale callbacks.** Restart cancels the pending Spirit move, and the new match gets its full 800 ms. Leaving during the Spirit's turn records nothing and plays nothing. The result dialog never opens after Restart, Play Again or leave, and opens exactly once if the player stays. Play Again stops the victory sound and restarts music after 300 ms; that restart is cancelled by a restart. The Spirit moves exactly once and the player can't move during its turn. Session score resets per mode and survives restarts. Results land in the right buckets. Settings apply from the next match. Match info and the result line reach the view. |
 | `migration.test.mjs` | Save format, migration and malformed storage (§5.4). |
 | `timers-audio.test.mjs` | Timer scopes (dispose cancels and ignores later calls; scopes are independent). Music fades: draw → Play Again and music off→on keep music playing; no dip when already playing; fade-out pauses; toggles respected. |
-| `rules-ai.test.mjs` | Lines, draws, illegal moves, outcomes. **Wise never loses**: all 569 human lines give 183 draws and 386 AI wins, as v1 measured. Win-before-block. Gentle and Balanced with a fixed random source. |
+| `rules-ai.test.mjs` | Lines, draws, illegal moves, outcomes. A line completed on the ninth move is a win, not a draw. Completing two lines at once is one win. Feather as Player 1 moves first. No move after a draw or win. **Wise never loses**: all 569 human lines give 183 draws and 386 AI wins, as v1 measured, and it also never loses when the player picks Feather. The Spirit only picks empty squares, at every difficulty, from every reachable position. Win-before-block. Gentle and Balanced with a fixed random source. |
+| `announcements.test.mjs` | Square and line names; move, turn and result announcements (keeping the game's result titles). |
 | `navigation.test.mjs` | Hash parsing. Redirects. Unknown routes go to the hub, and only Shells & Feathers has play routes. go/up/back against a fake history (up() steps back instead of adding entries; back() falls back to the hub on a fresh visit). Typed URLs and Back/Forward. Arrow-key movement on the board. |
 | `hub-content.test.mjs` | Achievements: all locked at first; each unlocks from its record; pre-v2 games count toward totals only. Your Path receives a copy of the records. The checkers starting position on the preview. |
 
@@ -440,13 +481,14 @@ npm test                          # = npm run test:unit && npm run test:browser
 | `full-games.test.mjs` | Single player played to a result against Gentle, Balanced and Wise; Wise reproduces v1's exact audited game. Two players: Player 2 win then draw, session score and stats. Feather as Player 1. |
 | `lifecycle.test.mjs` | Audit bugs A1, A2, A3, M1 and M2 reproduced in the real UI and shown fixed. Leaving the match by Change Mode, the browser Back button or a typed URL. |
 | `storage.test.mjs` | v1 player upgrades and keeps records (including after more games and a reload; v1 key untouched by the migration, then mirrored). Malformed, `null` and `{}` v1 values. Corrupt v2 rebuilt from v1. Storage that throws. Settings, pieces and difficulty surviving a reload. |
-| `hub.test.mjs` | **Hub:** the Acorns & Leaves card has no play control, no buttons, nothing styled as primary, and no play route anywhere; both How to Play pages. **Full trip:** hub → setup → match → result → Play Again → Change Mode → other mode → All Games → Settings → Your Path achievements. **History:** Back/Forward (fresh match on Forward; "Change Mode" adds no history entry), reload, deep links, unknown links. **Keyboard only:** Tab to the game, arrow keys and Enter/Space to win, the dialog takes and keeps focus, Escape shows the board. **Devices:** narrow phone 320×568 with touch, and desktop 1280×800, each playing both modes to a result with the match fitting on screen. **Reachability:** at 320×568, 360×640, 750×340 and 1280×800, every link, button and input on every screen (and in the result dialog) can be scrolled into view and is not covered; no sideways scrolling. |
+| `match-flows.test.mjs` | **First move and the Spirit's turn:** the board is busy, taps are ignored, and both moves are announced. **Win and draw:** the board locks, winning squares are named and edged, the result and line are announced, and a draw adds to neither score. **Scoring once:** the winning square is clicked twice in one task and pressed with Enter three times; then View Board, taps after the end, Restart, Back/Forward and reload. Exactly one game is recorded. **Cancelling the Spirit's move:** Restart, switching to Acorns & Leaves, and going home during its turn; nothing scored, no stale move. **Keyboard:** arrows, Home/End, Enter/Space, taken squares refuse, and a dark focus ring on empty, taken and winning squares. **Phone (320×568, touch):** pinch zoom allowed; a touch drag scrolls the setup screen; no `touchmove` is blocked anywhere; no page-wide overscroll setting; only the board uses `touch-action: manipulation`; squares are 60 px or more; a swipe across the board is not a move; a touch game plays to a result. |
+| `hub.test.mjs` | **Hub:** the Acorns & Leaves card has no play control, no buttons, nothing styled as primary, and no play route anywhere; both How to Play pages. **Full trip:** hub → setup → match → result → Play Again → Change Mode → other mode → All Games → Settings → Your Path achievements. **History:** Back/Forward (fresh match on Forward; "Change Mode" adds no history entry), reload, deep links, unknown links. **Keyboard only:** Tab to the game, arrow keys and Enter/Space to win, the dialog takes and keeps focus, Escape shows the board. **Devices:** narrow phone 320×568 with touch, and desktop 1280×800, each playing both modes to a result with the match fitting on screen. **Reachability:** at 320×568, 360×640, 750×340 and 1280×800, every link, button and input on every screen (and in the result dialog) can be scrolled into view, is not covered, and is at least 44×44 px; no sideways scrolling. |
 
 ### 6.2 How each stage was verified beyond the suite
 
 **Stage 1.**
 - **AI:** v1's `index.js` (from `main`) was loaded in a Node VM and compared with `src/games/shells-feathers/ai.js` on every AI-to-move position, for both symbol assignments, every difficulty and five seeded random sources. 62,910 comparisons, 0 differences.
-- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.2.
+- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.3.
 - **Mutation check:** key safeguards were removed one at a time (timer disposal on teardown, fade cancellation, the storage guards, the v1 migration). The suite failed each time.
 
 **Stage 2.**
@@ -459,6 +501,22 @@ npm test                          # = npm run test:unit && npm run test:browser
   - focus moving to the new screen;
   - the one-row controls on narrow phones;
   - saving the difficulty choice.
+
+**Stage 3.**
+- **Match-flow audit** in Chromium before and after the fixes (§0.1), and the **phone smoke test** on three emulated phones (§0.1).
+- **Mutation check:** each of these was removed one at a time, and the suite failed each time:
+  - the waiting and locked board states;
+  - turn announcements;
+  - the instant focus ring;
+  - the winning squares' solid edge.
+
+  Re-adding page-wide `overscroll-behavior` or a page-wide `touchmove` block also fails the phone test.
+- **Scoring is protected three times:**
+  - the rules refuse moves after the end;
+  - the session ignores taps once a round has a result;
+  - the session records each round at most once.
+
+  Removing one or two layers changes nothing observable. With all three removed, the score-once test fails.
 
 ### 6.3 Remaining automated checks to add
 

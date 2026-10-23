@@ -2,11 +2,14 @@
 // turns, results, session score and sounds. No DOM access; drawing goes
 // through `view` (see view.js).
 //
-// Lifecycle: enter(mode) when the game screen opens, restart() for "New
-// Journey", playAgain() for "New Game", leave() when the screen closes. Each
-// match owns a timer scope; starting another match or leaving disposes it, so
-// a pending Spirit move, result modal or music restart from an old match can
-// never fire.
+// Lifecycle: enter(mode) when the match screen opens, restart() for
+// "Restart", playAgain() for "Play Again", leave() when the screen closes.
+// Each match owns a timer scope; starting another match or leaving disposes
+// it, so a pending Spirit move, result dialog or music restart from an old
+// match can never fire.
+//
+// Scoring: a round is recorded once, when its last move is played. A round
+// that is restarted or left before it ends is not recorded.
 import { createMatch } from './match.js';
 import { chooseMove } from './ai.js';
 import { createTimerScope } from '../../shared/timers.js';
@@ -18,6 +21,7 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
   let match = null;
   let timers = null;
   let spiritThinking = false;
+  let scoredMatch = null;
   const scores = { player1: 0, player2: 0 };
 
   function enter(newMode) {
@@ -53,6 +57,7 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
     timers = createTimerScope(clock);
     view.clearBoard();
     view.showMatchInfo({ mode, difficulty, player1Symbol });
+    view.setBoardState('ready');
     showTurn();
   }
 
@@ -74,17 +79,22 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
   function place(index) {
     const move = match.play(index);
     if (!move) return;
-    view.placePiece(move.index, move.symbol);
-    audio.playSfx(move.symbol === match.player1Symbol ? 'player-select' : 'opponent-select');
+    const byPlayer1 = move.symbol === match.player1Symbol;
+    const actor = mode === 'single' ? (byPlayer1 ? 'you' : 'spirit') : (byPlayer1 ? 'player1' : 'player2');
+    view.placePiece(move.index, move.symbol, actor);
+    audio.playSfx(byPlayer1 ? 'player-select' : 'opponent-select');
     if (match.result) {
       finish();
       return;
     }
-    showTurn();
     if (match.isSpiritTurn()) {
       spiritThinking = true;
+      view.setBoardState('waiting');
       timers.after(delays.spiritMove, spiritMove);
+    } else {
+      view.setBoardState('ready');
     }
+    showTurn();
   }
 
   function spiritMove() {
@@ -99,8 +109,11 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
   }
 
   function finish() {
+    if (scoredMatch === match) return; // never score a round twice
+    scoredMatch = match;
     const { winner, line } = match.result;
     const outcome = match.outcome;
+    view.setBoardState('over');
     profile.recordResult({ mode, difficulty: match.difficulty, outcome });
     if (winner !== null) {
       if (winner === match.player1Symbol) scores.player1++;
@@ -110,7 +123,7 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
       audio.playSfx('victory-sound');
     }
     view.showScores(mode, scores);
-    view.showFinalTurn(outcome, winner);
+    view.showFinalTurn(outcome, winner, line);
     timers.after(delays.resultModal, () => view.showResult(outcome, winner));
   }
 

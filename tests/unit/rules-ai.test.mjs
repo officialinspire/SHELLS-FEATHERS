@@ -82,3 +82,84 @@ test('Gentle plays a random empty cell; Balanced plays best below 0.7, random ab
   const random = chooseMove(board, { ai: 'feather', human: 'shell', difficulty: 'medium', rng: () => values.shift() });
   assert.equal(random, open[open.length - 1]);
 });
+
+test('a line completed on the ninth move is a win, not a draw', () => {
+  // Shell's ninth move fills the board (S S F / F F S / S F S) with no line: a draw.
+  const draw = createMatch({ mode: 'two', player1Symbol: 'shell', difficulty: 'easy' });
+  for (const i of [0, 2, 1, 3, 5, 4, 6, 7, 8]) draw.play(i);
+  assert.equal(draw.outcome, 'draw');
+
+  // Shell's ninth move completes the 0-4-8 diagonal on a full board.
+  const win = createMatch({ mode: 'two', player1Symbol: 'shell', difficulty: 'easy' });
+  for (const i of [0, 1, 4, 2, 5, 3, 6, 7, 8]) win.play(i);
+  assert.ok(win.board.every(Boolean), 'board is full');
+  assert.equal(win.outcome, 'player1');
+  assert.deepEqual(win.result.line, [0, 4, 8]);
+});
+
+test('completing two lines with one move is a single win', () => {
+  // Shell at 0, 2, 6, 8 then 4 completes both diagonals (and more) at once.
+  const match = createMatch({ mode: 'two', player1Symbol: 'shell', difficulty: 'easy' });
+  for (const i of [0, 1, 2, 3, 6, 5, 8, 7, 4]) match.play(i);
+  assert.equal(match.outcome, 'player1');
+  assert.equal(match.play(0), null);
+});
+
+test('Feather as Player 1 moves first and is "you" in single player', () => {
+  const match = createMatch({ mode: 'single', player1Symbol: 'feather', difficulty: 'hard' });
+  assert.equal(match.turn, 'feather');
+  assert.equal(match.player2Symbol, 'shell');
+  assert.deepEqual(match.play(4), { index: 4, symbol: 'feather' });
+  assert.equal(match.isSpiritTurn(), true);
+});
+
+test('no move is accepted after a draw or a win', () => {
+  const draw = createMatch({ mode: 'two', player1Symbol: 'shell', difficulty: 'easy' });
+  for (const i of [0, 1, 2, 4, 3, 5, 7, 6, 8]) draw.play(i);
+  assert.equal(draw.outcome, 'draw');
+  for (let i = 0; i < 9; i++) assert.equal(draw.play(i), null);
+});
+
+test('the Spirit only ever picks an empty square, at every difficulty, from every reachable position', () => {
+  let positions = 0;
+  const seen = new Set();
+  const walk = (board, turn) => {
+    const key = board.map((c) => c?.[0] ?? '.').join('');
+    if (seen.has(key)) return;
+    seen.add(key);
+    if (winningLine(board, 'shell') || winningLine(board, 'feather') || isFull(board)) return;
+    if (turn === 'feather') {
+      positions++;
+      for (const difficulty of ['easy', 'medium', 'hard']) {
+        for (const r of [0, 0.35, 0.69, 0.71, 0.99]) {
+          const move = chooseMove(board, { ai: 'feather', human: 'shell', difficulty, rng: () => r });
+          assert.ok(Number.isInteger(move) && board[move] === null, `${difficulty} picked ${move} on ${key}`);
+        }
+      }
+    }
+    for (const i of emptyCells(board)) {
+      const next = board.slice();
+      next[i] = turn;
+      walk(next, turn === 'shell' ? 'feather' : 'shell');
+    }
+  };
+  walk(Array(9).fill(null), 'shell');
+  assert.ok(positions > 2000, `checked ${positions} positions`);
+});
+
+test('Wise never loses when the player picks Feather either', () => {
+  let humanWins = 0;
+  const walk = (board) => {
+    for (const i of emptyCells(board)) {
+      const b = board.slice();
+      b[i] = 'feather';
+      if (winningLine(b, 'feather')) { humanWins++; continue; }
+      if (isFull(b)) continue;
+      b[chooseMove(b, { ai: 'shell', human: 'feather', difficulty: 'hard' })] = 'shell';
+      if (winningLine(b, 'shell') || isFull(b)) continue;
+      walk(b);
+    }
+  };
+  walk(Array(9).fill(null));
+  assert.equal(humanWins, 0);
+});

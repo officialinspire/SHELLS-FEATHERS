@@ -118,11 +118,11 @@
           <span class="score-separator" aria-hidden="true">|</span>
           <span class="score-label" id="player2-label">Feather: </span><span id="player2-score">0</span>
         </div>
-        <div class="turn-indicator" id="turn-indicator" aria-live="polite">Your Turn</div>
+        <div class="turn-indicator" id="turn-indicator">Your Turn</div>
       </div>
 
       <div id="game-board" class="game-board">
-        <div id="board-overlay" class="board-overlay" role="group" aria-label="Board">
+        <div id="board-overlay" class="board-overlay" role="group" aria-label="Board" aria-describedby="board-help" data-state="ready">
           <button type="button" class="cell" data-index="0"></button>
           <button type="button" class="cell" data-index="1"></button>
           <button type="button" class="cell" data-index="2"></button>
@@ -134,6 +134,8 @@
           <button type="button" class="cell" data-index="8"></button>
         </div>
       </div>
+
+      <p id="board-help" class="visually-hidden">Use the arrow keys to move between squares, and Enter or Space to place a piece.</p>
 
       <div class="game-controls">
         <button type="button" class="btn control-btn" data-action="restart-match">Restart</button>
@@ -261,6 +263,10 @@
         <p>Preview: records will appear here once the game can be played.</p>
       </div>
     </section>
+
+    <!-- Shells & Feathers announcements (outside the match screen, which turns
+         inert while the result dialog is open) -->
+    <p id="sf-status" class="visually-hidden" role="status" aria-live="polite"></p>
 
     <!-- Shells & Feathers result -->
     <div id="game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message">

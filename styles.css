@@ -47,7 +47,6 @@ body {
     background: #B98552;
     min-height: 100vh;
     min-height: 100dvh;
-    overscroll-behavior-y: none;
 }
 
 /* Forest gradient, pinned to the screen so long pages stay covered. */
@@ -817,7 +816,8 @@ h2[tabindex="-1"]:focus {
     border: 2px solid rgba(139, 69, 19, 0.3);
     border-radius: 15px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    /* Not "all": the focus ring and edges must appear instantly. */
+    transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -825,21 +825,42 @@ h2[tabindex="-1"]:focus {
     -webkit-tap-highlight-color: transparent;
 }
 
+/* Hover and press feedback only while the player can move. */
 @media (hover: hover) {
-    .cell:hover:not(.occupied) {
+    .board-overlay[data-state="ready"] .cell:hover:not(.occupied) {
         background: rgba(64, 224, 208, 0.2);
         transform: scale(1.05);
         box-shadow: 0 5px 15px rgba(64, 224, 208, 0.3);
     }
 }
 
-.cell:active:not(.occupied) {
+.board-overlay[data-state="ready"] .cell:active:not(.occupied) {
     transform: scale(0.95);
     background: rgba(64, 224, 208, 0.3);
 }
 
+/* The Spirit is thinking: empty squares wait. */
+.board-overlay[data-state="waiting"] .cell:not(.occupied) {
+    cursor: progress;
+}
+
+/* Round over: empty squares fade back so the result reads at a glance. */
+.board-overlay[data-state="over"] .cell {
+    cursor: default;
+}
+
+.board-overlay[data-state="over"] .cell:not(.occupied) {
+    background: rgba(255, 248, 220, 0.04);
+    border-style: dashed;
+}
+
+/* Focus: a dark ring outside and a cream edge inside. Neither uses
+   box-shadow, so the winning glow can't hide it. */
 .cell:focus-visible {
+    outline: 3px solid var(--ink);
     outline-offset: 2px;
+    border-color: var(--feather-white);
+    box-shadow: none;
 }
 
 .cell.occupied {
@@ -853,10 +874,17 @@ h2[tabindex="-1"]:focus {
     100% { transform: scale(1) rotate(360deg); }
 }
 
+/* Winning squares: gold glow plus a solid edge, so the line doesn't rely on
+   color alone. */
 .cell.winner {
     background: rgba(255, 215, 0, 0.4);
+    border: 3px solid var(--dark-brown);
     box-shadow: 0 0 24px rgba(255, 215, 0, 0.65);
     animation: winnerGlow 1s ease infinite;
+}
+
+.cell.winner:focus-visible {
+    border-color: var(--feather-white);
 }
 
 @keyframes winnerGlow {

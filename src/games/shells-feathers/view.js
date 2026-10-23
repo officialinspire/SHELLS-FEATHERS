@@ -1,10 +1,18 @@
-// DOM for the Shells & Feathers match screen: board, turn indicator, session
-// score, match info and the result dialog. Game text and colors match v1.
+// DOM for the Shells & Feathers match screen: board, turn line, session
+// score, match info, status announcements and the result dialog. Game text and
+// colors match v1.
 //
-// Keyboard: the nine squares are buttons with one tab stop between them; the
-// arrow keys move between squares and Enter/Space places a piece. The result
-// dialog takes focus and makes the board inert while open; "View Board" (or
-// Escape) closes it to show the final board.
+// Board: the nine squares are buttons with one tab stop between them; the
+// arrow keys (and Home/End) move between squares and Enter/Space places a
+// piece. Each square's name says what is on it. The board has three states:
+// "ready" (the player may move), "waiting" (the Spirit is thinking) and "over"
+// (the round has ended); outside "ready", empty squares are aria-disabled.
+//
+// Announcements: a polite status region says what just happened ("The Spirit
+// placed a feather on row 2, column 2. Your turn.") and how a round ended.
+//
+// Result dialog: takes focus and makes the board inert while open; "View
+// Board" (or Escape) closes it to show the final board.
 import { DIFFICULTY_NAMES } from './ai.js';
 
 const GLYPHS = { shell: '🐚', feather: '🪶' };
@@ -18,6 +26,9 @@ const RESULTS = {
   player1: { title: 'Player 1 Wins!' },
   player2: { title: 'Player 2 Wins!' },
 };
+const ACTORS = { you: 'You', spirit: 'The Spirit', player1: 'Player 1', player2: 'Player 2' };
+const ROWS = ['top', 'middle', 'bottom'];
+const COLUMNS = ['left', 'middle', 'right'];
 
 // Square reached from `index` with an arrow/Home/End key (stays put at the
 // edges), or null for any other key.
@@ -35,26 +46,62 @@ export function nextCellIndex(index, key) {
   }
 }
 
+export const squareName = (index) => `row ${Math.floor(index / 3) + 1}, column ${(index % 3) + 1}`;
+
+// "the top row", "the left column", "the diagonal from top left", …
+export function lineName([a, , c]) {
+  if (c - a === 2) return `the ${ROWS[a / 3]} row`;
+  if (c - a === 6) return `the ${COLUMNS[a]} column`;
+  return a === 0 ? 'the diagonal from top left' : 'the diagonal from top right';
+}
+
+// Status line after a move: who moved where, then whose turn it is.
+export function moveStatus({ actor, symbol, index }) {
+  const piece = symbol === 'shell' ? 'a shell' : 'a feather';
+  return `${ACTORS[actor]} placed ${piece} on ${squareName(index)}.`;
+}
+
+export function turnStatus(mode, isPlayer1) {
+  if (mode === 'single') return isPlayer1 ? 'Your turn.' : "The Spirit's turn.";
+  return `Player ${isPlayer1 ? 1 : 2}'s turn.`;
+}
+
+export function resultStatus(outcome, winner, line) {
+  if (outcome === 'draw') return `${RESULTS.draw.title}: a draw. The board is full with no three in a row.`;
+  const pieces = winner === 'shell' ? 'shells' : 'feathers';
+  return `${RESULTS[outcome].title} Three ${pieces} in ${lineName(line)}.`;
+}
+
 export function createShellsFeathersView(doc) {
   const byId = (id) => doc.getElementById(id);
   const cells = [];
   for (const cell of doc.querySelectorAll('#board-overlay .cell')) cells[Number(cell.dataset.index)] = cell;
+  const board = byId('board-overlay');
   const screen = byId('game-screen');
   const modal = byId('game-modal');
+  const status = byId('sf-status');
   const restartButton = screen.querySelector('[data-action="restart-match"]');
   let focusIndex = 0;
+  let lastMove = '';
 
   function describeCell(index) {
     const symbol = cells[index].dataset.symbol;
     const state = symbol ? NAMES[symbol].toLowerCase() : 'empty';
     const winning = cells[index].classList.contains('winner') ? ', winning line' : '';
-    cells[index].setAttribute('aria-label', `Row ${Math.floor(index / 3) + 1}, column ${(index % 3) + 1}: ${state}${winning}`);
+    const name = squareName(index);
+    cells[index].setAttribute('aria-label', `${name[0].toUpperCase()}${name.slice(1)}: ${state}${winning}`);
   }
 
   function setFocusIndex(index, { focus = false } = {}) {
     focusIndex = index;
     cells.forEach((cell, i) => { cell.tabIndex = i === index ? 0 : -1; });
     if (focus) cells[index].focus();
+  }
+
+  // Repeating the same text wouldn't be announced again, so alternate a
+  // trailing no-break space.
+  function announce(text) {
+    status.textContent = status.textContent === text ? `${text} ` : text;
   }
 
   function hideResult() {
@@ -70,7 +117,7 @@ export function createShellsFeathersView(doc) {
     restartButton.focus();
   }
 
-  const view = {
+  return {
     bindCells(onSelect) {
       cells.forEach((cell, index) => {
         cell.addEventListener('click', () => {
@@ -96,21 +143,32 @@ export function createShellsFeathersView(doc) {
       cells[focusIndex].focus();
     },
     clearBoard() {
+      lastMove = '';
       for (const cell of cells) {
         cell.textContent = '';
         delete cell.dataset.symbol;
         cell.classList.remove('occupied', 'winner');
-        cell.removeAttribute('aria-disabled');
       }
       cells.forEach((_, i) => describeCell(i));
     },
-    placePiece(index, symbol) {
+    // 'ready' | 'waiting' | 'over'
+    setBoardState(state) {
+      board.dataset.state = state;
+      board.setAttribute('aria-busy', String(state === 'waiting'));
+      for (const cell of cells) {
+        if (state === 'ready' && !cell.dataset.symbol) cell.removeAttribute('aria-disabled');
+        else cell.setAttribute('aria-disabled', 'true');
+      }
+    },
+    // actor: 'you' | 'spirit' | 'player1' | 'player2'
+    placePiece(index, symbol, actor) {
       const cell = cells[index];
       cell.textContent = GLYPHS[symbol];
       cell.dataset.symbol = symbol;
       cell.classList.add('occupied');
       cell.setAttribute('aria-disabled', 'true');
       describeCell(index);
+      lastMove = moveStatus({ actor, symbol, index });
     },
     highlight(line) {
       for (const i of line) {
@@ -129,14 +187,15 @@ export function createShellsFeathersView(doc) {
         ? (isPlayer1 ? 'Your Turn' : "Spirit's Turn")
         : `Player ${isPlayer1 ? 1 : 2}'s Turn ${GLYPHS[symbol]}`;
       el.style.color = isPlayer1 ? PLAYER1_COLOR : PLAYER2_COLOR;
+      announce(`${lastMove || 'New round.'} ${turnStatus(mode, isPlayer1)}`);
     },
     // After the last move the turn line shows the result (it stays visible
     // once the dialog is closed with View Board).
-    showFinalTurn(outcome, winner) {
+    showFinalTurn(outcome, winner, line) {
       const el = byId('turn-indicator');
       el.textContent = RESULTS[outcome].title;
       el.style.color = outcome === 'loss' || outcome === 'player2' ? PLAYER2_COLOR : PLAYER1_COLOR;
-      if (winner === null) el.style.color = PLAYER1_COLOR;
+      announce(`${lastMove} ${resultStatus(outcome, winner, line)}`);
     },
     showScores(mode, scores) {
       byId('player1-label').textContent = mode === 'single' ? 'You: ' : 'Player 1: ';
@@ -155,5 +214,4 @@ export function createShellsFeathersView(doc) {
     hideResult,
     dismissResult,
   };
-  return view;
 }

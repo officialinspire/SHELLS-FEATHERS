@@ -267,7 +267,7 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     });
   }
 
-  await t.test('every control on every screen can be reached at phone, landscape and desktop sizes', async () => {
+  await t.test('every control on every screen can be reached, and is at least 44px, at phone, landscape and desktop sizes', async () => {
     const sizes = [[320, 568], [360, 640], [750, 340], [1280, 800]];
     const routes = [
       ['#/', 'hub-screen'],
@@ -286,8 +286,14 @@ test('game hub', { timeout: 300_000 }, async (t) => {
         const r = el.getBoundingClientRect();
         const onScreen = r.width > 0 && r.left >= -1 && r.right <= innerWidth + 1 && r.top >= -1 && r.bottom <= innerHeight + 1;
         const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        const name = el.getAttribute('aria-label') || el.textContent.trim() || el.name || el.id;
         if (!onScreen || !(hit === el || el.contains(hit))) {
-          problems.push(`${el.getAttribute('aria-label') || el.textContent.trim() || el.name || el.id} @ ${Math.round(r.left)},${Math.round(r.top)}`);
+          problems.push(`${name} @ ${Math.round(r.left)},${Math.round(r.top)}`);
+        }
+        // Comfortable touch target: at least 44×44 (a whole label counts for its input).
+        const target = (el.closest('label') ?? el).getBoundingClientRect();
+        if (target.width < 44 || target.height < 44) {
+          problems.push(`${name} is only ${Math.round(target.width)}×${Math.round(target.height)}px`);
         }
       }
       if (document.documentElement.scrollWidth > innerWidth) problems.push(`page is ${document.documentElement.scrollWidth}px wide`);

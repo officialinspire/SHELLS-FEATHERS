@@ -184,7 +184,84 @@ test('each match tells the view its mode, difficulty and pieces, and the result 
   session.leave();
   session.enter('two');
   for (const i of [3, 0, 4, 1, 8, 2]) session.selectCell(i);
-  assert.deepEqual(view.finalTurn, { outcome: 'player2', winner: 'shell' });
+  assert.deepEqual(view.finalTurn, { outcome: 'player2', winner: 'shell', line: [0, 1, 2] });
   clock.tick(10_000);
 });
 
+test('a round is scored once, whatever the player does after its last move', () => {
+  const { session, clock, view, profile } = setup();
+  session.enter('two');
+  for (const i of [0, 3, 1, 4, 2]) session.selectCell(i); // Player 1 wins
+  for (let n = 0; n < 3; n++) for (let i = 0; i < 9; i++) session.selectCell(i); // taps after the end
+  clock.tick(10_000);
+  assert.deepEqual(profile.statsSummary(), { wins: 1, losses: 0, draws: 0, totalGames: 1 });
+  assert.deepEqual(view.scores, { player1: 1, player2: 0 });
+  assert.deepEqual(view.resultsShown, ['player1']);
+
+  session.playAgain(); // a new round starts, nothing is re-scored
+  session.restart();
+  clock.tick(10_000);
+  assert.equal(profile.statsSummary().totalGames, 1);
+  assert.deepEqual(view.scores, { player1: 1, player2: 0 });
+});
+
+test('the Spirit\'s last move scores its round once', () => {
+  const { session, clock, profile, view } = setup({ difficulty: 'hard' });
+  session.enter('single');
+  reachSpiritWinningReply({ session, clock });
+  clock.tick(DELAYS.spiritMove);
+  session.selectCell(5); // too late: the round is over
+  clock.tick(10_000);
+  assert.deepEqual(profile.statsSummary(), { wins: 0, losses: 1, draws: 0, totalGames: 1 });
+  assert.deepEqual(view.scores, { player1: 0, player2: 1 });
+});
+
+test('rounds that are restarted or left before they end are not scored', () => {
+  const { session, clock, profile, view } = setup();
+  session.enter('single');
+  session.selectCell(4);
+  session.restart(); // during the Spirit's turn
+  session.selectCell(0);
+  clock.tick(DELAYS.spiritMove);
+  session.leave(); // during the player's turn
+  session.enter('two');
+  for (const i of [0, 3, 1]) session.selectCell(i);
+  session.leave();
+  clock.tick(10_000);
+  assert.equal(profile.statsSummary().totalGames, 0);
+  assert.deepEqual(view.resultsShown, []);
+});
+
+test('the board is ready on the player\'s turn, waits for the Spirit, and locks when the round ends', () => {
+  const { session, clock, view } = setup();
+  session.enter('single');
+  assert.equal(view.boardState, 'ready');
+  session.selectCell(4);
+  assert.equal(view.boardState, 'waiting');
+  clock.tick(DELAYS.spiritMove);
+  assert.equal(view.boardState, 'ready');
+
+  session.leave();
+  session.enter('two');
+  view.boardStates.length = 0;
+  for (const i of [0, 3, 1, 4, 2]) session.selectCell(i);
+  assert.deepEqual(view.boardStates, ['ready', 'ready', 'ready', 'ready', 'over'], 'two players never wait');
+  session.playAgain();
+  assert.equal(view.boardState, 'ready');
+  clock.tick(10_000);
+});
+
+test('each move says who made it', () => {
+  const { session, clock, view } = setup();
+  session.enter('single');
+  session.selectCell(4);
+  clock.tick(DELAYS.spiritMove);
+  assert.deepEqual(view.moves.map(([, symbol, actor]) => [symbol, actor]), [['shell', 'you'], ['feather', 'spirit']]);
+
+  session.leave();
+  view.moves.length = 0;
+  session.enter('two');
+  session.selectCell(0);
+  session.selectCell(1);
+  assert.deepEqual(view.moves, [[0, 'shell', 'player1'], [1, 'feather', 'player2']]);
+});
