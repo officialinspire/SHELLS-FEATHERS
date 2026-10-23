@@ -51,7 +51,7 @@
               <p class="badge badge-preview">Preview · not playable yet</p>
             </div>
           </div>
-          <p class="card-text">Classic checkers with acorn and leaf pieces. The game engine is still being built, so it can't be played yet.</p>
+          <p class="card-text">Classic checkers with acorn and leaf pieces. Its rules are ready, but the board is still being built, so it can't be played yet.</p>
           <div class="card-actions">
             <a class="btn btn-secondary" href="#/acorns-leaves/how-to-play" aria-label="How to Play Acorns &amp; Leaves">How to Play</a>
           </div>
@@ -181,7 +181,7 @@
         <h2 id="al-howto-title" tabindex="-1">How to Play Acorns &amp; Leaves</h2>
         <p class="screen-subtitle">Checkers</p>
       </header>
-      <p class="notice notice-preview" role="note"><strong>Preview:</strong> Acorns &amp; Leaves can't be played yet. Its game engine is still being built. These are the rules the first playable version is planned to follow.</p>
+      <p class="notice notice-preview" role="note"><strong>Preview:</strong> Acorns &amp; Leaves can't be played yet. Its rules engine is finished, but the playable board is still being built. These are the rules it plays by.</p>
       <div class="panel prose">
         <p>Acorns &amp; Leaves is checkers (also called draughts) with a forest look: one player has acorns, the other has leaves.</p>
         <figure class="checkers-figure">
@@ -195,13 +195,13 @@
         </ul>
         <h3>Capturing</h3>
         <ul>
-          <li>Jump diagonally over an opponent's piece to the empty square just beyond it; the jumped piece is removed.</li>
-          <li>If a capture is possible, you must take it. If the same piece can jump again, it keeps jumping.</li>
+          <li>Jump diagonally over an opponent's piece to the empty square just beyond it; the jumped piece is removed. Ordinary pieces capture forward only.</li>
+          <li>If a capture is possible, you must take one, but you may choose which. If the same piece can jump again, it keeps jumping.</li>
         </ul>
         <h3>Kings</h3>
-        <p>A piece that reaches the far row becomes a king and can move and capture backward as well as forward.</p>
+        <p>A piece that reaches the far row becomes a king and can move and capture backward as well as forward. Becoming a king ends the move, even in the middle of a chain of jumps.</p>
         <h3>Winning</h3>
-        <p>You win when your opponent has no pieces left or no legal move.</p>
+        <p>You win when your opponent has no pieces left or no legal move. If 40 moves pass on each side with no capture and no ordinary piece moved, the game is a draw.</p>
       </div>
     </section>
 

@@ -7,7 +7,8 @@
 | Stage 0: audit and baseline smoke test | `d97fc97` (2026-10-23) |
 | Stage 1: module refactor, lifecycle, save migration | `2a222c0` |
 | Stage 2: Spirit of the Woods game hub | `2099f98` |
-| Stage 3: Shells & Feathers match flows, board accessibility, gestures | the commit that adds §0.1 |
+| Stage 3: Shells & Feathers match flows, board accessibility, gestures | `bb5708d` |
+| Stage 4: Acorns & Leaves Classic Checkers rules engine | the commit that adds §0.1 |
 | Live site | https://officialinspire.github.io/SHELLS-FEATHERS/ still serves v1 from `main`. Nothing from this branch is merged or deployed. |
 
 The existing Shells & Feathers tic-tac-toe game must stay playable at every step of the upgrade. Each stage ends with every test green and the game deployable as is.
@@ -18,7 +19,33 @@ Sections 1–3 are the audit of v1 and stay as they were written, as a record of
 
 ## 0. Status
 
-### 0.1 Stage 3: Shells & Feathers inside the hub
+### 0.1 Stage 4: the Acorns & Leaves rules engine
+
+`src/games/acorns-leaves/engine.js` is a pure Classic Checkers engine (American checkers / English draughts), separate from any user interface. The full rules and every rule choice are in [`docs/acorns-leaves-rules.md`](acorns-leaves-rules.md).
+
+**Rule choices.**
+- Acorns move first and move up the board; Leaves move down.
+- Ordinary pieces move and capture forward only; there are no backward captures.
+- Kings move and capture one square in any direction (no flying kings).
+- Captures are compulsory, with a free choice between them.
+- Chains must be completed by the same piece. A piece can't be jumped twice, and jumped pieces are removed when the move ends.
+- Crowning ends the move, even partway through a chain.
+- A side with no pieces, or with no legal move on its turn, loses.
+- The engine also draws a game after 40 moves each with no capture and no ordinary-piece move, so every game ends.
+
+**API.**
+- `createInitialState`
+- `legalMoves` / `legalMovesFrom` / `findMove`
+- `applyMove`, which validates the move, applies it and switches the turn. Illegal moves throw `IllegalMoveError` with a reason code and message.
+- `switchTurn`
+- `gameResult`
+- `positionFromRows` / `rowsFromBoard`
+
+**Tests.** 26 unit tests, including 300 seeded random games checked against the rules on every move. Nine rule bugs were introduced one at a time, and each made the tests fail.
+
+**Still a preview.** The hub card, preview notice and rules page now say the rules are ready but the board isn't. They also state the forward-only captures, the free choice between captures, crowning ending the move and the draw rule. There is still no play route. Shells & Feathers is unchanged. Fog of War is not part of this stage.
+
+### 0.2 Stage 3: Shells & Feathers inside the hub
 
 The game keeps everything it had:
 - Shell 🐚 and Feather 🪶 pieces;
@@ -57,7 +84,7 @@ On all three: no errors, no sideways scrolling, and exactly two games recorded. 
 
 **Known limit (unchanged).** Two tabs playing at once each keep their own copy of the records, and the last one saved wins. Nothing is double-counted, but one tab's games can be overwritten.
 
-### 0.2 Stage 2: the game hub
+### 0.3 Stage 2: the game hub
 
 The opening screen is now a hub for Spirit of the Woods games.
 
@@ -101,7 +128,7 @@ Settings (sound, music) and Your Path (totals, records per difficulty and two-pl
 | P3 (CSS) | **Fixed.** The unused celebration styles are removed. The unused PNGs remain. |
 | ST1 | **Fixed.** Your Path shows the per-mode breakdown next to the v1-style totals. |
 
-### 0.3 Stage 1: modules, lifecycle, save migration
+### 0.4 Stage 1: modules, lifecycle, save migration
 
 **Done in Stage 1.**
 - `index.js` is split into ES modules under `src/` (§4), with explicit lifecycles for screens, matches, timers and music fades.
@@ -322,7 +349,9 @@ src/
                          arrow-key movement between squares (DOM)
     setup.js             setup screen: Player 1 pieces and Spirit difficulty (saved)
     achievements.js      six achievements derived from the saved records (pure)
-  games/acorns-leaves/   preview only: no engine yet
+  games/acorns-leaves/   preview: rules engine done, no board or play route yet
+    engine.js            Classic Checkers rules: setup, legal moves, applyMove,
+                         switchTurn, gameResult (pure; docs/acorns-leaves-rules.md)
     preview-board.js     static picture of the checkers starting position
 ```
 
@@ -373,11 +402,9 @@ Navigation uses real links, so new tabs and keyboard Enter work. The app routes 
 - **Music:** `audio.js` keeps one fade timer. Starting a fade cancels the running one. `startMusic()` while music is playing ramps back up from the current volume (v1 dropped it to silence first). `stopMusic()` pauses only when its own fade finishes.
 
 **Remaining order of work.**
-1. **Acorns & Leaves engine:**
-   - pure rules and move generation in `games/acorns-leaves/` (forced captures, multi-jumps, kings, win/draw), unit-tested like Shells & Feathers;
-   - then a session and view, a play route, and a "Ready to play" card.
-
-   The preview card and rules page change only when the engine is complete.
+1. **Acorns & Leaves board:** the engine is done (Stage 4). Next:
+   - a session and view on top of it (choosing a piece, highlighting its legal moves, and multi-jump paths step by step);
+   - a play route, then the "Ready to play" card.
 2. **Cleanup:** the unused PNGs (P3), music preloading (P2), `.nojekyll`.
 3. **Real-device and screen-reader pass** (§6.4).
 
@@ -471,6 +498,7 @@ npm test                          # = npm run test:unit && npm run test:browser
 | `rules-ai.test.mjs` | Lines, draws, illegal moves, outcomes. A line completed on the ninth move is a win, not a draw. Completing two lines at once is one win. Feather as Player 1 moves first. No move after a draw or win. **Wise never loses**: all 569 human lines give 183 draws and 386 AI wins, as v1 measured, and it also never loses when the player picks Feather. The Spirit only picks empty squares, at every difficulty, from every reachable position. Win-before-block. Gentle and Balanced with a fixed random source. |
 | `announcements.test.mjs` | Square and line names; move, turn and result announcements (keeping the game's result titles). |
 | `navigation.test.mjs` | Hash parsing. Redirects. Unknown routes go to the hub, and only Shells & Feathers has play routes. go/up/back against a fake history (up() steps back instead of adding entries; back() falls back to the hub on a fresh visit). Typed URLs and Back/Forward. Arrow-key movement on the board. |
+| `acorns-leaves-engine.test.mjs` | **Checkers engine:** setup (matching the preview picture), the seven opening moves, illegal moves with reasons, immutability, forced captures, free choice between captures, multi-jumps (must continue, branches, no double jumps, a king's loop back to its start), crowning on both sides and crowning ending a chain, king moves and backward captures, the draw count, and elimination, blockade, draw and win-before-draw. 300 seeded random games check every move against the rules. |
 | `hub-content.test.mjs` | Achievements: all locked at first; each unlocks from its record; pre-v2 games count toward totals only. Your Path receives a copy of the records. The checkers starting position on the preview. |
 
 **Browser tests** (`tests/browser`, Playwright + Chromium against a built-in static server). Every off-site request is blocked, which proves the game is self-contained. Each test also asserts no page errors and no missing files.
@@ -488,7 +516,7 @@ npm test                          # = npm run test:unit && npm run test:browser
 
 **Stage 1.**
 - **AI:** v1's `index.js` (from `main`) was loaded in a Node VM and compared with `src/games/shells-feathers/ai.js` on every AI-to-move position, for both symbol assignments, every difficulty and five seeded random sources. 62,910 comparisons, 0 differences.
-- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.3.
+- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.4.
 - **Mutation check:** key safeguards were removed one at a time (timer disposal on teardown, fade cancellation, the storage guards, the v1 migration). The suite failed each time.
 
 **Stage 2.**
@@ -503,7 +531,7 @@ npm test                          # = npm run test:unit && npm run test:browser
   - saving the difficulty choice.
 
 **Stage 3.**
-- **Match-flow audit** in Chromium before and after the fixes (§0.1), and the **phone smoke test** on three emulated phones (§0.1).
+- **Match-flow audit** in Chromium before and after the fixes (§0.2), and the **phone smoke test** on three emulated phones (§0.2).
 - **Mutation check:** each of these was removed one at a time, and the suite failed each time:
   - the waiting and locked board states;
   - turn announcements;
