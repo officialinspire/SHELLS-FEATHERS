@@ -1,0 +1,15 @@
+{
+  "name": "shells-feathers",
+  "private": true,
+  "description": "Spirit of the Woods: Shells & Feathers (static site, no build step). Dev tooling only.",
+  "scripts": {
+    "test": "node --test tests/gameplay.smoke.test.mjs",
+    "test:smoke": "node --test tests/gameplay.smoke.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
