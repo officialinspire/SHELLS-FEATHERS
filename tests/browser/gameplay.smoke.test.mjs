@@ -1,9 +1,10 @@
-// Baseline gameplay smoke check (added before the refactor; assertions kept
-// unchanged so it guards v1 behavior).
+// Baseline gameplay smoke check (added before the refactor). The game
+// assertions are unchanged from v1; only the way it reaches the game follows
+// the hub navigation (hub -> Shells & Feathers -> mode).
 //
 // Serves the repo as static files, drives the real page in headless Chromium
-// and checks the core loop end to end: menu -> two-player win -> result modal
-// -> stats survive a reload -> new game -> single-player AI reply.
+// and checks the core loop end to end: hub -> two-player win -> result dialog
+// -> stats survive a reload -> play again -> single-player AI reply.
 //
 // Run: npm ci && npx playwright install chromium && npm test
 
@@ -16,10 +17,10 @@ test('v1 core loop: two-player win, saved stats, restart, single-player AI reply
   const game = await openGame(harness);
   const { page } = game;
 
-  assert.equal(await game.activeScreen(), 'start-screen');
+  assert.equal(await game.activeScreen(), 'hub-screen');
 
   // --- Two players: Player 1 (shell, the default) takes the top row. ---
-  await game.press('Begin Journey');
+  await game.openShellsFeathers();
   await game.press('Two Players');
   await game.waitForTurn("Player 1's Turn");
   assert.equal(await game.activeScreen(), 'game-screen');
@@ -29,8 +30,9 @@ test('v1 core loop: two-player win, saved stats, restart, single-player AI reply
     await game.tap(index);
     await game.waitForTurn(`${nextTurn}'s Turn`);
   }
-  // A click on an occupied cell must not change the board or the turn.
-  await game.tap(4);
+  // A click on an occupied cell must not change the board or the turn. (Occupied
+  // cells are aria-disabled, which Playwright won't click, so dispatch it.)
+  await page.locator('.cell[data-index="4"]').dispatchEvent('click');
   assert.deepEqual(await game.cells(), ['🐚', '🐚', '', '🪶', '🪶', '', '', '', '']);
   assert.match(await game.turnText(), /^Player 1's Turn/);
 
@@ -42,8 +44,8 @@ test('v1 core loop: two-player win, saved stats, restart, single-player AI reply
   );
   assert.deepEqual(await game.scores(), ['1', '0']);
 
-  // --- "New Game" from the result modal clears the board, keeps the session score. ---
-  await game.press('New Game');
+  // --- "Play Again" from the result dialog clears the board, keeps the session score. ---
+  await game.press('Play Again');
   await game.waitForTurn("Player 1's Turn");
   assert.equal(await game.modalOpen(), false);
   assert.deepEqual(await game.cells(), Array(9).fill(''));
@@ -51,14 +53,15 @@ test('v1 core loop: two-player win, saved stats, restart, single-player AI reply
   assert.deepEqual(await game.scores(), ['1', '0']);
 
   // --- Lifetime stats survive a reload. ---
-  await game.press('Return Home');
-  assert.equal(await game.activeScreen(), 'start-screen');
+  await game.press('Change Mode');
+  await game.waitForScreen('sf-setup-screen');
   await page.reload();
-  assert.deepEqual(await game.lifetimeStats(), { victories: '1', balance: '0', lessons: '0', total: '1' });
+  assert.equal(await game.activeScreen(), 'sf-setup-screen', 'reload keeps the screen');
+  assert.deepEqual(await game.lifetimeStats(), { victories: '1', draws: '0', losses: '0', total: '1' });
 
   // --- Single player (default "Gentle" spirit): the AI answers the player's move. ---
-  await game.press('Begin Journey');
-  await game.press('Single Player');
+  await game.openShellsFeathers();
+  await game.press('Play the Spirit');
   await game.waitForTurn('Your Turn');
   assert.equal(await page.locator('#player1-label').textContent(), 'You: ');
   assert.equal(await page.locator('#player2-label').textContent(), 'Spirit: ');

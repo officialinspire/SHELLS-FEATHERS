@@ -1,6 +1,7 @@
 // Restart / leave / screen-switch behavior in the real page. Each test
 // reproduces a stale-callback bug found in the v1 audit (docs/upgrade-plan.md)
-// and checks it no longer happens.
+// and checks it no longer happens, including when the player leaves with the
+// browser's Back button.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, openGame } from '../helpers/game-page.mjs';
@@ -8,46 +9,50 @@ import { startHarness, openGame } from '../helpers/game-page.mjs';
 const SPIRIT_DELAY = 800;
 const RESULT_DELAY = 800;
 
-test('match lifecycle', { timeout: 120_000 }, async (t) => {
+// Wise is deterministic: 0 -> 4, 1 -> 2, then 3 leaves 2-4-6 open, so the
+// Spirit's next move (800ms later) wins.
+async function reachSpiritWinningReply(game) {
+  await game.newMatch('single', { difficulty: 'Wise' });
+  await game.tap(0);
+  await game.waitForPieces(2);
+  await game.waitForTurn('Your Turn');
+  await game.tap(1);
+  await game.waitForPieces(4);
+  await game.waitForTurn('Your Turn');
+  assert.deepEqual(await game.cells(), ['🐚', '🐚', '🪶', '', '🪶', '', '', '', '']);
+  await game.tap(3);
+}
+
+test('match lifecycle', { timeout: 180_000 }, async (t) => {
   const harness = await startHarness(t);
 
-  await t.test('A1: leaving while the Spirit is about to win shows no result on the menu and records nothing', async () => {
+  for (const [how, leave] of [
+    ['"Change Mode"', (game) => game.press('Change Mode')],
+    ['the browser Back button', (game) => game.page.goBack()],
+  ]) {
+    await t.test(`A1: leaving with ${how} while the Spirit is about to win shows no result and records nothing`, async () => {
+      const game = await openGame(harness);
+      await reachSpiritWinningReply(game);
+      await leave(game); // within the Spirit's 800ms
+
+      await game.wait(SPIRIT_DELAY + RESULT_DELAY + 600);
+      assert.equal(await game.activeScreen(), 'sf-setup-screen');
+      assert.equal(await game.modalOpen(), false);
+      assert.equal((await game.audioState('victory-sound')).paused, true);
+      assert.deepEqual(await game.lifetimeStats(), { victories: '0', draws: '0', losses: '0', total: '0' });
+
+      // The next match starts clean.
+      await game.newMatch('single');
+      assert.deepEqual(await game.cells(), Array(9).fill(''));
+      assert.deepEqual(game.pageErrors, []);
+    });
+  }
+
+  await t.test('A2: "Restart" right after a win keeps the old result dialog closed', async () => {
     const game = await openGame(harness);
-    await game.chooseSettings({ difficulty: 'Wise' });
-    await game.press('Begin Journey');
-    await game.press('Single Player');
-    await game.waitForTurn('Your Turn');
-    // Wise is deterministic: 0 -> 4, 1 -> 2, then 3 leaves 2-4-6 open for the Spirit.
-    await game.tap(0);
-    await game.waitForPieces(2);
-    await game.waitForTurn('Your Turn');
-    await game.tap(1);
-    await game.waitForPieces(4);
-    await game.waitForTurn('Your Turn');
-    assert.deepEqual(await game.cells(), ['🐚', '🐚', '🪶', '', '🪶', '', '', '', '']);
-    await game.tap(3);
-    await game.press('Return Home'); // within the Spirit's 800ms
-
-    await game.wait(SPIRIT_DELAY + RESULT_DELAY + 600);
-    assert.equal(await game.activeScreen(), 'start-screen');
-    assert.equal(await game.modalOpen(), false);
-    assert.equal((await game.audioState('victory-sound')).paused, true);
-    assert.deepEqual(await game.lifetimeStats(), { victories: '0', balance: '0', lessons: '0', total: '0' });
-
-    // The next match starts clean.
-    await game.press('Begin Journey');
-    await game.press('Single Player');
-    await game.waitForTurn('Your Turn');
-    assert.deepEqual(await game.cells(), Array(9).fill(''));
-    assert.deepEqual(game.pageErrors, []);
-  });
-
-  await t.test('A2: "New Journey" right after a win keeps the old result modal closed', async () => {
-    const game = await openGame(harness);
-    await game.press('Begin Journey');
-    await game.press('Two Players');
+    await game.newMatch('two');
     for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
-    await game.press('New Journey'); // before the 800ms result delay
+    await game.press('Restart'); // before the 800ms result delay
 
     await game.wait(RESULT_DELAY + 600);
     assert.equal(await game.modalOpen(), false);
@@ -57,27 +62,30 @@ test('match lifecycle', { timeout: 120_000 }, async (t) => {
     assert.equal((await game.cells())[4], '🐚', 'new board is playable');
   });
 
-  await t.test('A2b: "Return Home" right after a win keeps the result modal off the menu', async () => {
-    const game = await openGame(harness);
-    await game.press('Begin Journey');
-    await game.press('Two Players');
-    for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
-    await game.press('Return Home');
-    await game.wait(RESULT_DELAY + 600);
-    assert.equal(await game.activeScreen(), 'start-screen');
-    assert.equal(await game.modalOpen(), false);
-    // The finished game still counts.
-    assert.deepEqual(await game.lifetimeStats(), { victories: '1', balance: '0', lessons: '0', total: '1' });
-  });
+  for (const [how, leave, screen] of [
+    ['"Change Mode"', (game) => game.press('Change Mode'), 'sf-setup-screen'],
+    ['the browser Back button', (game) => game.page.goBack(), 'sf-setup-screen'],
+    ['a typed URL (hub)', (game) => game.goTo('#/'), 'hub-screen'],
+  ]) {
+    await t.test(`A2b: leaving with ${how} right after a win keeps the result dialog away`, async () => {
+      const game = await openGame(harness);
+      await game.newMatch('two');
+      for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
+      await leave(game);
+      await game.wait(RESULT_DELAY + 600);
+      assert.equal(await game.activeScreen(), screen);
+      assert.equal(await game.modalOpen(), false);
+      // The finished game still counts.
+      assert.deepEqual(await game.lifetimeStats(), { victories: '1', draws: '0', losses: '0', total: '1' });
+    });
+  }
 
   await t.test('A3: after a restart the Spirit waits its full delay (no timer carried over)', async () => {
     const game = await openGame(harness);
-    await game.press('Begin Journey');
-    await game.press('Single Player');
-    await game.waitForTurn('Your Turn');
+    await game.newMatch('single');
     await game.tap(0);
     await game.wait(100);
-    await game.press('New Journey');
+    await game.press('Restart');
     await game.wait(100);
     const replyMs = await game.page.evaluate(() => new Promise((resolve) => {
       const start = performance.now();
@@ -94,21 +102,20 @@ test('match lifecycle', { timeout: 120_000 }, async (t) => {
     assert.equal((await game.cells()).filter(Boolean).length, 2, 'exactly one Spirit move');
   });
 
-  await t.test('M1/M2: music keeps playing after draw -> New Game; victory sound stops on New Game', async () => {
+  await t.test('M1/M2: music keeps playing after draw -> Play Again; victory sound stops on Play Again', async () => {
     const game = await openGame(harness);
     await game.page.mouse.click(5, 5); // first click starts the music
-    await game.press('Begin Journey');
-    await game.press('Two Players');
+    await game.newMatch('two');
     for (const i of [0, 1, 2, 4, 3, 5, 7, 6, 8]) await game.tap(i);
     assert.equal((await game.waitForResult()).title, 'Balance Achieved');
-    await game.press('New Game');
+    await game.press('Play Again');
     await game.wait(1_000); // past the point where v1's leftover fade-out paused the music
     await game.waitForMusicPlaying();
 
     for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
     await game.waitForResult();
     assert.equal((await game.audioState('victory-sound')).paused, false);
-    await game.press('New Game');
+    await game.press('Play Again');
     assert.equal((await game.audioState('victory-sound')).paused, true);
     await game.waitForMusicPlaying();
   });

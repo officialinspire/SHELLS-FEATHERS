@@ -99,7 +99,7 @@ test('the result modal opens once, after its delay, when the player stays', () =
   assert.deepEqual(view.resultsShown, ['player1']);
 });
 
-test('"New Game" stops the victory sound, keeps the session score and restarts music after 300ms', () => {
+test('"Play Again" (v1: New Game) stops the victory sound, keeps the session score and restarts music after 300ms', () => {
   const { session, clock, view, audio } = setup();
   session.enter('two');
   for (const i of [0, 3, 1, 4, 2]) session.selectCell(i);
@@ -116,7 +116,7 @@ test('"New Game" stops the victory sound, keeps the session score and restarts m
   assert.deepEqual(audio.calls.slice(3), ['music:start']);
 });
 
-test('a "New Game" music restart is cancelled if the match is restarted first', () => {
+test('a "Play Again" music restart is cancelled if the match is restarted first', () => {
   const { session, clock, audio } = setup();
   session.enter('two');
   session.playAgain();
@@ -174,3 +174,17 @@ test('the symbol and difficulty saved in settings apply from the next match', ()
   assert.equal(view.board[0], 'feather');
   assert.equal(view.board.filter((c) => c === 'shell').length, 1, 'Spirit plays shell');
 });
+
+test('each match tells the view its mode, difficulty and pieces, and the result replaces the turn line', () => {
+  const { session, clock, view } = setup({ difficulty: 'medium', player1Symbol: 'feather' });
+  session.enter('single');
+  assert.deepEqual(view.matchInfo, { mode: 'single', difficulty: 'medium', player1Symbol: 'feather' });
+  assert.equal(view.finalTurn, null);
+
+  session.leave();
+  session.enter('two');
+  for (const i of [3, 0, 4, 1, 8, 2]) session.selectCell(i);
+  assert.deepEqual(view.finalTurn, { outcome: 'player2', winner: 'shell' });
+  clock.tick(10_000);
+});
+

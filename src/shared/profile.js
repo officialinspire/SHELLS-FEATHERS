@@ -62,6 +62,8 @@ export function createProfile(store, { onSaveError = (msg) => console.warn(msg) 
     settings: () => ({ ...save.settings }),
     gameSettings: () => ({ ...save.shellsFeathers.settings }),
     statsSummary: () => summarizeStats(save),
+    // A copy of the Shells & Feathers records (per difficulty, two-player, legacy).
+    stats: () => JSON.parse(JSON.stringify(save.shellsFeathers.stats)),
     updateSettings(patch) { applySettings(save, patch); persist(); },
     updateGameSettings(patch) { applyGameSettings(save, patch); persist(); },
     recordResult(result) { recordResult(save, result); persist({ mirrorStats: true }); },

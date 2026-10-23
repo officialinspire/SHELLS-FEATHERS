@@ -5,7 +5,8 @@
 | Audited commit | `main` @ `f7c626d` ("Add files via upload") |
 | Feature branch | `claude/hopeful-hawking-ummjv2` (branched from that commit) |
 | Stage 0: audit and baseline smoke test | `d97fc97` (2026-10-23) |
-| Stage 1: module refactor, lifecycle, save migration | the commit that adds this section (see §0) |
+| Stage 1: module refactor, lifecycle, save migration | `2a222c0` |
+| Stage 2: Spirit of the Woods game hub | the commit that adds §0.1 |
 | Live site | https://officialinspire.github.io/SHELLS-FEATHERS/ still serves v1 from `main`. Nothing from this branch is merged or deployed. |
 
 The existing Shells & Feathers tic-tac-toe game must stay playable at every step of the upgrade. Each stage ends with every test green and the game deployable as is.
@@ -14,7 +15,53 @@ Sections 1–3 are the audit of v1 and stay as they were written, as a record of
 
 ---
 
-## 0. Status after Stage 1
+## 0. Status
+
+### 0.1 Stage 2: the game hub
+
+The opening screen is now a hub for Spirit of the Woods games.
+
+**Games.**
+- **Shells & Feathers (Tic-Tac-Toe)** is marked "Ready to play" and has Play and How to Play.
+- **Acorns & Leaves (Checkers)** is a clearly marked preview: a dashed, muted card with a "Preview · not playable yet" badge and a static picture of the starting position. Its only control is How to Play.
+  - There is no play button, no play route and no disabled-looking play control.
+  - Its How to Play page states that the engine isn't built yet, and gives the rules the first version is planned to follow.
+
+**Path through the app.** Every step is a real URL (§4.1), so Back/Forward, reload and bookmarks work. Hub → game setup (pieces and Spirit difficulty) → match → result dialog. From the result dialog:
+- **Play Again** keeps you in the match.
+- **Change Mode** goes back to setup.
+- **All Games** returns to the hub.
+- **View Board** closes the dialog and shows the final board.
+
+Settings (sound, music) and Your Path (totals, records per difficulty and two-player, six achievements, Clear) are linked from the hub.
+
+**Look and feel.** The forest palette, fonts, gradient and the Shells & Feathers board and pieces are kept.
+- Content sits on darker panels so cream text stays readable over the light end of the gradient.
+- Long text uses a serif body font.
+- Hierarchy is primary teal (from the existing turquoise), then brown, outlined and quiet buttons. Each has visible hover, pressed, focus and disabled states.
+
+**Keyboard and accessibility (X1).**
+- Squares are buttons: one tab stop, arrow keys to move, Enter or Space to play. Each square has a spoken label ("Row 1, column 2: shell").
+- The turn line is a live region.
+- The result dialog is a real dialog: it takes focus, the board behind it is inert, and Escape closes it.
+- Focus moves to each new screen's heading.
+- Toggles and options are real checkboxes and radios.
+- Pinch zoom is allowed again, and motion is reduced when the system asks for it.
+
+**Wording.** "Sacred Settings", "Your Sacred Journey", "Return to Lodge" and the eagle icon are gone. The hub and new pages use plain, nature-based language. Acorns & Leaves is described only as checkers (draughts) with a forest look, with no claim about its origins. The Shells & Feathers result lines ("The spirits smile upon you", …) are kept as part of that game's recognizable presentation.
+
+**Layout findings fixed in this stage.**
+
+| ID | Status |
+|---|---|
+| L1 | **Fixed.** On short landscape screens the board sits beside the score and controls and fits the screen height. |
+| L2 | **Fixed.** Screens scroll when taller than the window. |
+| L3 | **Fixed.** The drifting background is fixed-position, and the fade-in no longer adds overflow. |
+| T1 | **Fixed.** The page-wide touch block is gone; the board uses `touch-action: manipulation`. |
+| P3 (CSS) | **Fixed.** The unused celebration styles are removed. The unused PNGs remain. |
+| ST1 | **Fixed.** Your Path shows the per-mode breakdown next to the v1-style totals. |
+
+### 0.2 Stage 1: modules, lifecycle, save migration
 
 **Done in Stage 1.**
 - `index.js` is split into ES modules under `src/` (§4), with explicit lifecycles for screens, matches, timers and music fades.
@@ -202,68 +249,97 @@ Severity: **High** means it breaks play or loses data. **Medium** means it is vi
 ---
 
 
-## 4. Module boundaries (implemented in Stage 1)
+## 4. Module boundaries (Stage 1, extended in Stage 2)
 
 The site is still static with **no build step**. `index.html` loads `src/main.js` as a native ES module, and Pages serves the files as they are. There are no runtime dependencies.
 
 ```
-index.html               markup only; buttons declare data-action="…" (no inline handlers)
-styles.css               unchanged except the removed #game-canvas rule
+index.html               markup only: every screen, the result dialog, <audio>
+styles.css               forest theme; S&F board styles carried over from v1
 src/
   main.js                entry: createApp(...).init()
   app/                   navigation and app composition
-    app.js               builds the shared services, screens and session; one delegated
-                         click listener maps data-action → action
-    navigation.js        shows one .screen at a time; runs leave() on the old screen,
+    app.js               builds services, router, screens and session; routes
+                         link clicks, runs data-action buttons, moves focus
+    router.js            hash routes (§4.1): go(), up(), back(), Back/Forward
+    navigation.js        shows one .screen at a time; leave() on the old screen,
                          then enter(...args) on the new one
-    settings-screen.js   toggles, difficulty, symbol: shows saved values, saves changes
-    stats-screen.js      "Your Path" totals and Clear Path
+    settings-screen.js   sound and music toggles (saved)
+    path-screen.js       "Your Path": totals, per-mode records, achievements, Clear
   shared/                used by any game; no DOM except the <audio> elements
     storage.js           guarded localStorage access (never throws) + readJson
     save-data.js         v2 save schema: defaults, validation, v1 migration (pure)
     profile.js           loads/repairs/migrates the save; settings and records API
     audio.js             music with one cancellable fade at a time; sound effects
     timers.js            createTimerScope(): after(ms, fn) / dispose()
-  games/shells-feathers/ the game
+  games/shells-feathers/ the playable game
     rules.js             lines, winner, full board, empty cells (pure)
     ai.js                the Spirit: chooseMove(board, {ai, human, difficulty, rng}) (pure)
     match.js             one game's state: turn, play(i), result, outcome (pure)
-    session.js           runs matches on the game screen: Spirit turns, results,
+    session.js           runs matches on the match screen: Spirit turns, results,
                          session score, sounds (no DOM; talks to view.js)
-    view.js              board cells, turn indicator, score, result modal (DOM)
+    view.js              board, turn line, score, match info, result dialog;
+                         arrow-key movement between squares (DOM)
+    setup.js             setup screen: Player 1 pieces and Spirit difficulty (saved)
+    achievements.js      six achievements derived from the saved records (pure)
+  games/acorns-leaves/   preview only: no engine yet
+    preview-board.js     static picture of the checkers starting position
 ```
 
 **Dependency rules.**
-- `games/*/rules|ai|match` are pure.
+- `games/*/rules|ai|match|achievements` are pure.
 - `session.js` takes its view, audio, profile, clock and random source as parameters, so the unit tests run it with fakes.
-- Only `view.js` and `app/*` touch the DOM.
+- Only `view.js`, `setup.js`, `preview-board.js` and `app/*` touch the DOM.
 - Only `storage.js` touches `localStorage`.
 - Only `audio.js` touches `<audio>` elements.
 - One exception, chosen on purpose: `shared/save-data.js` imports the game's symbol and difficulty lists, because the save file stores this game's records.
 
+### 4.1 Routes
+
+| URL | Screen |
+|---|---|
+| `#/` (or no hash) | Hub |
+| `#/shells-feathers` | Shells & Feathers setup (pieces, difficulty, mode) |
+| `#/shells-feathers/play/single`, `…/play/two` | Match (a fresh match each time the route is entered) |
+| `#/shells-feathers/how-to-play` | How to Play Shells & Feathers |
+| `#/acorns-leaves` → `#/acorns-leaves/how-to-play` | Acorns & Leaves preview and rules (no play route exists) |
+| `#/settings`, `#/your-path` | Settings, Your Path |
+| anything else | Hub (the URL is rewritten to `#/`) |
+
+Hash routes keep every screen on `index.html`, which GitHub Pages can serve without server rewrites.
+
+Navigation uses real links, so new tabs and keyboard Enter work. The app routes link clicks itself, adding a history entry that remembers the screen it came from:
+- `data-up` links ("All games", "Change Mode") step **back** through history when the target is the previous screen, so Back and Forward stay predictable instead of piling up entries.
+- `data-back` links ("← Back") return to the previous screen of this visit, or to the hub on a fresh visit.
+- Leaving the match screen by any route (a button, Back, or a typed URL) runs the match teardown.
+
 **Initialization and teardown.**
 - `createApp({ doc, win }).init()` runs once:
   - loads the profile (and migrates it);
-  - binds the delegated click listener, the cells and the settings controls;
-  - renders the stats;
-  - arms the "first click starts the music" listener.
+  - binds the click routing, the board, the setup and settings controls;
+  - draws the preview board and renders Your Path;
+  - arms the "first click starts the music" listener;
+  - starts the router, which shows the screen for the current URL.
 - **Navigation:** `nav.show(id)` always calls the current screen's `leave()` before the next screen's `enter()`.
-  - The game screen's `enter(mode)` adds the touch-scroll block and calls `session.enter(mode)`.
-  - Its `leave()` calls `session.leave()` and removes the touch block.
-  - So *any* way off the game screen (Return Home, Main Menu) tears the match down.
+  - The match screen's `enter(mode)` calls `session.enter(mode)`, and its `leave()` calls `session.leave()`.
+  - After each route change, focus moves to the new screen's heading, or to the board for a match.
 - **Matches:** every match gets its own timer scope, and `teardownMatch()` runs first in `startMatch()` and in `leave()`. Teardown:
-  - disposes the match's timers (Spirit move, result modal, music restart);
-  - closes the result modal;
+  - disposes the match's timers (Spirit move, result dialog, music restart);
+  - closes the result dialog;
   - stops the victory sound;
   - clears the Spirit-thinking lock.
 
-  A disposed scope ignores later `after()` calls, so nothing from an old match can fire. This covers "New Journey" (`restart()`), "New Game" (`playAgain()`) and leaving (`leave()`).
+  A disposed scope ignores later `after()` calls, so nothing from an old match can fire. This covers Restart (`restart()`), Play Again (`playAgain()`) and leaving (`leave()`).
 - **Music:** `audio.js` keeps one fade timer. Starting a fade cancels the running one. `startMusic()` while music is playing ramps back up from the current volume (v1 dropped it to silence first). `stopMusic()` pauses only when its own fade finishes.
 
 **Remaining order of work.**
-1. **Layout and input:** L1, L2, L3, T1, and the zoom part of X1. Add the viewport reachability check (§6.3).
-2. **Cleanup:** decide about the unused PNGs and CSS (P3), music preloading (P2), and `.nojekyll`.
-3. **Spirit of the Woods design work.** Gameplay changes (including what "Your Path" shows, ST1) belong here.
+1. **Acorns & Leaves engine:**
+   - pure rules and move generation in `games/acorns-leaves/` (forced captures, multi-jumps, kings, win/draw), unit-tested like Shells & Feathers;
+   - then a session and view, a play route, and a "Ready to play" card.
+
+   The preview card and rules page change only when the engine is complete.
+2. **Cleanup:** the unused PNGs (P3), music preloading (P2), `.nojekyll`.
+3. **Real-device and screen-reader pass** (§6.4).
 
 ---
 
@@ -345,39 +421,57 @@ npx playwright install chromium   # skip if PLAYWRIGHT_BROWSERS_PATH already pro
 npm test                          # = npm run test:unit && npm run test:browser
 ```
 
-**Unit tests** (`tests/unit`, plain `node --test`, no browser, about 1 s). Timers run on a fake clock, so every pending callback is visible.
+**Unit tests** (`tests/unit`, plain `node --test`, no browser, under 1 s). Timers run on a fake clock, so every pending callback is visible.
 
 | File | Covers |
 |---|---|
-| `session.test.mjs` | **Reset and stale callbacks.** "New Journey" cancels the pending Spirit move, and the new match gets its full 800 ms. Leaving during the Spirit's turn records nothing and plays nothing. The result modal never opens after restart, New Game or leave, and opens exactly once if the player stays. New Game stops the victory sound and restarts music after 300 ms; that restart is cancelled by a restart. The Spirit moves exactly once and the player can't move during its turn. Session score resets per mode and survives restarts. Results land in the right buckets. Settings apply from the next match. |
+| `session.test.mjs` | **Reset and stale callbacks.** Restart cancels the pending Spirit move, and the new match gets its full 800 ms. Leaving during the Spirit's turn records nothing and plays nothing. The result dialog never opens after Restart, Play Again or leave, and opens exactly once if the player stays. Play Again stops the victory sound and restarts music after 300 ms; that restart is cancelled by a restart. The Spirit moves exactly once and the player can't move during its turn. Session score resets per mode and survives restarts. Results land in the right buckets. Settings apply from the next match. Match info and the result line reach the view. |
 | `migration.test.mjs` | Save format, migration and malformed storage (§5.4). |
-| `timers-audio.test.mjs` | Timer scopes (dispose cancels and ignores later calls; scopes are independent). Music fades: draw → New Game and music off→on keep music playing; no dip when already playing; fade-out pauses; toggles respected. |
+| `timers-audio.test.mjs` | Timer scopes (dispose cancels and ignores later calls; scopes are independent). Music fades: draw → Play Again and music off→on keep music playing; no dip when already playing; fade-out pauses; toggles respected. |
 | `rules-ai.test.mjs` | Lines, draws, illegal moves, outcomes. **Wise never loses**: all 569 human lines give 183 draws and 386 AI wins, as v1 measured. Win-before-block. Gentle and Balanced with a fixed random source. |
+| `navigation.test.mjs` | Hash parsing. Redirects. Unknown routes go to the hub, and only Shells & Feathers has play routes. go/up/back against a fake history (up() steps back instead of adding entries; back() falls back to the hub on a fresh visit). Typed URLs and Back/Forward. Arrow-key movement on the board. |
+| `hub-content.test.mjs` | Achievements: all locked at first; each unlocks from its record; pre-v2 games count toward totals only. Your Path receives a copy of the records. The checkers starting position on the preview. |
 
 **Browser tests** (`tests/browser`, Playwright + Chromium against a built-in static server). Every off-site request is blocked, which proves the game is self-contained. Each test also asserts no page errors and no missing files.
 
 | File | Covers |
 |---|---|
-| `gameplay.smoke.test.mjs` | The Stage 0 baseline, assertions unchanged. |
+| `gameplay.smoke.test.mjs` | The Stage 0 baseline. Game assertions unchanged; navigation follows the hub. |
 | `full-games.test.mjs` | Single player played to a result against Gentle, Balanced and Wise; Wise reproduces v1's exact audited game. Two players: Player 2 win then draw, session score and stats. Feather as Player 1. |
-| `lifecycle.test.mjs` | Audit bugs A1, A2 (plus Return Home), A3, M1, M2 reproduced in the real UI and shown fixed. |
-| `storage.test.mjs` | v1 player upgrades and keeps records (including after more games and a reload; v1 key untouched by the migration, then mirrored). Malformed, `null` and `{}` v1 values. Corrupt v2 rebuilt from v1. Storage that throws. Settings surviving a reload. |
+| `lifecycle.test.mjs` | Audit bugs A1, A2, A3, M1 and M2 reproduced in the real UI and shown fixed. Leaving the match by Change Mode, the browser Back button or a typed URL. |
+| `storage.test.mjs` | v1 player upgrades and keeps records (including after more games and a reload; v1 key untouched by the migration, then mirrored). Malformed, `null` and `{}` v1 values. Corrupt v2 rebuilt from v1. Storage that throws. Settings, pieces and difficulty surviving a reload. |
+| `hub.test.mjs` | **Hub:** the Acorns & Leaves card has no play control, no buttons, nothing styled as primary, and no play route anywhere; both How to Play pages. **Full trip:** hub → setup → match → result → Play Again → Change Mode → other mode → All Games → Settings → Your Path achievements. **History:** Back/Forward (fresh match on Forward; "Change Mode" adds no history entry), reload, deep links, unknown links. **Keyboard only:** Tab to the game, arrow keys and Enter/Space to win, the dialog takes and keeps focus, Escape shows the board. **Devices:** narrow phone 320×568 with touch, and desktop 1280×800, each playing both modes to a result with the match fitting on screen. **Reachability:** at 320×568, 360×640, 750×340 and 1280×800, every link, button and input on every screen (and in the result dialog) can be scrolled into view and is not covered; no sideways scrolling. |
 
-### 6.2 How Stage 1 was verified beyond the suite
+### 6.2 How each stage was verified beyond the suite
 
+**Stage 1.**
 - **AI:** v1's `index.js` (from `main`) was loaded in a Node VM and compared with `src/games/shells-feathers/ai.js` on every AI-to-move position, for both symbol assignments, every difficulty and five seeded random sources. 62,910 comparisons, 0 differences.
-- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.
+- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.2.
 - **Mutation check:** key safeguards were removed one at a time (timer disposal on teardown, fade cancellation, the storage guards, the v1 migration). The suite failed each time.
 
-### 6.3 Next: viewport reachability check (layout stage)
+**Stage 2.**
+- **Screenshots** of every screen at 320×568, 1280×800 and 750×340 landscape were reviewed by eye. The match screen was compared side by side with Stage 1: same board, pieces and colors, with a darker header and one row of controls.
+- **Mutation check:** these safeguards were removed one at a time, and the suite failed each time:
+  - history stepping for "Change Mode";
+  - the rewrite of unknown URLs;
+  - the inert board behind the dialog;
+  - Escape;
+  - focus moving to the new screen;
+  - the one-row controls on narrow phones;
+  - saving the difficulty choice.
 
-For each screen, at 320×568, 360×640, 390×844, 393×727, 750×340, 844×390, 768×1024 and 1280×800: every button, toggle and cell is either inside the viewport or reachable by scrolling an ancestor. This catches L1 and L2, and guards the design stage. It should also assert that the document can't be scrolled by script (L3).
+### 6.3 Remaining automated checks to add
+
+- **More viewports:** 390×844, 393×727, 844×390 and 768×1024 in the reachability test.
+- **Acorns & Leaves:** when its engine lands, rules unit tests (forced captures, multi-jumps, kings, no-move loss) and a full-game browser test, before the card switches to "Ready to play".
 
 ### 6.4 Manual checklist (real devices, before each deploy)
 
 - [ ] iOS Safari and Android Chrome, portrait and landscape: full game in both modes; settings and stats fully reachable; bottom buttons not under browser toolbars.
-- [ ] Audio: the first tap starts music; mute toggles take effect immediately; music continues after win, draw, New Game and Main Menu; no victory bleed.
+- [ ] Audio: the first tap starts music; mute toggles take effect immediately; music continues after win, draw, Play Again and All Games; no victory bleed.
 - [ ] Rotate mid-game: board state kept, layout fits.
+- [ ] Browser Back/Forward and the system back gesture on Android move between hub, setup and match as expected.
+- [ ] A screen reader (VoiceOver, TalkBack) announces squares, turns and results, and the dialog.
 - [ ] Private or incognito window: game playable; stats behave sensibly.
 - [ ] Upgrade path: a browser with real v1 stats keeps its totals after deploy, and they appear in "Your Path".
 - [ ] Throttled 3G: time to first playable board.

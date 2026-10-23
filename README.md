@@ -13,6 +13,9 @@ Features:
 🔥 Subtle sound design and ambient score
 💾 Persistent win/loss stats stored locally
 ⚙️ Built fully in-browser — no frameworks, no dependencies
+🌲 Game hub: Shells & Feathers (Tic-Tac-Toe) is playable now; Acorns & Leaves (Checkers) is in development and shown as a preview
+🏆 Your Path: records per difficulty and achievements
+⌨️ Playable by touch, mouse or keyboard, on phones and desktop; browser Back/Forward move between screens
 
 Built With:
 

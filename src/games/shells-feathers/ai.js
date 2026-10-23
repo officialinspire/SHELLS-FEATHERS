@@ -6,6 +6,7 @@
 import { winningLine, isFull, emptyCells } from './rules.js';
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'];
+export const DIFFICULTY_NAMES = { easy: 'Gentle', medium: 'Balanced', hard: 'Wise' };
 
 export function chooseMove(board, { ai, human, difficulty, rng = Math.random }) {
   switch (difficulty) {

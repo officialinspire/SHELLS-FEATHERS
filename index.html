@@ -2,138 +2,280 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Spirit of the Woods - Tic Tac Toe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#654321" />
+  <meta name="description" content="Spirit of the Woods: peaceful forest games. Play Shells &amp; Feathers (tic-tac-toe) against the forest Spirit or a friend." />
+  <title>Spirit of the Woods</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <div id="game-container">
-    <!-- Start Screen -->
-    <div id="start-screen" class="screen active">
-      <div class="title-container">
-        <h1 class="game-title">Spirit of the Woods</h1>
-        <p class="subtitle">A Peaceful Journey of Shells &amp; Feathers</p>
-      </div>
+  <main id="game-container">
+    <!-- Hub: choose a game -->
+    <section id="hub-screen" class="screen active" aria-labelledby="hub-title">
+      <header class="hub-header">
+        <h1 id="hub-title" class="game-title" tabindex="-1">Spirit of the Woods</h1>
+        <p class="subtitle">Peaceful games from the forest</p>
+      </header>
 
-      <div class="menu-container">
-        <button class="menu-btn play-btn" data-action="show-modes"><span class="btn-icon">🦅</span><span>Begin Journey</span></button>
-        <button class="menu-btn settings-btn" data-action="show-settings"><span class="btn-icon">⚙️</span><span>Settings</span></button>
-        <button class="menu-btn stats-btn" data-action="show-stats"><span class="btn-icon">📊</span><span>Your Path</span></button>
-      </div>
-
-      <div class="decorative-border"></div>
-    </div>
-
-    <!-- Game Mode Selection -->
-    <div id="game-mode-screen" class="screen">
-      <div class="screen-header"><h2>Choose Your Path</h2></div>
-      <div class="game-mode-container">
-        <button class="mode-btn" data-action="start-single"><span class="mode-icon">🎯</span><span class="mode-title">Single Player</span><span class="mode-desc">Challenge the Spirit</span></button>
-        <button class="mode-btn" data-action="start-two"><span class="mode-icon">👥</span><span class="mode-title">Two Players</span><span class="mode-desc">Share the Journey</span></button>
-      </div>
-      <button class="back-btn" data-action="show-start">Return to Lodge</button>
-    </div>
-
-    <!-- Settings -->
-    <div id="settings-screen" class="screen">
-      <div class="screen-header"><h2>Sacred Settings</h2></div>
-      <div class="settings-container">
-        <div class="setting-item">
-          <label class="setting-label">Sound Effects</label>
-          <div class="toggle-container">
-            <input type="checkbox" id="audio-toggle" checked />
-            <label for="audio-toggle" class="toggle-switch"></label>
+      <h2 class="section-label">Choose a game</h2>
+      <div class="game-cards">
+        <article class="game-card" aria-labelledby="sf-card-title">
+          <div class="card-top">
+            <div class="card-art mini-board" aria-hidden="true">
+              <span>🐚</span><span></span><span>🪶</span>
+              <span></span><span>🐚</span><span></span>
+              <span>🪶</span><span></span><span>🐚</span>
+            </div>
+            <div class="card-heading">
+              <h3 id="sf-card-title" class="card-title">Shells &amp; Feathers</h3>
+              <p class="card-kind">Tic-Tac-Toe</p>
+              <p class="badge badge-ready">Ready to play</p>
+            </div>
           </div>
-        </div>
-        <div class="setting-item">
-          <label class="setting-label">Music</label>
-          <div class="toggle-container">
-            <input type="checkbox" id="music-toggle" checked />
-            <label for="music-toggle" class="toggle-switch"></label>
+          <p class="card-text">Get three in a row against the forest Spirit or a friend on the same device.</p>
+          <div class="card-actions">
+            <a class="btn btn-primary" href="#/shells-feathers" aria-label="Play Shells &amp; Feathers">Play</a>
+            <a class="btn btn-secondary" href="#/shells-feathers/how-to-play" aria-label="How to Play Shells &amp; Feathers">How to Play</a>
           </div>
-        </div>
-        <div class="setting-item">
-          <label class="setting-label">Spirit Challenge (Single Player)</label>
-          <div class="difficulty-selector">
-            <button class="diff-btn active" data-level="easy">Gentle</button>
-            <button class="diff-btn" data-level="medium">Balanced</button>
-            <button class="diff-btn" data-level="hard">Wise</button>
-          </div>
-        </div>
-        <div class="setting-item">
-          <label class="setting-label">Player 1 Symbol</label>
-          <div class="symbol-selector">
-            <button class="symbol-btn active" data-symbol="shell">🐚 Shell</button>
-            <button class="symbol-btn" data-symbol="feather">🪶 Feather</button>
-          </div>
-        </div>
-      </div>
-      <button class="back-btn" data-action="show-start">Return to Lodge</button>
-    </div>
+        </article>
 
-    <!-- Stats -->
-    <div id="stats-screen" class="screen">
-      <div class="screen-header"><h2>Your Sacred Journey</h2></div>
-      <div class="stats-scroll-container">
-        <div class="stats-container">
-          <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-value" id="wins-count">0</div><div class="stat-label">Victories</div></div>
-          <div class="stat-card"><div class="stat-icon">🤝</div><div class="stat-value" id="draws-count">0</div><div class="stat-label">Balance</div></div>
-          <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-value" id="losses-count">0</div><div class="stat-label">Lessons</div></div>
-          <div class="stat-card full-width"><div class="stat-icon">🎮</div><div class="stat-value" id="total-games">0</div><div class="stat-label">Total Journeys</div></div>
-        </div>
-        <div class="stats-buttons">
-          <button class="reset-stats-btn" data-action="reset-stats">Clear Path</button>
-          <button class="back-btn" data-action="show-start">Return to Lodge</button>
-        </div>
+        <article class="game-card game-card-preview" aria-labelledby="al-card-title">
+          <div class="card-top">
+            <div class="card-art checkers-preview" data-checkers-preview aria-hidden="true"></div>
+            <div class="card-heading">
+              <h3 id="al-card-title" class="card-title">Acorns &amp; Leaves</h3>
+              <p class="card-kind">Checkers</p>
+              <p class="badge badge-preview">Preview · not playable yet</p>
+            </div>
+          </div>
+          <p class="card-text">Classic checkers with acorn and leaf pieces. The game engine is still being built, so it can't be played yet.</p>
+          <div class="card-actions">
+            <a class="btn btn-secondary" href="#/acorns-leaves/how-to-play" aria-label="How to Play Acorns &amp; Leaves">How to Play</a>
+          </div>
+        </article>
       </div>
-    </div>
 
-    <!-- Game Screen -->
-    <div id="game-screen" class="screen">
+      <nav class="hub-links" aria-label="More">
+        <a class="btn btn-quiet" href="#/settings"><span aria-hidden="true">⚙️</span> Settings</a>
+        <a class="btn btn-quiet" href="#/your-path"><span aria-hidden="true">🏆</span> Your Path</a>
+      </nav>
+      <div class="decorative-border" aria-hidden="true"></div>
+    </section>
+
+    <!-- Shells & Feathers: mode and difficulty -->
+    <section id="sf-setup-screen" class="screen" aria-labelledby="sf-setup-title">
+      <div class="screen-top"><a class="back-link" href="#/" data-up>← All games</a></div>
+      <header class="screen-header">
+        <p class="eyebrow" aria-hidden="true">🐚 🪶</p>
+        <h2 id="sf-setup-title" tabindex="-1">Shells &amp; Feathers</h2>
+        <p class="screen-subtitle">Tic-Tac-Toe · three in a row wins</p>
+      </header>
+
+      <div class="panel setup-panel">
+        <fieldset class="option-group">
+          <legend>Player 1 plays as</legend>
+          <div class="segmented">
+            <label class="segment"><input type="radio" name="sf-symbol" value="shell" /><span>🐚 Shell</span></label>
+            <label class="segment"><input type="radio" name="sf-symbol" value="feather" /><span>🪶 Feather</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="option-group">
+          <legend>Spirit difficulty</legend>
+          <div class="segmented segmented-stack">
+            <label class="segment"><input type="radio" name="sf-difficulty" value="easy" aria-describedby="sf-difficulty-hint" /><span>Gentle</span></label>
+            <label class="segment"><input type="radio" name="sf-difficulty" value="medium" aria-describedby="sf-difficulty-hint" /><span>Balanced</span></label>
+            <label class="segment"><input type="radio" name="sf-difficulty" value="hard" aria-describedby="sf-difficulty-hint" /><span>Wise</span></label>
+          </div>
+          <p class="hint" id="sf-difficulty-hint"></p>
+        </fieldset>
+      </div>
+
+      <div class="mode-choices">
+        <a class="mode-btn" href="#/shells-feathers/play/single">
+          <span class="mode-icon" aria-hidden="true">🎯</span>
+          <span class="mode-title">Play the Spirit</span>
+          <span class="mode-desc">One player, using the difficulty above</span>
+        </a>
+        <a class="mode-btn" href="#/shells-feathers/play/two">
+          <span class="mode-icon" aria-hidden="true">👥</span>
+          <span class="mode-title">Two Players</span>
+          <span class="mode-desc">Take turns on one device</span>
+        </a>
+      </div>
+      <a class="text-link" href="#/shells-feathers/how-to-play">How to Play</a>
+    </section>
+
+    <!-- Shells & Feathers: match -->
+    <section id="game-screen" class="screen match-screen" aria-labelledby="match-title">
+      <h2 id="match-title" class="visually-hidden" tabindex="-1">Shells &amp; Feathers match</h2>
       <div class="game-header">
+        <p class="match-info" id="match-info"></p>
         <div class="score-display">
           <span class="score-label" id="player1-label">Shell: </span><span id="player1-score">0</span>
-          <span class="score-separator">|</span>
+          <span class="score-separator" aria-hidden="true">|</span>
           <span class="score-label" id="player2-label">Feather: </span><span id="player2-score">0</span>
         </div>
-        <div class="turn-indicator" id="turn-indicator">Your Turn</div>
+        <div class="turn-indicator" id="turn-indicator" aria-live="polite">Your Turn</div>
       </div>
 
       <div id="game-board" class="game-board">
-        <div id="board-overlay" class="board-overlay">
-          <div class="cell" data-index="0"></div>
-          <div class="cell" data-index="1"></div>
-          <div class="cell" data-index="2"></div>
-          <div class="cell" data-index="3"></div>
-          <div class="cell" data-index="4"></div>
-          <div class="cell" data-index="5"></div>
-          <div class="cell" data-index="6"></div>
-          <div class="cell" data-index="7"></div>
-          <div class="cell" data-index="8"></div>
+        <div id="board-overlay" class="board-overlay" role="group" aria-label="Board">
+          <button type="button" class="cell" data-index="0"></button>
+          <button type="button" class="cell" data-index="1"></button>
+          <button type="button" class="cell" data-index="2"></button>
+          <button type="button" class="cell" data-index="3"></button>
+          <button type="button" class="cell" data-index="4"></button>
+          <button type="button" class="cell" data-index="5"></button>
+          <button type="button" class="cell" data-index="6"></button>
+          <button type="button" class="cell" data-index="7"></button>
+          <button type="button" class="cell" data-index="8"></button>
         </div>
       </div>
 
       <div class="game-controls">
-        <button class="control-btn" data-action="restart-match">New Journey</button>
-        <button class="control-btn" data-action="show-start">Return Home</button>
+        <button type="button" class="btn control-btn" data-action="restart-match">Restart</button>
+        <a class="btn control-btn" href="#/shells-feathers" data-up>Change Mode</a>
       </div>
-    </div>
+    </section>
 
-    <!-- Modal -->
-    <div id="game-modal" class="modal">
+    <!-- How to Play: Shells & Feathers -->
+    <section id="sf-howto-screen" class="screen" aria-labelledby="sf-howto-title">
+      <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
+      <header class="screen-header">
+        <p class="eyebrow" aria-hidden="true">🐚 🪶</p>
+        <h2 id="sf-howto-title" tabindex="-1">How to Play Shells &amp; Feathers</h2>
+        <p class="screen-subtitle">Tic-Tac-Toe</p>
+      </header>
+      <div class="panel prose">
+        <h3>Goal</h3>
+        <p>Get three of your pieces in a row: across, down or diagonally.</p>
+        <h3>Taking turns</h3>
+        <ul>
+          <li>Players take turns placing one piece on an empty square.</li>
+          <li>Player 1 always moves first. Choose whether Player 1 plays shells or feathers before the game.</li>
+          <li>If all nine squares fill up with no row of three, the game is a draw.</li>
+        </ul>
+        <h3>Against the Spirit</h3>
+        <ul>
+          <li>You are Player 1 and the forest Spirit answers each move.</li>
+          <li><strong>Gentle</strong> picks open squares at random. <strong>Balanced</strong> usually finds the strongest move. <strong>Wise</strong> never loses, so a draw is a great result.</li>
+        </ul>
+        <h3>Two players</h3>
+        <p>Share one device and take turns. The turn line above the board shows whose move it is.</p>
+        <h3>Keyboard</h3>
+        <p>Tab to the board, move between squares with the arrow keys, and press Enter or Space to place a piece.</p>
+      </div>
+      <a class="btn btn-primary" href="#/shells-feathers">Play Shells &amp; Feathers</a>
+    </section>
+
+    <!-- How to Play: Acorns & Leaves (preview) -->
+    <section id="al-howto-screen" class="screen" aria-labelledby="al-howto-title">
+      <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
+      <header class="screen-header">
+        <p class="eyebrow" aria-hidden="true">🌰 🍂</p>
+        <h2 id="al-howto-title" tabindex="-1">How to Play Acorns &amp; Leaves</h2>
+        <p class="screen-subtitle">Checkers</p>
+      </header>
+      <p class="notice notice-preview" role="note"><strong>Preview:</strong> Acorns &amp; Leaves can't be played yet. Its game engine is still being built. These are the rules the first playable version is planned to follow.</p>
+      <div class="panel prose">
+        <p>Acorns &amp; Leaves is checkers (also called draughts) with a forest look: one player has acorns, the other has leaves.</p>
+        <figure class="checkers-figure">
+          <div class="checkers-preview checkers-preview-large" data-checkers-preview aria-hidden="true"></div>
+          <figcaption>Starting position: 12 pieces each, on the dark squares of an 8 × 8 board.</figcaption>
+        </figure>
+        <h3>Moving</h3>
+        <ul>
+          <li>Acorns move first, then players alternate.</li>
+          <li>A piece moves one square diagonally forward to an empty dark square.</li>
+        </ul>
+        <h3>Capturing</h3>
+        <ul>
+          <li>Jump diagonally over an opponent's piece to the empty square just beyond it; the jumped piece is removed.</li>
+          <li>If a capture is possible, you must take it. If the same piece can jump again, it keeps jumping.</li>
+        </ul>
+        <h3>Kings</h3>
+        <p>A piece that reaches the far row becomes a king and can move and capture backward as well as forward.</p>
+        <h3>Winning</h3>
+        <p>You win when your opponent has no pieces left or no legal move.</p>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section id="settings-screen" class="screen" aria-labelledby="settings-title">
+      <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
+      <header class="screen-header">
+        <h2 id="settings-title" tabindex="-1">Settings</h2>
+      </header>
+      <div class="panel settings-container">
+        <label class="setting-row" for="audio-toggle">
+          <span class="setting-label">Sound effects</span>
+          <span class="switch"><input type="checkbox" id="audio-toggle" role="switch" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
+        </label>
+        <label class="setting-row" for="music-toggle">
+          <span class="setting-label">Music</span>
+          <span class="switch"><input type="checkbox" id="music-toggle" role="switch" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
+        </label>
+        <p class="hint">Shells &amp; Feathers pieces and difficulty are chosen before each game.</p>
+      </div>
+    </section>
+
+    <!-- Your Path: records and achievements -->
+    <section id="path-screen" class="screen" aria-labelledby="path-title">
+      <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
+      <header class="screen-header">
+        <h2 id="path-title" tabindex="-1">Your Path</h2>
+        <p class="screen-subtitle">Records and achievements</p>
+      </header>
+
+      <div class="panel path-panel">
+        <h3 class="panel-title"><span aria-hidden="true">🐚</span> Shells &amp; Feathers</h3>
+        <div class="stats-container">
+          <div class="stat-card"><div class="stat-value" id="wins-count">0</div><div class="stat-label">Victories</div></div>
+          <div class="stat-card"><div class="stat-value" id="draws-count">0</div><div class="stat-label">Draws</div></div>
+          <div class="stat-card"><div class="stat-value" id="losses-count">0</div><div class="stat-label">Losses</div></div>
+          <div class="stat-card"><div class="stat-value" id="total-games">0</div><div class="stat-label">Games played</div></div>
+        </div>
+        <p class="hint">Totals include two-player games.</p>
+
+        <h4>Against the Spirit</h4>
+        <table class="record-table">
+          <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
+          <tbody id="spirit-records"></tbody>
+        </table>
+
+        <h4>Two players</h4>
+        <p id="two-player-record"></p>
+        <p class="hint" id="legacy-note" hidden></p>
+
+        <h4>Achievements <span class="achievement-count" id="achievement-count"></span></h4>
+        <ul class="achievements" id="achievement-list"></ul>
+
+        <button type="button" class="btn btn-danger" data-action="reset-stats">Clear Shells &amp; Feathers records</button>
+      </div>
+
+      <div class="panel panel-muted">
+        <h3 class="panel-title"><span aria-hidden="true">🌰</span> Acorns &amp; Leaves</h3>
+        <p>Preview: records will appear here once the game can be played.</p>
+      </div>
+    </section>
+
+    <!-- Shells & Feathers result -->
+    <div id="game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message">
       <div class="modal-content">
         <h3 id="modal-title">Victory!</h3>
         <p id="modal-message">The spirits smile upon you</p>
         <div class="modal-buttons">
-          <button class="modal-btn" data-action="play-again">New Game</button>
-          <button class="modal-btn" data-action="show-start">Main Menu</button>
+          <button type="button" class="btn btn-primary modal-btn" data-action="play-again">Play Again</button>
+          <a class="btn modal-btn" href="#/shells-feathers" data-up>Change Mode</a>
+          <a class="btn modal-btn" href="#/" data-up>All Games</a>
         </div>
+        <button type="button" class="view-board-btn" data-action="view-board" aria-keyshortcuts="Escape">View Board</button>
       </div>
     </div>
-  </div>
+  </main>
 
   <!-- Audio -->
   <audio id="gameplay-music" loop preload="auto">

@@ -52,6 +52,7 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
     match = createMatch({ mode, player1Symbol, difficulty });
     timers = createTimerScope(clock);
     view.clearBoard();
+    view.showMatchInfo({ mode, difficulty, player1Symbol });
     showTurn();
   }
 
@@ -109,6 +110,7 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
       audio.playSfx('victory-sound');
     }
     view.showScores(mode, scores);
+    view.showFinalTurn(outcome, winner);
     timers.after(delays.resultModal, () => view.showResult(outcome, winner));
   }
 

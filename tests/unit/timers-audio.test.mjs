@@ -58,7 +58,7 @@ test('restarting music during a fade-out keeps it playing (v1 left it paused)', 
   const { clock, audio, music } = setupAudio();
   audio.startMusic();
   clock.tick(1_000);
-  audio.stopMusic(); // e.g. draw -> "New Game"
+  audio.stopMusic(); // e.g. draw -> "Play Again"
   clock.tick(300);
   audio.startMusic(); // the 300ms music restart
   clock.tick(3_000);

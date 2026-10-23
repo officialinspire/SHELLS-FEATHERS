@@ -19,13 +19,14 @@ export async function startHarness(t) {
   return { base, browser };
 }
 
-// Opens the game in a fresh browser context (empty storage). `storage` seeds
-// localStorage before the game's first load; `initScript` runs before the
-// page's own scripts on every load.
-export async function openGame({ base, browser }, { viewport = { width: 390, height: 844 }, storage, initScript } = {}) {
-  const context = await browser.newContext({ viewport });
+// Opens the game's hub in a fresh browser context (empty storage). `device`
+// is a Playwright device descriptor (touch devices tap instead of click);
+// `storage` seeds localStorage before the game's first load; `initScript`
+// runs before the page's own scripts on every load.
+export async function openGame({ base, browser }, { viewport = { width: 390, height: 844 }, device, storage, initScript } = {}) {
+  const context = await browser.newContext(device ?? { viewport });
   const page = await context.newPage();
-  const game = new GamePage(page, base);
+  const game = new GamePage(page, base, { touch: Boolean(device?.hasTouch) });
 
   page.on('pageerror', (err) => game.pageErrors.push(err.message));
   page.on('response', (res) => {
@@ -51,22 +52,78 @@ export async function openGame({ base, browser }, { viewport = { width: 390, hei
 }
 
 export class GamePage {
-  constructor(page, base) {
+  constructor(page, base, { touch = false } = {}) {
     this.page = page;
     this.base = base;
+    this.touch = touch;
     this.pageErrors = [];
     this.missingAssets = [];
     this.externalRequests = [];
   }
 
-  // Clicks a button on the visible screen (or the open modal) by its label, so
-  // the same label on a hidden screen can't match.
-  press(name) {
-    return this.page.locator('.screen.active, #game-modal.active').getByRole('button', { name }).click();
+  // A button or link on the visible screen, or in the result dialog while it
+  // is open, by its accessible name. Hidden screens can't match.
+  control(name, { exact = false } = {}) {
+    const scope = this.page.locator('#game-modal.active, .screen.active:not(:has(~ #game-modal.active))').first();
+    return scope.getByRole('button', { name, exact }).or(scope.getByRole('link', { name, exact }));
+  }
+
+  async press(name, options) {
+    const target = this.control(name, options);
+    if (this.touch) await target.tap();
+    else await target.click();
   }
 
   activeScreen() {
     return this.page.locator('.screen.active').getAttribute('id');
+  }
+
+  waitForScreen(id, timeout = 10_000) {
+    return this.page.waitForFunction((s) => document.querySelector('.screen.active')?.id === s, id, { timeout });
+  }
+
+  // Waits for running transitions (screen fade-in, piece placement) to end,
+  // so measurements see the layout a player sees.
+  settle() {
+    return this.page.evaluate(() => Promise.all(document.getAnimations()
+      .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+      .map((a) => a.finished.catch(() => {}))));
+  }
+
+  // Navigates like a typed URL or bookmark (hash change).
+  async goTo(hash, screen) {
+    await this.page.evaluate((h) => { location.hash = h; }, hash);
+    if (screen) await this.waitForScreen(screen);
+  }
+
+  goHome() {
+    return this.goTo('#/', 'hub-screen');
+  }
+
+  // Hub -> Shells & Feathers setup screen.
+  async openShellsFeathers() {
+    await this.press('Play Shells & Feathers', { exact: true });
+    await this.waitForScreen('sf-setup-screen');
+  }
+
+  // On the setup screen: difficulty 'Gentle' | 'Balanced' | 'Wise'; symbol 'Shell' | 'Feather'.
+  async chooseOptions({ difficulty, symbol } = {}) {
+    if (difficulty) await this.page.getByRole('radio', { name: difficulty, exact: true }).check();
+    if (symbol) await this.page.getByRole('radio', { name: symbol }).check();
+  }
+
+  // On the setup screen: starts a match and waits for the first turn.
+  async startMatch(mode) {
+    await this.press(mode === 'single' ? 'Play the Spirit' : 'Two Players');
+    await this.waitForScreen('game-screen');
+    await this.waitForTurn(mode === 'single' ? 'Your Turn' : "Player 1's Turn");
+  }
+
+  // Hub -> setup -> match.
+  async newMatch(mode, options) {
+    await this.openShellsFeathers();
+    await this.chooseOptions(options);
+    await this.startMatch(mode);
   }
 
   turnText() {
@@ -78,7 +135,8 @@ export class GamePage {
   }
 
   tap(index) {
-    return this.page.locator(`.cell[data-index="${index}"]`).click();
+    const cell = this.page.locator(`.cell[data-index="${index}"]`);
+    return this.touch ? cell.tap() : cell.click();
   }
 
   waitForTurn(prefix, timeout = 10_000) {
@@ -112,26 +170,37 @@ export class GamePage {
     ]);
   }
 
-  // Lifetime totals as "Your Path" shows them. Leaves the page on the stats
-  // screen's "Return to Lodge" (start screen).
+  // Lifetime totals as "Your Path" shows them. Opens Your Path by URL and
+  // leaves the page on the hub.
   async lifetimeStats() {
-    await this.press('Your Path');
+    await this.goTo('#/your-path', 'path-screen');
     const read = (id) => this.page.locator(`#${id}`).textContent();
     const stats = {
       victories: await read('wins-count'),
-      balance: await read('draws-count'),
-      lessons: await read('losses-count'),
+      draws: await read('draws-count'),
+      losses: await read('losses-count'),
       total: await read('total-games'),
     };
-    await this.press('Return to Lodge');
+    await this.goHome();
     return stats;
   }
 
-  async chooseSettings({ difficulty, symbol } = {}) {
-    await this.press('Settings');
-    if (difficulty) await this.press(difficulty);
-    if (symbol) await this.press(symbol);
-    await this.press('Return to Lodge');
+  // Taps the first empty square each turn until a single-player game ends.
+  async playFirstEmptyUntilResult() {
+    while (!(await this.modalOpen())) {
+      const board = await this.cells();
+      if (board.indexOf('') === -1 || (await this.page.locator('.cell.winner').count()) > 0) break;
+      const pieces = board.filter(Boolean).length;
+      await this.tap(board.indexOf(''));
+      await this.page.waitForFunction(
+        (n) => document.querySelectorAll('.cell.occupied').length > n + 1
+          || document.querySelectorAll('.cell.winner').length > 0
+          || document.querySelectorAll('.cell.occupied').length === 9,
+        pieces,
+        { timeout: 10_000 },
+      );
+    }
+    return this.waitForResult();
   }
 
   storageItem(key) {
