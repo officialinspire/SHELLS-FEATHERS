@@ -22,8 +22,9 @@ export async function startHarness(t) {
 // Opens the game's hub in a fresh browser context (empty storage). `device`
 // is a Playwright device descriptor (touch devices tap instead of click);
 // `storage` seeds localStorage before the game's first load; `initScript`
-// runs before the page's own scripts on every load.
-export async function openGame({ base, browser }, { viewport = { width: 390, height: 844 }, device, storage, initScript } = {}) {
+// runs before the page's own scripts on every load; `fakeClock` gives the
+// page Playwright's controllable clock (timers run only on page.clock.runFor).
+export async function openGame({ base, browser }, { viewport = { width: 390, height: 844 }, device, storage, initScript, fakeClock = false } = {}) {
   const context = await browser.newContext(device ?? { viewport });
   const page = await context.newPage();
   const game = new GamePage(page, base, { touch: Boolean(device?.hasTouch) });
@@ -47,6 +48,7 @@ export async function openGame({ base, browser }, { viewport = { width: 390, hei
     }, storage);
   }
   if (initScript) await page.addInitScript(initScript);
+  if (fakeClock) await page.clock.install();
   await page.goto(`${base}/index.html`);
   return game;
 }
@@ -61,10 +63,10 @@ export class GamePage {
     this.externalRequests = [];
   }
 
-  // A button or link on the visible screen, or in the result dialog while it
+  // A button or link on the visible screen, or in a result dialog while one
   // is open, by its accessible name. Hidden screens can't match.
   control(name, { exact = false } = {}) {
-    const scope = this.page.locator('#game-modal.active, .screen.active:not(:has(~ #game-modal.active))').first();
+    const scope = this.page.locator('.modal.active, .screen.active:not(:has(~ .modal.active))').first();
     return scope.getByRole('button', { name, exact }).or(scope.getByRole('link', { name, exact }));
   }
 
@@ -151,15 +153,17 @@ export class GamePage {
     return this.page.waitForFunction((n) => document.querySelectorAll('.cell.occupied').length === n, count, { timeout });
   }
 
+  // Whether a result dialog (either game's) is open.
   modalOpen() {
-    return this.page.locator('#game-modal').evaluate((el) => el.classList.contains('active'));
+    return this.page.evaluate(() => document.querySelector('.modal.active') !== null);
   }
 
   async waitForResult(timeout = 10_000) {
-    await this.page.locator('#game-modal.active').waitFor({ timeout });
+    const modal = this.page.locator('.modal.active');
+    await modal.waitFor({ timeout });
     return {
-      title: await this.page.locator('#modal-title').textContent(),
-      message: await this.page.locator('#modal-message').textContent(),
+      title: await modal.locator('.modal-title').textContent(),
+      message: await modal.locator('.modal-message').textContent(),
     };
   }
 
@@ -201,6 +205,96 @@ export class GamePage {
       );
     }
     return this.waitForResult();
+  }
+
+  // ------------------------------------------------------ Acorns & Leaves
+
+  // Hub -> Acorns & Leaves setup screen.
+  async openAcornsLeaves() {
+    await this.press('Play Acorns & Leaves', { exact: true });
+    await this.waitForScreen('al-setup-screen');
+  }
+
+  // On the Acorns & Leaves setup screen: side 'Acorns' | 'Leaves';
+  // difficulty 'Gentle' | 'Balanced' | 'Wise'.
+  async chooseCheckersOptions({ side, difficulty } = {}) {
+    if (side) await this.page.getByRole('radio', { name: side, exact: true }).check();
+    if (difficulty) await this.page.getByRole('radio', { name: difficulty, exact: true }).check();
+  }
+
+  async startCheckers(mode) {
+    await this.press(mode === 'single' ? 'Play the Spirit' : 'Two Players');
+    await this.waitForScreen('al-game-screen');
+  }
+
+  // Hub -> setup -> match.
+  async newCheckersMatch(mode, options) {
+    await this.openAcornsLeaves();
+    await this.chooseCheckersOptions(options);
+    await this.startCheckers(mode);
+  }
+
+  square(index) {
+    return this.page.locator(`#al-board button[data-square="${index}"]`);
+  }
+
+  tapSquare(index) {
+    return this.touch ? this.square(index).tap() : this.square(index).click();
+  }
+
+  // Taps each square of a move's path in turn.
+  async playPath(path) {
+    for (const index of path) await this.tapSquare(index);
+  }
+
+  // The board as 8 strings, top row first, in the engine's notation
+  // (a/A acorn/king, l/L leaf/king, '.' empty), read from the drawn pieces.
+  checkersRows() {
+    return this.page.evaluate(() => {
+      const codes = { acorn: 'a', 'acorn-king': 'A', leaf: 'l', 'leaf-king': 'L' };
+      const cells = Array(64).fill('.');
+      for (const el of document.querySelectorAll('#al-board [data-square]')) {
+        cells[Number(el.dataset.square)] = codes[el.dataset.piece] ?? '.';
+      }
+      return Array.from({ length: 8 }, (_, r) => cells.slice(r * 8, r * 8 + 8).join(''));
+    });
+  }
+
+  // What the match screen shows: board state, turn line, guidance, captured
+  // counts, the side to move, and which squares carry which marks.
+  checkersView() {
+    return this.page.evaluate(() => {
+      const squaresWith = (cls) => [...document.querySelectorAll(`#al-board .${cls}`)].map((el) => Number(el.dataset.square)).sort((a, b) => a - b);
+      const count = (side) => Number(document.querySelector(`#al-side-${side} .al-side-count`).textContent);
+      const active = document.querySelector('.al-side.is-active');
+      return {
+        state: document.getElementById('al-board').dataset.state,
+        busy: document.getElementById('al-board').getAttribute('aria-busy'),
+        turn: document.getElementById('al-turn').textContent,
+        hint: document.getElementById('al-hint').textContent,
+        toMove: active ? active.id.replace('al-side-', '') : null,
+        captured: { acorn: count('acorn'), leaf: count('leaf') },
+        selected: squaresWith('is-selected'),
+        destinations: squaresWith('is-destination'),
+        mustJump: squaresWith('must-jump'),
+        jumped: squaresWith('is-jumped'),
+        trail: squaresWith('is-trail'),
+        lastMove: squaresWith('is-last'),
+        wasCaptured: squaresWith('was-captured'),
+      };
+    });
+  }
+
+  label(index) {
+    return this.square(index).getAttribute('aria-label');
+  }
+
+  checkersStatus() {
+    return this.page.locator('#al-status').evaluate((el) => el.textContent.trim());
+  }
+
+  waitForBoardState(state, timeout = 10_000) {
+    return this.page.waitForFunction((s) => document.getElementById('al-board').dataset.state === s, state, { timeout });
   }
 
   storageItem(key) {

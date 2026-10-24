@@ -13,7 +13,7 @@ const names = (locator) => locator.evaluateAll((els) => els.map((el) => el.getAt
 test('game hub', { timeout: 300_000 }, async (t) => {
   const harness = await startHarness(t);
 
-  await t.test('Shells & Feathers is playable; Acorns & Leaves is only a preview with no way to start it', async () => {
+  await t.test('both games are ready to play from the hub, each with Play and How to Play', async () => {
     const game = await openGame(harness);
     const { page } = game;
     assert.equal(await game.activeScreen(), 'hub-screen');
@@ -25,19 +25,19 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     assert.equal(await sf.getByRole('link', { name: 'Play Shells & Feathers', exact: true }).getAttribute('href'), '#/shells-feathers');
 
     const al = page.locator('article', { has: page.locator('#al-card-title') });
-    assert.match(await al.locator('.badge').textContent(), /^Preview/);
-    assert.match(await al.textContent(), /can't be played yet/);
-    assert.deepEqual(await names(al.getByRole('link')), ['How to Play Acorns & Leaves'], 'only a How to Play link');
-    assert.equal(await al.getByRole('button').count(), 0, 'no buttons on the preview card');
-    assert.equal(await al.locator('.btn-primary').count(), 0, 'nothing styled as a primary (play) action');
-    assert.equal(await al.evaluate((el) => getComputedStyle(el).borderTopStyle), 'dashed');
-    assert.equal(await page.locator('a[href*="acorns-leaves/play"], [data-action*="acorns"]').count(), 0);
+    assert.equal(await al.locator('.badge').textContent(), 'Ready to play');
+    assert.doesNotMatch(await al.textContent(), /preview|can't be played/i);
+    assert.deepEqual(await names(al.getByRole('link')), ['Play Acorns & Leaves', 'How to Play Acorns & Leaves']);
+    assert.equal(await al.getByRole('link', { name: 'Play Acorns & Leaves', exact: true }).getAttribute('href'), '#/acorns-leaves');
+    assert.equal(await al.locator('.btn-primary').count(), 1);
 
-    const preview = al.locator('[data-checkers-preview]');
-    assert.equal(await preview.getAttribute('aria-hidden'), 'true', 'the picture is decorative');
-    assert.equal(await preview.locator('.checkers-square').count(), 64);
-    assert.equal(await preview.locator('.checkers-square', { hasText: '🌰' }).count(), 12);
-    assert.equal(await preview.locator('.checkers-square', { hasText: '🍂' }).count(), 12);
+    // The card's picture is the starting position, drawn with the game's pieces.
+    const picture = al.locator('[data-checkers-board]');
+    assert.equal(await picture.getAttribute('aria-hidden'), 'true', 'the picture is decorative');
+    assert.equal(await picture.locator('.checkers-square').count(), 64);
+    assert.equal(await picture.locator('use[href="#al-acorn"]').count(), 12);
+    assert.equal(await picture.locator('use[href="#al-leaf"]').count(), 12);
+    assert.equal(await picture.locator('.checkers-square.light use').count(), 0, 'pieces only on dark squares');
 
     const more = page.locator('nav.hub-links').getByRole('link');
     assert.deepEqual((await names(more)).map((n) => n.replace(/^\S+\s/, '')), ['Settings', 'Your Path']);
@@ -63,18 +63,24 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     await game.press('How to Play Acorns & Leaves');
     await game.waitForScreen('al-howto-screen');
     const screen = page.locator('#al-howto-screen');
-    assert.match(await screen.locator('.notice-preview').textContent(), /can't be played yet/);
-    assert.deepEqual(await names(screen.locator('a, button')), ['← Back'], 'no play control on the preview page');
+    const text = await screen.textContent();
+    for (const rule of [/Acorns move first/, /capture forward only/, /Capturing is compulsory, but you choose/, /keeps jumping/,
+      /Being crowned ends the move/, /40 moves each/, /a dot is a move, a ring is a jump/, /orange ring/, /Escape/]) {
+      assert.match(text, rule);
+    }
     assert.equal(await screen.locator('.checkers-square').count(), 64);
-    assert.doesNotMatch(await screen.textContent(), /traditional|native|tribe|sacred/i);
-    assert.equal(await page.title(), 'Acorns & Leaves (Preview) · Spirit of the Woods');
+    assert.deepEqual(await screen.locator('.piece-legend li').allTextContents(), ['Acorn', 'Acorn king', 'Leaf', 'Leaf king'].map((n) => ` ${n}`));
+    assert.doesNotMatch(text, /traditional|native|tribe|sacred|preview/i);
+    assert.equal(await page.title(), 'How to Play Acorns & Leaves · Spirit of the Woods');
+    await game.press('Play Acorns & Leaves');
+    await game.waitForScreen('al-setup-screen');
+    await game.press('How to Play');
+    await game.waitForScreen('al-howto-screen');
     await game.press('Back');
-    await game.waitForScreen('hub-screen');
+    await game.waitForScreen('al-setup-screen');
 
-    await game.goTo('#/acorns-leaves', 'al-howto-screen');
-    assert.equal(await page.evaluate(() => location.hash), '#/acorns-leaves/how-to-play');
     await game.goTo('#/acorns-leaves/play', 'hub-screen');
-    assert.equal(await page.evaluate(() => location.hash), '#/', 'no play route for the preview');
+    assert.equal(await page.evaluate(() => location.hash), '#/', 'unknown play routes go to the hub');
   });
 
   await t.test('full trip: hub, setup, match, result, play again, change mode, other mode, all games, settings, Your Path', async () => {
@@ -274,6 +280,8 @@ test('game hub', { timeout: 300_000 }, async (t) => {
       ['#/shells-feathers', 'sf-setup-screen'],
       ['#/shells-feathers/play/two', 'game-screen'],
       ['#/shells-feathers/how-to-play', 'sf-howto-screen'],
+      ['#/acorns-leaves', 'al-setup-screen'],
+      ['#/acorns-leaves/play/two', 'al-game-screen'],
       ['#/acorns-leaves/how-to-play', 'al-howto-screen'],
       ['#/settings', 'settings-screen'],
       ['#/your-path', 'path-screen'],
@@ -290,9 +298,12 @@ test('game hub', { timeout: 300_000 }, async (t) => {
         if (!onScreen || !(hit === el || el.contains(hit))) {
           problems.push(`${name} @ ${Math.round(r.left)},${Math.round(r.top)}`);
         }
-        // Comfortable touch target: at least 44×44 (a whole label counts for its input).
+        // Comfortable touch target: at least 44×44 (a whole label counts for its
+        // input). The 64 checkers squares share the screen width, so they get
+        // 36×36 on the narrowest phone.
         const target = (el.closest('label') ?? el).getBoundingClientRect();
-        if (target.width < 44 || target.height < 44) {
+        const least = el.matches('.al-square') ? 36 : 44;
+        if (target.width < least - 0.5 || target.height < least - 0.5) {
           problems.push(`${name} is only ${Math.round(target.width)}×${Math.round(target.height)}px`);
         }
       }
@@ -314,6 +325,12 @@ test('game hub', { timeout: 300_000 }, async (t) => {
       await game.waitForResult();
       await game.settle();
       assert.deepEqual(await unreachable('#game-modal'), [], `${width}×${height} result dialog`);
+      // The Acorns & Leaves dialog has the same layout; shown directly here, as
+      // reaching it takes a whole game (tests/browser/acorns-leaves.test.mjs).
+      await game.goTo('#/acorns-leaves/play/two', 'al-game-screen');
+      await game.page.evaluate(() => document.getElementById('al-modal').classList.add('active'));
+      await game.settle();
+      assert.deepEqual(await unreachable('#al-modal'), [], `${width}×${height} Acorns & Leaves result dialog`);
       // The page itself never scrolls sideways.
       assert.equal(await game.page.evaluate(() => { window.scrollTo(5000, 0); return scrollX; }), 0);
       await game.page.context().close();

@@ -13,8 +13,8 @@ Features:
 🔥 Subtle sound design and ambient score
 💾 Persistent win/loss stats stored locally
 ⚙️ Built fully in-browser — no frameworks, no dependencies
-🌲 Game hub: Shells & Feathers (Tic-Tac-Toe) is playable now; Acorns & Leaves (Checkers) is in development and shown as a preview
-🏆 Your Path: records per difficulty and achievements
+🌲 Game hub: Shells & Feathers (Tic-Tac-Toe) and Acorns & Leaves (Classic Checkers), each against the forest Spirit (Gentle, Balanced or Wise) or a friend on the same device
+🏆 Your Path: each game's records per difficulty, and Shells & Feathers achievements
 ⌨️ Playable by touch, mouse or keyboard, on phones and desktop; browser Back/Forward move between screens
 
 Built With:
@@ -32,4 +32,4 @@ Playing Locally:
 The game loads as ES modules, so serve the folder instead of opening index.html from disk, e.g. `python3 -m http.server` and visit http://localhost:8000.
 
 Tests:
-`npm ci`, then `npx playwright install chromium`, then `npm test` (unit tests in Node plus browser tests in headless Chromium). Code layout, save format and test plan: docs/upgrade-plan.md
+`npm ci`, then `npx playwright install chromium`, then `npm test` (unit tests in Node plus browser tests in headless Chromium). Code layout, save format and test plan: docs/upgrade-plan.md. Checkers rules and the Spirit's search: docs/acorns-leaves-rules.md

@@ -103,7 +103,11 @@ export function rowsFromBoard(board) {
   return rows;
 }
 
-export const countPieces = (board, side) => board.filter((p) => p?.side === side).length;
+export function countPieces(board, side) {
+  let count = 0;
+  for (const p of board) if (p && p.side === side) count++;
+  return count;
+}
 
 // ---------------------------------------------------------------- moves
 
@@ -163,9 +167,7 @@ function movesFor(board, side) {
 }
 
 // The moves available to the side to move (none once the game has ended).
-export function legalMoves(state) {
-  return gameResult(state) ? [] : movesFor(state.board, state.turn);
-}
+export const legalMoves = (state) => analyze(state).moves;
 
 export const legalMovesFrom = (state, square) => legalMoves(state).filter((m) => m.from === square);
 
@@ -199,9 +201,9 @@ function explainIllegal(state, path) {
 
 // ---------------------------------------------------------------- turns
 
-// The same position with the other side to move. applyMove calls this after
-// every move; on its own it is only for setting up positions (passing is not a
-// legal move in checkers).
+// The same position with the other side to move. For setting up positions
+// only: passing is not a legal move in checkers, and applyMove switches the
+// turn itself.
 export function switchTurn(state) {
   return makeState([...state.board], opponent(state.turn), state.quietPlies);
 }
@@ -213,7 +215,13 @@ export function applyMove(state, moveOrPath) {
   const path = Array.isArray(moveOrPath) ? moveOrPath : moveOrPath?.path;
   const chosen = findMove(state, path);
   if (!chosen) throw explainIllegal(state, path);
+  return playLegalMove(state, chosen);
+}
 
+// applyMove without the check: `chosen` must be one of legalMoves(state) (or
+// analyze(state).moves). For searches that already hold the legal moves, such
+// as the AI; everything else should call applyMove.
+export function playLegalMove(state, chosen) {
   const board = [...state.board];
   const mover = board[chosen.from];
   board[chosen.from] = null;
@@ -222,7 +230,7 @@ export function applyMove(state, moveOrPath) {
 
   // Progress (captures and ordinary-piece moves) resets the draw count.
   const quietPlies = chosen.captures.length || !mover.king ? 0 : state.quietPlies + 1;
-  return switchTurn(makeState(board, state.turn, quietPlies));
+  return makeState(board, opponent(state.turn), quietPlies);
 }
 
 // ---------------------------------------------------------------- game end
@@ -234,11 +242,24 @@ export function applyMove(state, moveOrPath) {
 // - { winner: null, reason: 'no-progress' } after DRAW_AFTER_QUIET_PLIES
 //   plies with no capture and no ordinary piece moved.
 // A win takes precedence over the draw.
-export function gameResult(state) {
+export const gameResult = (state) => analyze(state).result;
+
+// gameResult and legalMoves in one pass: { result, moves }, with moves [] once
+// the game has ended.
+export function analyze(state) {
   const { board, turn } = state;
-  if (countPieces(board, turn) === 0) return { winner: opponent(turn), reason: 'no-pieces' };
-  if (countPieces(board, opponent(turn)) === 0) return { winner: turn, reason: 'no-pieces' };
-  if (movesFor(board, turn).length === 0) return { winner: opponent(turn), reason: 'no-moves' };
-  if (state.quietPlies >= DRAW_AFTER_QUIET_PLIES) return { winner: null, reason: 'no-progress' };
-  return null;
+  const over = (result) => ({ result, moves: [] });
+  let own = 0;
+  let other = 0;
+  for (const p of board) {
+    if (!p) continue;
+    if (p.side === turn) own++;
+    else other++;
+  }
+  if (own === 0) return over({ winner: opponent(turn), reason: 'no-pieces' });
+  if (other === 0) return over({ winner: turn, reason: 'no-pieces' });
+  const moves = movesFor(board, turn);
+  if (moves.length === 0) return over({ winner: opponent(turn), reason: 'no-moves' });
+  if (state.quietPlies >= DRAW_AFTER_QUIET_PLIES) return over({ winner: null, reason: 'no-progress' });
+  return { result: null, moves };
 }

@@ -123,7 +123,7 @@ test('Shells & Feathers match flows', { timeout: 300_000 }, async (t) => {
 
   for (const [how, act, screen] of [
     ['Restart', (game) => game.press('Restart'), 'game-screen'],
-    ['switching to Acorns & Leaves', (game) => game.goTo('#/acorns-leaves/how-to-play'), 'al-howto-screen'],
+    ['switching to Acorns & Leaves', (game) => game.goTo('#/acorns-leaves/play/two'), 'al-game-screen'],
     ['going home', (game) => game.goTo('#/'), 'hub-screen'],
   ]) {
     await t.test(`${how} during the Spirit's turn cancels its move and scores nothing`, async () => {

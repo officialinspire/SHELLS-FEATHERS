@@ -1,5 +1,5 @@
 // Composes the app: shared services (storage, profile, audio), the router and
-// screens, and the Shells & Feathers session.
+// screens, and one session per game (Shells & Feathers, Acorns & Leaves).
 //
 // Navigation uses real links (href="#/..."). A click on one is routed in-page
 // (with a history entry, so Back/Forward work); `data-up` and `data-back`
@@ -15,7 +15,11 @@ import { createPathScreen } from './path-screen.js';
 import { createShellsFeathersView } from '../games/shells-feathers/view.js';
 import { createSession } from '../games/shells-feathers/session.js';
 import { initShellsFeathersSetup } from '../games/shells-feathers/setup.js';
-import { renderStartingPosition } from '../games/acorns-leaves/preview-board.js';
+import { createInitialState } from '../games/acorns-leaves/engine.js';
+import { renderMiniBoard } from '../games/acorns-leaves/pieces.js';
+import { createAcornsLeavesView } from '../games/acorns-leaves/view.js';
+import { createSession as createAcornsLeavesSession } from '../games/acorns-leaves/session.js';
+import { initAcornsLeavesSetup } from '../games/acorns-leaves/setup.js';
 
 export function createApp({ doc, win }) {
   const profile = createProfile(openStorage(() => win.localStorage));
@@ -23,6 +27,8 @@ export function createApp({ doc, win }) {
   const audio = createAudio({ doc, clock: win, musicId: 'gameplay-music', sfxEnabled: sfx, musicEnabled: music });
   const view = createShellsFeathersView(doc);
   const session = createSession({ view, audio, profile, clock: win });
+  const checkersView = createAcornsLeavesView(doc);
+  const checkers = createAcornsLeavesSession({ view: checkersView, audio, profile, clock: win });
   const path = createPathScreen({ doc, profile, audio, confirm: (message) => win.confirm(message) });
   let firstRoute = true;
 
@@ -34,6 +40,10 @@ export function createApp({ doc, win }) {
     'game-screen': {
       enter: (mode) => session.enter(mode),
       leave: () => session.leave(),
+    },
+    'al-game-screen': {
+      enter: (mode) => checkers.enter(mode),
+      leave: () => checkers.leave(),
     },
   });
 
@@ -49,6 +59,7 @@ export function createApp({ doc, win }) {
       // Move keyboard and screen-reader focus to the new screen.
       win.scrollTo(0, 0);
       if (route.screen === 'game-screen') view.focusBoard();
+      else if (route.screen === 'al-game-screen') checkersView.focusBoard();
       else doc.getElementById(route.screen).querySelector('[tabindex="-1"]')?.focus();
     },
   });
@@ -58,6 +69,10 @@ export function createApp({ doc, win }) {
     'play-again': () => session.playAgain(),
     'view-board': () => view.dismissResult(),
     'reset-stats': () => path.reset(),
+    'al-restart': () => checkers.restart(),
+    'al-rematch': () => checkers.playAgain(),
+    'al-view-board': () => checkersView.dismissResult(),
+    'reset-al-stats': () => path.resetAcornsLeaves(),
   };
 
   function onClick(event) {
@@ -80,9 +95,11 @@ export function createApp({ doc, win }) {
   function init() {
     doc.addEventListener('click', onClick);
     view.bindCells((index) => session.selectCell(index));
+    checkersView.bind({ onSelect: (square) => checkers.selectSquare(square), onCancel: () => checkers.cancelSelection() });
     initShellsFeathersSetup({ doc, profile, audio });
+    initAcornsLeavesSetup({ doc, profile, audio });
     initSettingsScreen({ doc, profile, audio });
-    for (const board of doc.querySelectorAll('[data-checkers-preview]')) renderStartingPosition(board);
+    for (const board of doc.querySelectorAll('[data-checkers-board]')) renderMiniBoard(board, createInitialState().board);
     path.render();
     // Browsers only allow audio after a user gesture.
     doc.addEventListener('click', () => audio.startMusic(), { once: true });

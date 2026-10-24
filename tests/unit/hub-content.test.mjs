@@ -1,12 +1,10 @@
-// Achievements, the Your Path data they come from, and the Acorns & Leaves
-// preview picture.
+// Achievements and the Your Path data they come from.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { achievementsFor } from '../../src/games/shells-feathers/achievements.js';
 import { createDefaultSave, summarizeStats } from '../../src/shared/save-data.js';
 import { createProfile } from '../../src/shared/profile.js';
 import { openStorage } from '../../src/shared/storage.js';
-import { startingPosition } from '../../src/games/acorns-leaves/preview-board.js';
 import { createMemoryStorage } from '../helpers/fakes.mjs';
 
 const unlocked = (save) => achievementsFor(save.shellsFeathers.stats, summarizeStats(save)).filter((a) => a.unlocked).map((a) => a.id);
@@ -45,16 +43,4 @@ test('profile.stats() hands out a copy, so a screen cannot change saved records'
   const copy = profile.stats();
   copy.single.hard.draws = 99;
   assert.equal(profile.stats().single.hard.draws, 1);
-});
-
-test('the Acorns & Leaves preview shows the checkers starting position', () => {
-  const squares = startingPosition();
-  assert.equal(squares.length, 64);
-  assert.equal(squares.filter((s) => s.piece === 'acorn').length, 12);
-  assert.equal(squares.filter((s) => s.piece === 'leaf').length, 12);
-  assert.ok(squares.every((s) => !s.piece || s.dark), 'pieces only on dark squares');
-  assert.equal(squares[56].dark, true, 'dark square at bottom-left');
-  assert.equal(squares[63].dark, false, 'light square at bottom-right');
-  assert.ok(squares.slice(0, 24).every((s) => s.piece !== 'acorn'), 'leaves on the top rows');
-  assert.ok(squares.slice(40).every((s) => s.piece !== 'leaf'), 'acorns on the bottom rows');
 });

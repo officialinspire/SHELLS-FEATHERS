@@ -7,8 +7,8 @@ import {
   SIZE, FIRST_TO_MOVE, DRAW_AFTER_QUIET_PLIES, IllegalMoveError,
   createInitialState, positionFromRows, rowsFromBoard, legalMoves, legalMovesFrom, findMove, applyMove,
   switchTurn, gameResult, opponent, forwardOf, crownRowOf, squareAt, rowOf, isDarkSquare, countPieces,
+  analyze, playLegalMove,
 } from '../../src/games/acorns-leaves/engine.js';
-import { startingPosition } from '../../src/games/acorns-leaves/preview-board.js';
 
 // (row, col) -> square index; path(...pairs) -> list of squares.
 const sq = (row, col) => squareAt(row, col);
@@ -44,12 +44,6 @@ test('setup: 12 pieces each on the dark squares of the three nearest rows; Acorn
   assert.ok(isDarkSquare(sq(7, 0)), 'dark square at bottom-left');
   assert.ok(!isDarkSquare(sq(7, 7)), 'light square at bottom-right');
   assert.equal(gameResult(state), null);
-});
-
-test('setup: matches the picture on the hub preview card', () => {
-  const engine = createInitialState().board.map((p) => p?.side ?? null);
-  const picture = startingPosition().map((s) => s.piece);
-  assert.deepEqual(engine, picture);
 });
 
 test('directions: Acorns move up toward row 0 and crown there; Leaves move down and crown on row 7', () => {
@@ -380,6 +374,7 @@ test('random games keep every rule, and always end', () => {
       assert.ok(ply < 3000, 'game did not end');
       const moves = legalMoves(state);
       const result = gameResult(state);
+      assert.deepEqual(analyze(state), { result, moves }, 'analyze() is gameResult() and legalMoves() together');
       if (!moves.length) {
         assert.ok(result, 'no moves only when the game is over');
         endings[result.reason]++;
@@ -397,6 +392,7 @@ test('random games keep every rule, and always end', () => {
         }
       }
       const next = applyMove(state, chosen);
+      assert.deepEqual(playLegalMove(state, chosen), next, 'the unchecked path plays legal moves the same way');
       assert.equal(next.turn, opponent(state.turn));
       assert.equal(countPieces(next.board, state.turn), countPieces(state.board, state.turn));
       assert.equal(countPieces(next.board, next.turn), countPieces(state.board, next.turn) - chosen.captures.length);

@@ -84,6 +84,27 @@ export function createFakeView() {
   return view;
 }
 
+// Records what the Acorns & Leaves session asks its view to draw and say.
+export function createFakeCheckersView() {
+  const view = {
+    model: null, // the latest render(model)
+    models: [],
+    announcements: [],
+    result: null, // { outcome, title, message } while the dialog is open
+    results: [],
+    orientation: null,
+    matchInfo: null,
+    setOrientation(side) { view.orientation = side; },
+    showMatchInfo(info) { view.matchInfo = { ...info }; },
+    render(model) { view.model = model; view.models.push(model); },
+    announce(text) { view.announcements.push(text); },
+    showResult(result) { view.result = result; view.results.push(result); },
+    hideResult() { view.result = null; },
+    get said() { return view.announcements[view.announcements.length - 1]; },
+  };
+  return view;
+}
+
 // Records audio calls in order, e.g. ['sfx:victory-sound', 'music:stop'].
 export function createFakeAudio() {
   const calls = [];

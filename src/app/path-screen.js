@@ -1,8 +1,10 @@
 // "Your Path": Shells & Feathers totals (same numbers as v1's stats screen),
 // records per Spirit difficulty and for two players, achievements, and the
-// button that clears them.
+// button that clears them; then the Acorns & Leaves records, cleared
+// separately.
 import { DIFFICULTIES, DIFFICULTY_NAMES } from '../games/shells-feathers/ai.js';
 import { achievementsFor } from '../games/shells-feathers/achievements.js';
+import { DIFFICULTIES as AL_DIFFICULTIES, DIFFICULTY_NAMES as AL_DIFFICULTY_NAMES } from '../games/acorns-leaves/ai.js';
 
 export function createPathScreen({ doc, profile, audio, confirm }) {
   const byId = (id) => doc.getElementById(id);
@@ -13,6 +15,14 @@ export function createPathScreen({ doc, profile, audio, confirm }) {
     return el;
   };
 
+  const recordRows = (difficulties, names, single) => difficulties.map((d) => {
+    const { wins, draws, losses } = single[d];
+    return make('tr', {}, [
+      make('th', { scope: 'row', textContent: names[d] }),
+      ...[wins, draws, losses].map((n) => make('td', { textContent: String(n) })),
+    ]);
+  });
+
   function render() {
     const totals = profile.statsSummary();
     const stats = profile.stats();
@@ -21,13 +31,7 @@ export function createPathScreen({ doc, profile, audio, confirm }) {
     byId('losses-count').textContent = totals.losses;
     byId('total-games').textContent = totals.totalGames;
 
-    byId('spirit-records').replaceChildren(...DIFFICULTIES.map((d) => {
-      const { wins, draws, losses } = stats.single[d];
-      return make('tr', {}, [
-        make('th', { scope: 'row', textContent: DIFFICULTY_NAMES[d] }),
-        ...[wins, draws, losses].map((n) => make('td', { textContent: String(n) })),
-      ]);
-    }));
+    byId('spirit-records').replaceChildren(...recordRows(DIFFICULTIES, DIFFICULTY_NAMES, stats.single));
 
     const { player1Wins, player2Wins, draws } = stats.twoPlayer;
     byId('two-player-record').textContent = `Player 1 wins: ${player1Wins} · Player 2 wins: ${player2Wins} · Draws: ${draws}`;
@@ -53,6 +57,11 @@ export function createPathScreen({ doc, profile, audio, confirm }) {
         make('span', { className: 'achievement-state', textContent: a.unlocked ? 'Unlocked' : 'Locked' }),
       ],
     )));
+
+    const checkers = profile.acornsLeavesStats();
+    byId('al-spirit-records').replaceChildren(...recordRows(AL_DIFFICULTIES, AL_DIFFICULTY_NAMES, checkers.single));
+    const { acornWins, leafWins, draws: checkersDraws } = checkers.twoPlayer;
+    byId('al-two-player-record').textContent = `Acorns wins: ${acornWins} · Leaves wins: ${leafWins} · Draws: ${checkersDraws}`;
   }
 
   function reset() {
@@ -62,5 +71,12 @@ export function createPathScreen({ doc, profile, audio, confirm }) {
     audio.playSfx('button-select');
   }
 
-  return { render, reset };
+  function resetAcornsLeaves() {
+    if (!confirm('Clear all Acorns & Leaves records?')) return;
+    profile.resetAcornsLeavesStats();
+    render();
+    audio.playSfx('button-select');
+  }
+
+  return { render, reset, resetAcornsLeaves };
 }

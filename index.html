@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#654321" />
-  <meta name="description" content="Spirit of the Woods: peaceful forest games. Play Shells &amp; Feathers (tic-tac-toe) against the forest Spirit or a friend." />
+  <meta name="description" content="Spirit of the Woods: peaceful forest games. Play Shells &amp; Feathers (tic-tac-toe) and Acorns &amp; Leaves (checkers) against the forest Spirit or a friend." />
   <title>Spirit of the Woods</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -12,6 +12,58 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
 </head>
 <body>
+  <!-- Acorns & Leaves pieces, used by the board, cards and rules. Acorns: light
+       wooden disc, dark rim, acorn. Leaves: dark green disc, cream rim, leaf.
+       Kings add a gold ring, a second disc underneath and a crown. -->
+  <svg class="svg-sprite" aria-hidden="true" focusable="false">
+    <defs>
+      <g id="al-acorn-emblem">
+        <path d="M33 46H67C67 62 60 72 50 77C40 72 33 62 33 46Z" fill="#B5682A" stroke="#3E2410" stroke-width="3" stroke-linejoin="round" />
+        <path d="M40 53C40 62 43 67 47 70" fill="none" stroke="#E6A964" stroke-width="3" stroke-linecap="round" />
+        <path d="M27 47C27 35 37 29 50 29C63 29 73 35 73 47Z" fill="#6B3D18" stroke="#3E2410" stroke-width="3" stroke-linejoin="round" />
+        <path d="M34 41L40 35M42 42L49 34M51 42L58 34M60 42L66 36" fill="none" stroke="#9A6234" stroke-width="2" stroke-linecap="round" />
+        <path d="M50 29C50 24 52 20 57 18" fill="none" stroke="#3E2410" stroke-width="4" stroke-linecap="round" />
+      </g>
+      <g id="al-leaf-emblem" transform="rotate(-38 50 50)">
+        <path d="M50 16C68 30 72 54 50 80C28 54 32 30 50 16Z" fill="#DCEFC0" stroke="#173F22" stroke-width="3" stroke-linejoin="round" />
+        <path d="M50 24V86" fill="none" stroke="#2E6A3E" stroke-width="3" stroke-linecap="round" />
+        <path d="M50 40L41 33M50 40L59 33M50 52L39 43M50 52L61 43M50 64L41 56M50 64L59 56" fill="none" stroke="#2E6A3E" stroke-width="2.5" stroke-linecap="round" />
+      </g>
+      <g id="al-crown">
+        <path d="M31 39L28 18L40 28L50 11L60 28L72 18L69 39Z" fill="#FFD447" stroke="#3B2400" stroke-width="3" stroke-linejoin="round" />
+        <path d="M33 34H67" fill="none" stroke="#B8860B" stroke-width="2.5" />
+      </g>
+    </defs>
+    <symbol id="al-acorn" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="45" fill="#3E2410" />
+      <circle cx="50" cy="50" r="40" fill="#F1DBAE" />
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#D2A86E" stroke-width="2" />
+      <use href="#al-acorn-emblem" />
+    </symbol>
+    <symbol id="al-leaf" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="45" fill="#FFF8DC" />
+      <circle cx="50" cy="50" r="40" fill="#2E6A3E" />
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#4E8E5B" stroke-width="2" />
+      <use href="#al-leaf-emblem" />
+    </symbol>
+    <symbol id="al-acorn-king" viewBox="0 0 100 100">
+      <circle cx="50" cy="55" r="44" fill="#3E2410" />
+      <circle cx="50" cy="49" r="44" fill="#3E2410" />
+      <circle cx="50" cy="49" r="39" fill="#E9B526" />
+      <circle cx="50" cy="49" r="33" fill="#F1DBAE" />
+      <use href="#al-acorn-emblem" transform="translate(50 60) scale(0.56) translate(-50 -50)" />
+      <use href="#al-crown" />
+    </symbol>
+    <symbol id="al-leaf-king" viewBox="0 0 100 100">
+      <circle cx="50" cy="55" r="44" fill="#C9BC93" />
+      <circle cx="50" cy="49" r="44" fill="#FFF8DC" />
+      <circle cx="50" cy="49" r="39" fill="#E9B526" />
+      <circle cx="50" cy="49" r="33" fill="#2E6A3E" />
+      <use href="#al-leaf-emblem" transform="translate(50 61) scale(0.54) translate(-50 -50)" />
+      <use href="#al-crown" />
+    </symbol>
+  </svg>
+
   <main id="game-container">
     <!-- Hub: choose a game -->
     <section id="hub-screen" class="screen active" aria-labelledby="hub-title">
@@ -42,17 +94,18 @@
           </div>
         </article>
 
-        <article class="game-card game-card-preview" aria-labelledby="al-card-title">
+        <article class="game-card" aria-labelledby="al-card-title">
           <div class="card-top">
-            <div class="card-art checkers-preview" data-checkers-preview aria-hidden="true"></div>
+            <div class="card-art checkers-mini" data-checkers-board aria-hidden="true"></div>
             <div class="card-heading">
               <h3 id="al-card-title" class="card-title">Acorns &amp; Leaves</h3>
               <p class="card-kind">Checkers</p>
-              <p class="badge badge-preview">Preview · not playable yet</p>
+              <p class="badge badge-ready">Ready to play</p>
             </div>
           </div>
-          <p class="card-text">Classic checkers with acorn and leaf pieces. Its rules are ready, but the board is still being built, so it can't be played yet.</p>
+          <p class="card-text">Classic checkers with acorn and leaf pieces. Jump and capture against the forest Spirit or a friend on the same device.</p>
           <div class="card-actions">
+            <a class="btn btn-primary" href="#/acorns-leaves" aria-label="Play Acorns &amp; Leaves">Play</a>
             <a class="btn btn-secondary" href="#/acorns-leaves/how-to-play" aria-label="How to Play Acorns &amp; Leaves">How to Play</a>
           </div>
         </article>
@@ -173,36 +226,124 @@
       <a class="btn btn-primary" href="#/shells-feathers">Play Shells &amp; Feathers</a>
     </section>
 
-    <!-- How to Play: Acorns & Leaves (preview) -->
+    <!-- Acorns & Leaves: side, difficulty and mode -->
+    <section id="al-setup-screen" class="screen" aria-labelledby="al-setup-title">
+      <div class="screen-top"><a class="back-link" href="#/" data-up>← All games</a></div>
+      <header class="screen-header">
+        <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg></p>
+        <h2 id="al-setup-title" tabindex="-1">Acorns &amp; Leaves</h2>
+        <p class="screen-subtitle">Checkers · capture every piece, or leave no move</p>
+      </header>
+
+      <div class="panel setup-panel">
+        <fieldset class="option-group">
+          <legend>Against the Spirit, you play</legend>
+          <div class="segmented">
+            <label class="segment"><input type="radio" name="al-side" value="acorn" aria-describedby="al-side-hint" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> Acorns</span></label>
+            <label class="segment"><input type="radio" name="al-side" value="leaf" aria-describedby="al-side-hint" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg> Leaves</span></label>
+          </div>
+          <p class="hint" id="al-side-hint">Acorns move first. Your pieces start at the bottom of the board.</p>
+        </fieldset>
+        <fieldset class="option-group">
+          <legend>Spirit difficulty</legend>
+          <div class="segmented segmented-stack">
+            <label class="segment"><input type="radio" name="al-difficulty" value="easy" aria-describedby="al-difficulty-hint" /><span>Gentle</span></label>
+            <label class="segment"><input type="radio" name="al-difficulty" value="medium" aria-describedby="al-difficulty-hint" /><span>Balanced</span></label>
+            <label class="segment"><input type="radio" name="al-difficulty" value="hard" aria-describedby="al-difficulty-hint" /><span>Wise</span></label>
+          </div>
+          <p class="hint" id="al-difficulty-hint"></p>
+        </fieldset>
+      </div>
+
+      <div class="mode-choices">
+        <a class="mode-btn" href="#/acorns-leaves/play/single">
+          <span class="mode-icon" aria-hidden="true">🎯</span>
+          <span class="mode-title">Play the Spirit</span>
+          <span class="mode-desc">One player, with the side and difficulty above</span>
+        </a>
+        <a class="mode-btn" href="#/acorns-leaves/play/two">
+          <span class="mode-icon" aria-hidden="true">👥</span>
+          <span class="mode-title">Two Players</span>
+          <span class="mode-desc">Acorns and Leaves take turns on one device</span>
+        </a>
+      </div>
+      <a class="text-link" href="#/acorns-leaves/how-to-play">How to Play</a>
+    </section>
+
+    <!-- Acorns & Leaves: match -->
+    <section id="al-game-screen" class="screen match-screen al-match-screen" aria-labelledby="al-match-title">
+      <h2 id="al-match-title" class="visually-hidden" tabindex="-1">Acorns &amp; Leaves match</h2>
+      <div class="game-header al-header">
+        <p class="match-info" id="al-match-info"></p>
+        <div class="al-sides">
+          <div class="al-side" id="al-side-acorn">
+            <svg class="al-side-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg>
+            <span class="al-side-text"><span class="al-side-name">Acorns</span><span class="visually-hidden al-side-of"></span><span class="al-side-stat">Captured <span class="al-side-count">0</span></span></span>
+            <span class="al-side-tag" hidden></span>
+          </div>
+          <div class="al-side" id="al-side-leaf">
+            <svg class="al-side-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg>
+            <span class="al-side-text"><span class="al-side-name">Leaves</span><span class="visually-hidden al-side-of"></span><span class="al-side-stat">Captured <span class="al-side-count">0</span></span></span>
+            <span class="al-side-tag" hidden></span>
+          </div>
+        </div>
+        <p class="turn-indicator al-turn" id="al-turn"></p>
+      </div>
+
+      <div class="al-board-frame">
+        <div id="al-board" class="al-board" role="group" aria-label="Checkers board" aria-describedby="al-board-help" data-state="ready"></div>
+      </div>
+      <p class="al-hint" id="al-hint"></p>
+      <p id="al-board-help" class="visually-hidden">Use the arrow keys to move between the dark squares. Press Enter or Space on a piece to pick it up, then on the square it should move to. Escape puts the piece back.</p>
+
+      <div class="game-controls">
+        <button type="button" class="btn control-btn" data-action="al-restart">Restart</button>
+        <a class="btn control-btn" href="#/acorns-leaves" data-up>Change Mode</a>
+      </div>
+    </section>
+
+    <!-- How to Play: Acorns & Leaves -->
     <section id="al-howto-screen" class="screen" aria-labelledby="al-howto-title">
       <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
       <header class="screen-header">
-        <p class="eyebrow" aria-hidden="true">🌰 🍂</p>
+        <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg></p>
         <h2 id="al-howto-title" tabindex="-1">How to Play Acorns &amp; Leaves</h2>
         <p class="screen-subtitle">Checkers</p>
       </header>
-      <p class="notice notice-preview" role="note"><strong>Preview:</strong> Acorns &amp; Leaves can't be played yet. Its rules engine is finished, but the playable board is still being built. These are the rules it plays by.</p>
       <div class="panel prose">
-        <p>Acorns &amp; Leaves is checkers (also called draughts) with a forest look: one player has acorns, the other has leaves.</p>
+        <p>Classic checkers (draughts): one side plays acorns, the other leaves.</p>
         <figure class="checkers-figure">
-          <div class="checkers-preview checkers-preview-large" data-checkers-preview aria-hidden="true"></div>
-          <figcaption>Starting position: 12 pieces each, on the dark squares of an 8 × 8 board.</figcaption>
+          <div class="checkers-mini checkers-mini-large" data-checkers-board aria-hidden="true"></div>
+          <figcaption>Starting position: 12 pieces each on the dark squares, Acorns at the bottom.</figcaption>
         </figure>
-        <h3>Moving</h3>
-        <ul>
-          <li>Acorns move first, then players alternate.</li>
-          <li>A piece moves one square diagonally forward to an empty dark square.</li>
+        <ul class="piece-legend" aria-label="The pieces">
+          <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> Acorn</li>
+          <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn-king" /></svg> Acorn king</li>
+          <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg> Leaf</li>
+          <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf-king" /></svg> Leaf king</li>
         </ul>
-        <h3>Capturing</h3>
+        <h3>Goal</h3>
+        <p>Capture every piece on the other side, or leave it with no move.</p>
+        <h3>Moves</h3>
         <ul>
-          <li>Jump diagonally over an opponent's piece to the empty square just beyond it; the jumped piece is removed. Ordinary pieces capture forward only.</li>
-          <li>If a capture is possible, you must take one, but you may choose which. If the same piece can jump again, it keeps jumping.</li>
+          <li>Acorns move first. A piece moves one square diagonally forward, on the dark squares.</li>
+          <li>To capture, jump an opponent's piece to the empty square just beyond it. Ordinary pieces capture forward only.</li>
+          <li>Capturing is compulsory, but you choose which capture. A piece that can jump again keeps jumping.</li>
         </ul>
         <h3>Kings</h3>
-        <p>A piece that reaches the far row becomes a king and can move and capture backward as well as forward. Becoming a king ends the move, even in the middle of a chain of jumps.</p>
-        <h3>Winning</h3>
-        <p>You win when your opponent has no pieces left or no legal move. If 40 moves pass on each side with no capture and no ordinary piece moved, the game is a draw.</p>
+        <p>Reach the far row to be crowned (crown and gold ring). Kings move and capture backward too. Being crowned ends the move.</p>
+        <h3>Draw</h3>
+        <p>40 moves each with no capture and no ordinary piece moved.</p>
+        <h3>On the board</h3>
+        <ul>
+          <li>Tap a piece, then a marked square: a dot is a move, a ring is a jump. In a chain, tap each landing square.</li>
+          <li>An orange ring marks pieces that must capture.</li>
+          <li>Keyboard: arrow keys move between dark squares, Enter or Space picks, Escape puts the piece back.</li>
+        </ul>
+        <h3>Against the Spirit</h3>
+        <p>Pick your side and <strong>Gentle</strong>, <strong>Balanced</strong> or <strong>Wise</strong>. Your pieces start at the bottom.</p>
       </div>
+      <a class="btn btn-primary" href="#/acorns-leaves">Play Acorns &amp; Leaves</a>
     </section>
 
     <!-- Settings -->
@@ -220,7 +361,7 @@
           <span class="setting-label">Music</span>
           <span class="switch"><input type="checkbox" id="music-toggle" role="switch" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
         </label>
-        <p class="hint">Shells &amp; Feathers pieces and difficulty are chosen before each game.</p>
+        <p class="hint">Each game's pieces and difficulty are chosen on its own screen before you play.</p>
       </div>
     </section>
 
@@ -258,27 +399,51 @@
         <button type="button" class="btn btn-danger" data-action="reset-stats">Clear Shells &amp; Feathers records</button>
       </div>
 
-      <div class="panel panel-muted">
-        <h3 class="panel-title"><span aria-hidden="true">🌰</span> Acorns &amp; Leaves</h3>
-        <p>Preview: records will appear here once the game can be played.</p>
+      <div class="panel path-panel">
+        <h3 class="panel-title"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> Acorns &amp; Leaves</h3>
+        <h4>Against the Spirit</h4>
+        <table class="record-table">
+          <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
+          <tbody id="al-spirit-records"></tbody>
+        </table>
+
+        <h4>Two players</h4>
+        <p id="al-two-player-record"></p>
+
+        <button type="button" class="btn btn-danger" data-action="reset-al-stats">Clear Acorns &amp; Leaves records</button>
       </div>
     </section>
 
-    <!-- Shells & Feathers announcements (outside the match screen, which turns
-         inert while the result dialog is open) -->
+    <!-- Announcements (outside the match screens, which turn inert while a
+         result dialog is open) -->
     <p id="sf-status" class="visually-hidden" role="status" aria-live="polite"></p>
+    <p id="al-status" class="visually-hidden" role="status" aria-live="polite"></p>
 
     <!-- Shells & Feathers result -->
     <div id="game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message">
       <div class="modal-content">
-        <h3 id="modal-title">Victory!</h3>
-        <p id="modal-message">The spirits smile upon you</p>
+        <h3 id="modal-title" class="modal-title">Victory!</h3>
+        <p id="modal-message" class="modal-message">The spirits smile upon you</p>
         <div class="modal-buttons">
           <button type="button" class="btn btn-primary modal-btn" data-action="play-again">Play Again</button>
           <a class="btn modal-btn" href="#/shells-feathers" data-up>Change Mode</a>
           <a class="btn modal-btn" href="#/" data-up>All Games</a>
         </div>
         <button type="button" class="view-board-btn" data-action="view-board" aria-keyshortcuts="Escape">View Board</button>
+      </div>
+    </div>
+
+    <!-- Acorns & Leaves result -->
+    <div id="al-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="al-modal-title" aria-describedby="al-modal-message">
+      <div class="modal-content">
+        <h3 id="al-modal-title" class="modal-title">Victory!</h3>
+        <p id="al-modal-message" class="modal-message"></p>
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-primary modal-btn" data-action="al-rematch">Rematch</button>
+          <a class="btn modal-btn" href="#/acorns-leaves" data-up>Change Mode</a>
+          <a class="btn modal-btn" href="#/" data-up>All Games</a>
+        </div>
+        <button type="button" class="view-board-btn" data-action="al-view-board" aria-keyshortcuts="Escape">View Board</button>
       </div>
     </div>
   </main>

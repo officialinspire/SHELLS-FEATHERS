@@ -10,8 +10,10 @@ export const ROUTES = {
   '/shells-feathers/play/single': { screen: 'game-screen', args: ['single'], title: 'Shells & Feathers: vs the Spirit' },
   '/shells-feathers/play/two': { screen: 'game-screen', args: ['two'], title: 'Shells & Feathers: Two Players' },
   '/shells-feathers/how-to-play': { screen: 'sf-howto-screen', title: 'How to Play Shells & Feathers' },
-  '/acorns-leaves': { redirect: '/acorns-leaves/how-to-play' },
-  '/acorns-leaves/how-to-play': { screen: 'al-howto-screen', title: 'Acorns & Leaves (Preview)' },
+  '/acorns-leaves': { screen: 'al-setup-screen', title: 'Acorns & Leaves' },
+  '/acorns-leaves/play/single': { screen: 'al-game-screen', args: ['single'], title: 'Acorns & Leaves: vs the Spirit' },
+  '/acorns-leaves/play/two': { screen: 'al-game-screen', args: ['two'], title: 'Acorns & Leaves: Two Players' },
+  '/acorns-leaves/how-to-play': { screen: 'al-howto-screen', title: 'How to Play Acorns & Leaves' },
   '/settings': { screen: 'settings-screen', title: 'Settings' },
   '/your-path': { screen: 'path-screen', title: 'Your Path' },
 };
@@ -25,11 +27,9 @@ export function pathFromHash(hash) {
   return path.length > 1 ? path.replace(/\/+$/, '') || '/' : '/';
 }
 
-// Follows redirects; unknown paths resolve to the hub.
+// Unknown paths resolve to the hub (`redirected` says the URL needs rewriting).
 export function resolveRoute(path) {
-  let target = path;
-  if (ROUTES[target]?.redirect) target = ROUTES[target].redirect;
-  if (!ROUTES[target]) target = '/';
+  const target = ROUTES[path] ? path : '/';
   return { path: target, route: ROUTES[target], redirected: target !== path };
 }
 

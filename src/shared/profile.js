@@ -7,6 +7,7 @@ import {
   SAVE_KEY, LEGACY_STATS_KEY,
   createDefaultSave, normalizeSave, legacyStatsFromV1, migrateFromV1, absorbNewerLegacyStats,
   summarizeStats, recordResult, clearStats, applySettings, applyGameSettings,
+  recordAcornsLeavesResult, clearAcornsLeavesStats, applyAcornsLeavesSettings,
 } from './save-data.js';
 
 export const CORRUPT_SUFFIX = ':corrupt';
@@ -68,5 +69,11 @@ export function createProfile(store, { onSaveError = (msg) => console.warn(msg) 
     updateGameSettings(patch) { applyGameSettings(save, patch); persist(); },
     recordResult(result) { recordResult(save, result); persist({ mirrorStats: true }); },
     resetStats() { clearStats(save); persist({ mirrorStats: true }); },
+    // Acorns & Leaves (not part of the v1 totals, so never mirrored).
+    acornsLeavesSettings: () => ({ ...save.acornsLeaves.settings }),
+    acornsLeavesStats: () => JSON.parse(JSON.stringify(save.acornsLeaves.stats)),
+    updateAcornsLeavesSettings(patch) { applyAcornsLeavesSettings(save, patch); persist(); },
+    recordAcornsLeavesResult(result) { recordAcornsLeavesResult(save, result); persist(); },
+    resetAcornsLeavesStats() { clearAcornsLeavesStats(save); persist(); },
   };
 }

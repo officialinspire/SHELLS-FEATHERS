@@ -109,6 +109,14 @@ h2[tabindex="-1"]:focus {
     box-shadow: none;
 }
 
+/* Holds the SVG symbols the pieces are drawn from; takes no space. */
+.svg-sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
 .visually-hidden {
     position: absolute !important;
     width: 1px;
@@ -356,13 +364,6 @@ h2[tabindex="-1"]:focus {
     box-shadow: 0 8px 16px var(--shadow);
 }
 
-.panel-muted {
-    background: var(--bark-soft);
-    border-style: dashed;
-    border-color: rgba(245, 222, 179, 0.45);
-    font-family: var(--font-body);
-}
-
 .panel-title {
     font-family: var(--font-display);
     font-size: 1.35rem;
@@ -461,23 +462,6 @@ h2[tabindex="-1"]:focus {
     color: var(--ink);
 }
 
-.badge-preview {
-    border: 1.5px dashed var(--sand);
-    color: var(--sand);
-}
-
-/* A preview is clearly not a game you can start: dashed edge, muted art,
-   and no play control. */
-.game-card-preview {
-    background: var(--bark-soft);
-    border-style: dashed;
-    border-color: rgba(245, 222, 179, 0.55);
-}
-
-.game-card-preview .card-art {
-    filter: grayscale(0.6) opacity(0.75);
-}
-
 .hub-links {
     display: flex;
     flex-wrap: wrap;
@@ -514,10 +498,11 @@ h2[tabindex="-1"]:focus {
     line-height: 1;
 }
 
-.checkers-preview {
+.checkers-mini {
     flex: none;
     display: grid;
     grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
     width: 96px;
     height: 96px;
     border: 2px solid var(--dark-brown);
@@ -529,8 +514,13 @@ h2[tabindex="-1"]:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 8px;
-    line-height: 1;
+    min-width: 0;
+}
+
+.checkers-piece {
+    display: block;
+    width: 88%;
+    height: 88%;
 }
 
 .checkers-square.light {
@@ -541,15 +531,14 @@ h2[tabindex="-1"]:focus {
     background: #6B4A2B;
 }
 
-.checkers-preview-large {
+.checkers-mini-large {
     width: min(100%, 320px);
     height: auto;
     aspect-ratio: 1;
 }
 
-.checkers-preview-large .checkers-square {
+.checkers-mini-large .checkers-square {
     aspect-ratio: 1;
-    font-size: clamp(14px, 4.5vw, 26px);
 }
 
 /* Shells & Feathers setup */
@@ -975,7 +964,7 @@ h2[tabindex="-1"]:focus {
     to { transform: translateY(0); opacity: 1; }
 }
 
-#modal-title {
+.modal-title {
     font-family: var(--font-display);
     font-size: clamp(1.8rem, 7vw, 2.5rem);
     color: var(--turquoise);
@@ -983,7 +972,7 @@ h2[tabindex="-1"]:focus {
     text-shadow: 2px 2px 4px var(--shadow);
 }
 
-#modal-message {
+.modal-message {
     font-size: 1.2rem;
     color: var(--feather-white);
     margin-bottom: 24px;
@@ -1032,12 +1021,12 @@ h2[tabindex="-1"]:focus {
         padding: 16px 20px;
     }
 
-    #modal-title {
+    .modal-title {
         margin-bottom: 4px;
         font-size: 1.9rem;
     }
 
-    #modal-message {
+    .modal-message {
         margin-bottom: 14px;
     }
 
@@ -1048,6 +1037,384 @@ h2[tabindex="-1"]:focus {
 
     .view-board-btn {
         margin-top: 4px;
+    }
+}
+
+/* Acorns & Leaves match: header (sides, turn), board, guidance, controls. */
+.al-match-screen.active {
+    grid-template-areas: "header" "board" "hint" "controls";
+    gap: 8px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.al-match-screen .game-header {
+    max-width: 580px;
+    padding: 6px 12px 8px;
+}
+
+.al-match-screen .match-info {
+    margin-bottom: 8px;
+}
+
+.al-sides {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.al-side {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 3px 8px;
+    background: rgba(43, 27, 14, 0.45);
+    border: 2px solid rgba(245, 222, 179, 0.25);
+    border-radius: 14px;
+    text-align: left;
+}
+
+/* The side to move: bright edge plus a "To move" tag, not color alone. */
+.al-side.is-active {
+    background: rgba(64, 224, 208, 0.16);
+    border-color: var(--turquoise);
+}
+
+.al-side.is-winner {
+    background: rgba(255, 212, 71, 0.18);
+    border-color: #FFD447;
+}
+
+.al-side-piece {
+    flex: none;
+    width: 34px;
+    height: 34px;
+}
+
+.al-side-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.al-side-name {
+    overflow: hidden;
+    font-size: 0.92rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.al-side-stat {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.al-side-count {
+    font-weight: bold;
+    color: var(--feather-white);
+}
+
+.al-side-tag {
+    position: absolute;
+    top: -9px;
+    right: 8px;
+    padding: 1px 8px;
+    background: var(--turquoise);
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.al-side.is-winner .al-side-tag {
+    background: #FFD447;
+}
+
+.al-turn[data-side="acorn"] { color: #F5DEB3; }
+.al-turn[data-side="leaf"] { color: #BDE8A8; }
+.al-turn[data-side="draw"] { color: var(--turquoise); }
+
+/* The board fits the width and leaves room for the header and controls. */
+.al-board-frame {
+    --al-board: min(calc(100vw - 32px), 560px, max(256px, calc(100vh - 292px)));
+    grid-area: board;
+    padding: 5px;
+    background: linear-gradient(145deg, #4A2E16, #2B1B0E);
+    border: 2px solid #1E1209;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px var(--shadow);
+}
+
+@supports (height: 100dvh) {
+    .al-board-frame {
+        --al-board: min(calc(100vw - 32px), 560px, max(256px, calc(100dvh - 292px)));
+    }
+}
+
+.al-board {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+    width: var(--al-board);
+    height: var(--al-board);
+    overflow: hidden;
+    border-radius: 6px;
+    /* No double-tap zoom on the board; scrolling and pinch zoom still work. */
+    touch-action: manipulation;
+}
+
+.al-square {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+}
+
+.al-square.light {
+    background: #E8D3A9;
+}
+
+.al-square.dark {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    padding: 0;
+    background: #6B4A2B;
+    border: 0;
+    border-radius: 0;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.al-piece {
+    position: relative;
+    z-index: 1;
+    width: 86%;
+    height: 86%;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45));
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+/* Coordinates: ranks down the left edge, files along the bottom. */
+.al-rank,
+.al-file {
+    position: absolute;
+    z-index: 2;
+    font-family: var(--font-label);
+    font-size: max(9px, calc(var(--al-board) / 8 * 0.22));
+    font-weight: 600;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.al-rank { top: 2px; left: 3px; }
+.al-file { right: 3px; bottom: 2px; }
+.al-square.dark :is(.al-rank, .al-file) { color: #E8D3A9; }
+.al-square.light :is(.al-rank, .al-file) { color: #6B4A2B; }
+
+/* The last move's route, and the route so far of an unfinished chain. */
+.al-square.dark.is-last { background: #8E6B3D; }
+.al-square.dark.is-trail { background: #2F6F66; }
+
+/* The piece picked up: gold square, piece lifted. */
+.al-square.dark.is-selected { background: #C99A2E; }
+
+.al-square.is-selected .al-piece {
+    transform: translateY(-6%) scale(1.06);
+    filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.55));
+}
+
+/* Where it can go: a dot for a move, a ring for a jump. */
+.al-square.is-destination::before {
+    content: '';
+    position: absolute;
+    width: 30%;
+    height: 30%;
+    background: var(--turquoise);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(255, 248, 220, 0.75);
+}
+
+.al-square.is-jump-target::before {
+    width: 64%;
+    height: 64%;
+    background: rgba(64, 224, 208, 0.18);
+    border: 4px solid var(--turquoise);
+    box-shadow: 0 0 0 2px var(--ink), inset 0 0 0 2px var(--ink);
+}
+
+/* Pieces that must capture: an orange ring. */
+.al-square.must-jump::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    width: 96%;
+    height: 96%;
+    border: 4px solid var(--sunset-orange);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.85);
+    animation: alMustJump 1.2s ease-in-out infinite;
+}
+
+@keyframes alMustJump {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+}
+
+/* A piece being jumped in an unfinished chain: faded, with a cross. A
+   faint cross marks squares emptied by the last move's captures. */
+.al-square.is-jumped .al-piece {
+    opacity: 0.5;
+}
+
+.al-square.is-jumped::after,
+.al-square.was-captured::after {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    width: 62%;
+    height: 62%;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 4L16 16M16 4L4 16' stroke='%232B1B0E' stroke-width='5.5' stroke-linecap='round'/%3E%3Cpath d='M4 4L16 16M16 4L4 16' stroke='%23FF6B35' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.al-square.was-captured::after {
+    width: 34%;
+    height: 34%;
+    opacity: 0.6;
+}
+
+.al-square.is-last-to .al-piece {
+    animation: alLand 0.3s ease;
+}
+
+@keyframes alLand {
+    from { transform: scale(0.7); }
+    to { transform: scale(1); }
+}
+
+@media (hover: hover) {
+    .al-board[data-state="ready"] .al-square.can-move:not(.is-selected):hover .al-piece {
+        transform: translateY(-4%) scale(1.04);
+    }
+
+    .al-board[data-state="ready"] .al-square.is-destination:hover {
+        background: #2F6F66;
+    }
+}
+
+.al-board[data-state="waiting"] .al-square.dark {
+    cursor: progress;
+}
+
+.al-board[data-state="over"] .al-square.dark {
+    cursor: default;
+}
+
+/* Focus: a cream edge with a dark band inside, drawn above the neighbours. */
+.al-square.dark:focus-visible {
+    z-index: 3;
+    outline: 3px solid var(--feather-white);
+    outline-offset: -3px;
+    box-shadow: inset 0 0 0 6px var(--ink);
+}
+
+/* Guidance under the board ("Choose a piece to move."). */
+.al-hint {
+    grid-area: hint;
+    width: 100%;
+    max-width: 580px;
+    min-height: 2.3em;
+    padding: 6px 12px;
+    background: var(--bark-soft);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-family: var(--font-body);
+    font-size: 0.98rem;
+    line-height: 1.35;
+    text-align: center;
+}
+
+.al-hint[data-tone="feedback"] {
+    border-color: var(--sunset-orange);
+    border-style: dashed;
+}
+
+/* Short landscape screens: the board beside the header, guidance and controls. */
+@media (orientation: landscape) and (max-height: 540px) {
+    .al-match-screen.active {
+        grid-template-columns: auto minmax(240px, 340px);
+        grid-template-areas: "board header" "board hint" "board controls";
+        align-items: center;
+        column-gap: 20px;
+        row-gap: 8px;
+    }
+
+    .al-match-screen .game-header { align-self: end; }
+    .al-match-screen .game-controls { align-self: start; }
+
+    .al-board-frame {
+        --al-board: min(calc(100vh - 46px), 52vw, 560px);
+    }
+
+    @supports (height: 100dvh) {
+        .al-board-frame {
+            --al-board: min(calc(100dvh - 46px), 52vw, 560px);
+        }
+    }
+}
+
+/* Narrow phones: the board takes the full width. */
+@media (max-width: 400px) {
+    .al-match-screen.active {
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+    }
+
+    .al-board-frame {
+        --al-board: min(calc(100vw - 26px), max(256px, calc(100vh - 278px)));
+        padding: 3px;
+    }
+
+    @supports (height: 100dvh) {
+        .al-board-frame {
+            --al-board: min(calc(100vw - 26px), max(256px, calc(100dvh - 278px)));
+        }
+    }
+
+    .al-side-piece {
+        width: 28px;
+        height: 28px;
+    }
+
+    .al-side-name {
+        font-size: 0.85rem;
+    }
+
+    .al-match-screen .match-info {
+        font-size: 0.8rem;
+    }
+
+    .al-match-screen .turn-indicator {
+        font-size: 1.05rem;
+    }
+
+    .al-hint {
+        padding: 4px 10px;
+        font-size: 0.9rem;
     }
 }
 
@@ -1077,21 +1444,6 @@ h2[tabindex="-1"]:focus {
     margin-top: 6px;
 }
 
-.notice {
-    width: 100%;
-    max-width: 560px;
-    padding: 14px 16px;
-    border-radius: 14px;
-    font-family: var(--font-body);
-    line-height: 1.5;
-}
-
-.notice-preview {
-    background: rgba(245, 222, 179, 0.96);
-    border: 2px dashed var(--primary-brown);
-    color: #3B2512;
-}
-
 .checkers-figure {
     display: flex;
     flex-direction: column;
@@ -1104,6 +1456,44 @@ h2[tabindex="-1"]:focus {
     font-size: 0.9rem;
     color: var(--text-muted);
     text-align: center;
+}
+
+/* Acorns & Leaves pieces in text: setup options, Your Path, the rules. */
+.icon-piece {
+    display: inline-block;
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: middle;
+}
+
+.eyebrow .icon-piece {
+    width: 1.3em;
+    height: 1.3em;
+}
+
+.piece-legend {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+    margin: 4px 0 8px;
+    padding: 0 !important;
+    list-style: none;
+}
+
+.piece-legend li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 !important;
+}
+
+.legend-piece {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 3px;
+    background: #6B4A2B;
+    border-radius: 6px;
 }
 
 /* Settings */
@@ -1356,7 +1746,7 @@ h2[tabindex="-1"]:focus {
         height: 72px;
     }
 
-    .checkers-preview:not(.checkers-preview-large) {
+    .checkers-mini:not(.checkers-mini-large) {
         width: 80px;
         height: 80px;
     }

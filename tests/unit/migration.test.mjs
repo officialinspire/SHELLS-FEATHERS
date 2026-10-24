@@ -195,3 +195,71 @@ test('legacyStatsFromV1 accepts only plain objects', () => {
   assert.equal(legacyStatsFromV1('3'), null);
   assert.deepEqual(legacyStatsFromV1({ wins: 1 }), { wins: 1, losses: 0, draws: 0, totalGames: 1 });
 });
+
+// ------------------------------------------------------------ Acorns & Leaves
+
+test('a v2 save from before Acorns & Leaves gains its defaults; nothing else changes', () => {
+  const before = createDefaultSave();
+  delete before.acornsLeaves;
+  before.shellsFeathers.stats.single.hard.draws = 4;
+  before.shellsFeathers.settings.player1Symbol = 'feather';
+  const mirror = JSON.stringify({ wins: 0, losses: 0, draws: 4, totalGames: 4 });
+  const { save, source, stored } = load({ [SAVE_KEY]: JSON.stringify(before), [LEGACY_STATS_KEY]: mirror });
+  assert.equal(source, 'v2');
+  assert.deepEqual(save.shellsFeathers, before.shellsFeathers);
+  assert.deepEqual(save.acornsLeaves, createDefaultSave().acornsLeaves);
+  assert.deepEqual(save.acornsLeaves.settings, { difficulty: 'easy', side: 'acorn' });
+  assert.deepEqual(save.acornsLeaves.stats.twoPlayer, { acornWins: 0, leafWins: 0, draws: 0 });
+  assert.equal(stored(LEGACY_STATS_KEY), mirror);
+});
+
+test('bad Acorns & Leaves fields are repaired field by field; unknown ones are kept', () => {
+  const raw = createDefaultSave();
+  raw.acornsLeaves = {
+    settings: { difficulty: 'grandmaster', side: 'leaf', boardTheme: 'birch' },
+    stats: { single: { medium: { wins: '3', draws: -2 }, hard: null }, twoPlayer: { acornWins: 2, leafWins: 'x' }, streak: 5 },
+  };
+  const save = normalizeSave(raw);
+  assert.deepEqual(save.acornsLeaves.settings, { difficulty: 'easy', side: 'leaf', boardTheme: 'birch' });
+  assert.deepEqual(save.acornsLeaves.stats.single.medium, { wins: 3, losses: 0, draws: 0 });
+  assert.deepEqual(save.acornsLeaves.stats.single.hard, { wins: 0, losses: 0, draws: 0 });
+  assert.deepEqual(save.acornsLeaves.stats.twoPlayer, { acornWins: 2, leafWins: 0, draws: 0 });
+  assert.equal(save.acornsLeaves.stats.streak, 5);
+  for (const junk of [null, 'x', [], { settings: 7, stats: [] }]) {
+    raw.acornsLeaves = junk;
+    assert.deepEqual(normalizeSave(raw).acornsLeaves, createDefaultSave().acornsLeaves, JSON.stringify(junk));
+  }
+});
+
+test('Acorns & Leaves records and settings are saved apart from Shells & Feathers and its v1 totals', () => {
+  const area = createMemoryStorage({ [LEGACY_STATS_KEY]: V1 });
+  const profile = createProfile(openStorage(() => area));
+  profile.recordAcornsLeavesResult({ mode: 'single', difficulty: 'hard', outcome: 'win' });
+  profile.recordAcornsLeavesResult({ mode: 'single', difficulty: 'medium', outcome: 'loss' });
+  profile.recordAcornsLeavesResult({ mode: 'single', difficulty: 'nonsense', outcome: 'draw' });
+  profile.recordAcornsLeavesResult({ mode: 'two', outcome: 'leaf' });
+  profile.recordAcornsLeavesResult({ mode: 'two', outcome: 'draw' });
+  profile.updateAcornsLeavesSettings({ side: 'leaf', difficulty: 'hard' });
+  profile.updateAcornsLeavesSettings({ side: 'pinecone', difficulty: 'impossible' });
+
+  const reloaded = createProfile(openStorage(() => area));
+  assert.deepEqual(reloaded.acornsLeavesSettings(), { side: 'leaf', difficulty: 'hard' });
+  const stats = reloaded.acornsLeavesStats();
+  assert.deepEqual(stats.single, {
+    easy: { wins: 0, losses: 0, draws: 1 },
+    medium: { wins: 0, losses: 1, draws: 0 },
+    hard: { wins: 1, losses: 0, draws: 0 },
+  });
+  assert.deepEqual(stats.twoPlayer, { acornWins: 0, leafWins: 1, draws: 1 });
+  assert.deepEqual(reloaded.statsSummary(), { wins: 3, losses: 1, draws: 2, totalGames: 6 }, 'Shells & Feathers totals untouched');
+  assert.equal(area.map.get(LEGACY_STATS_KEY), V1, 'checkers games never reach the v1 record');
+
+  // Each game's Clear button clears only that game.
+  reloaded.resetStats();
+  assert.equal(reloaded.acornsLeavesStats().twoPlayer.leafWins, 1);
+  reloaded.resetAcornsLeavesStats();
+  assert.deepEqual(reloaded.acornsLeavesStats(), createDefaultSave().acornsLeaves.stats);
+  const copy = reloaded.acornsLeavesStats();
+  copy.twoPlayer.draws = 99;
+  assert.equal(reloaded.acornsLeavesStats().twoPlayer.draws, 0, 'callers get a copy');
+});

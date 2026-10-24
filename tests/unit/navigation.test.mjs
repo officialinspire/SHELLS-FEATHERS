@@ -1,8 +1,10 @@
-// Hash routing and board keyboard movement.
+// Hash routing and keyboard movement on both boards.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ROUTES, pathFromHash, resolveRoute, createRouter, documentTitle } from '../../src/app/router.js';
 import { nextCellIndex } from '../../src/games/shells-feathers/view.js';
+import { nextSquare, squareLabel } from '../../src/games/acorns-leaves/view.js';
+import { squareAt } from '../../src/games/acorns-leaves/engine.js';
 
 // A window with just enough history for the router. back() fires popstate
 // synchronously (browsers do it a moment later).
@@ -57,21 +59,25 @@ test('pathFromHash normalizes hashes; anything else is the hub', () => {
   for (const [hash, path] of cases) assert.equal(pathFromHash(hash), path, hash);
 });
 
-test('resolveRoute follows redirects and sends unknown paths to the hub', () => {
+test('resolveRoute keeps known paths and sends unknown ones to the hub', () => {
   assert.deepEqual(resolveRoute('/settings'), { path: '/settings', route: ROUTES['/settings'], redirected: false });
-  assert.equal(resolveRoute('/acorns-leaves').path, '/acorns-leaves/how-to-play');
-  assert.equal(resolveRoute('/acorns-leaves').redirected, true);
-  for (const unknown of ['/nope', '/acorns-leaves/play', '/shells-feathers/play/three']) {
+  assert.deepEqual(resolveRoute('/acorns-leaves'), { path: '/acorns-leaves', route: ROUTES['/acorns-leaves'], redirected: false });
+  assert.equal(ROUTES['/acorns-leaves'].screen, 'al-setup-screen');
+  for (const unknown of ['/nope', '/acorns-leaves/play', '/shells-feathers/play/three', '/acorns-leaves/play/three']) {
     assert.deepEqual(resolveRoute(unknown), { path: '/', route: ROUTES['/'], redirected: true }, unknown);
   }
 });
 
-test('every route names an existing kind of screen; only Shells & Feathers has play routes', () => {
+test('every route names a screen and a title; both games have a play route per mode', () => {
   const playRoutes = Object.keys(ROUTES).filter((p) => p.includes('/play'));
-  assert.deepEqual(playRoutes, ['/shells-feathers/play/single', '/shells-feathers/play/two']);
+  assert.deepEqual(playRoutes, [
+    '/shells-feathers/play/single', '/shells-feathers/play/two', '/acorns-leaves/play/single', '/acorns-leaves/play/two',
+  ]);
+  for (const path of playRoutes) assert.deepEqual(ROUTES[path].args, [path.endsWith('single') ? 'single' : 'two'], path);
   for (const [path, route] of Object.entries(ROUTES)) {
-    assert.ok(route.redirect || (route.screen && route.title), path);
+    assert.ok(route.screen && route.title, path);
   }
+  assert.equal(documentTitle(ROUTES['/acorns-leaves/play/two']), 'Acorns & Leaves: Two Players · Spirit of the Woods');
   assert.equal(documentTitle(ROUTES['/']), 'Spirit of the Woods');
   assert.equal(documentTitle(ROUTES['/settings']), 'Settings · Spirit of the Woods');
 });
@@ -85,9 +91,8 @@ test('start() shows the current URL; unknown and redirected URLs are rewritten i
   assert.equal(unknown.win.location.hash, '#/');
   assert.equal(unknown.win.entries.length, 1, 'replaced, not pushed');
 
-  const alias = setup('#/acorns-leaves');
-  assert.deepEqual(alias.shown, ['/acorns-leaves/how-to-play']);
-  assert.equal(alias.win.location.hash, '#/acorns-leaves/how-to-play');
+  const deep = setup('#/acorns-leaves/play/two/');
+  assert.deepEqual(deep.shown, ['/acorns-leaves/play/two']);
 });
 
 test('go() adds a history entry that remembers where it came from; going to the same place is a no-op', () => {
@@ -149,4 +154,50 @@ test('arrow keys move around the 3×3 board and stop at the edges', () => {
   for (const [from, key, to] of moves) assert.equal(nextCellIndex(from, key), to, `${from} ${key}`);
   assert.equal(nextCellIndex(4, 'Enter'), null);
   assert.equal(nextCellIndex(4, 'a'), null);
+});
+
+test('checkers: arrow keys move between dark squares, as seen on screen, and stop at the edges', () => {
+  const sq = (row, col) => squareAt(row, col);
+  // Acorns at the bottom: (7,0) is a1, bottom-left.
+  const moves = [
+    [sq(7, 0), 'ArrowRight', sq(7, 2)], [sq(7, 0), 'ArrowLeft', sq(7, 0)], [sq(7, 0), 'ArrowDown', sq(7, 0)],
+    [sq(7, 0), 'ArrowUp', sq(6, 1)], [sq(6, 1), 'ArrowUp', sq(5, 0)], [sq(6, 7), 'ArrowUp', sq(5, 6)],
+    [sq(5, 2), 'ArrowDown', sq(6, 3)], [sq(0, 1), 'ArrowUp', sq(0, 1)], [sq(0, 7), 'ArrowRight', sq(0, 7)],
+    [sq(3, 4), 'Home', sq(3, 0)], [sq(3, 0), 'End', sq(3, 6)], [sq(2, 3), 'Home', sq(2, 1)],
+  ];
+  for (const [from, key, to] of moves) assert.equal(nextSquare(from, key), to, `${from} ${key}`);
+  // Turned round (Leaves at the bottom): screen directions are reversed on the board.
+  const turned = [
+    [sq(0, 7), 'ArrowUp', sq(1, 6)], [sq(0, 7), 'ArrowRight', sq(0, 5)], [sq(0, 7), 'ArrowDown', sq(0, 7)],
+    [sq(2, 1), 'ArrowDown', sq(1, 0)], [sq(4, 3), 'Home', sq(4, 7)],
+  ];
+  for (const [from, key, to] of turned) assert.equal(nextSquare(from, key, 'leaf'), to, `turned ${from} ${key}`);
+  // Every dark square is reachable, and the keys only ever land on dark squares.
+  for (const orientation of ['acorn', 'leaf']) {
+    const seen = new Set([sq(7, 0)]);
+    const queue = [sq(7, 0)];
+    while (queue.length) {
+      const at = queue.shift();
+      for (const key of ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End']) {
+        const next = nextSquare(at, key, orientation);
+        assert.equal((Math.floor(next / 8) + (next % 8)) % 2, 1, 'dark squares only');
+        if (!seen.has(next)) { seen.add(next); queue.push(next); }
+      }
+    }
+    assert.equal(seen.size, 32, orientation);
+  }
+  assert.equal(nextSquare(sq(7, 0), 'Enter'), null);
+});
+
+test('checkers squares are named by place, contents and purpose', () => {
+  const sq = (row, col) => squareAt(row, col);
+  const acorn = { side: 'acorn', king: false };
+  assert.equal(squareLabel({ square: sq(5, 2), piece: acorn, movable: true }), 'c3: acorn, can move');
+  assert.equal(squareLabel({ square: sq(5, 2), piece: acorn, movable: true, selected: true }), 'c3: acorn, selected');
+  assert.equal(squareLabel({ square: sq(4, 3), piece: null, destination: true }), 'd4: empty, move here');
+  assert.equal(squareLabel({ square: sq(3, 0), piece: null, destination: true, capture: true }), 'a5: empty, jump here');
+  assert.equal(squareLabel({ square: sq(5, 2), piece: acorn, movable: true, mustJump: true }), 'c3: acorn, must capture');
+  assert.equal(squareLabel({ square: sq(4, 1), piece: { side: 'leaf', king: true }, jumped: true }), 'b4: leaf king, being captured');
+  assert.equal(squareLabel({ square: sq(4, 1), piece: null, onLastMove: true, capturedLastMove: true }), 'b4: empty, captured in the last move');
+  assert.equal(squareLabel({ square: sq(3, 2), piece: acorn, onLastMove: true }), 'c5: acorn, last move');
 });
