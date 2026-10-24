@@ -331,6 +331,13 @@ test('game hub', { timeout: 300_000 }, async (t) => {
       await game.page.evaluate(() => document.getElementById('al-modal').classList.add('active'));
       await game.settle();
       assert.deepEqual(await unreachable('#al-modal'), [], `${width}×${height} Acorns & Leaves result dialog`);
+      // Fog of War with two players: the handoff screen, then the match behind it.
+      await game.goTo('#/acorns-leaves/fog/two', 'al-game-screen');
+      await game.settle();
+      assert.deepEqual(await unreachable('#al-handoff'), [], `${width}×${height} handoff screen`);
+      await game.press("Show the Acorns' board");
+      await game.settle();
+      assert.deepEqual(await unreachable('.screen.active'), [], `${width}×${height} Fog match`);
       // The page itself never scrolls sideways.
       assert.equal(await game.page.evaluate(() => { window.scrollTo(5000, 0); return scrollX; }), 0);
       await game.page.context().close();

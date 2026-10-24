@@ -19,6 +19,11 @@
 //
 // Against the Spirit the player's side sits at the bottom, so playing the
 // Leaves turns the board round. Square names stay the same either way.
+//
+// Fog of War: the model's board already holds only what the viewer can see.
+// Fogged squares (model.fog) get mist and are named "hidden"; pieces found by
+// a blocked jump (model.found) are marked. In a two-player game the handoff
+// screen covers everything, and the board behind it holds no pieces.
 import { SIZE, rowOf, colOf, isDarkSquare } from './engine.js';
 import { DIFFICULTY_NAMES } from './ai.js';
 import { squareName, pieceName, SIDE_NAMES } from './text.js';
@@ -53,17 +58,22 @@ export function nextSquare(square, key, orientation = 'acorn') {
   return onScreen(target[0] * SIZE + target[1], orientation);
 }
 
-// "d4: empty, move here", "c3: acorn, selected", "e5: leaf, being captured".
-export function squareLabel({ square, piece, selected, destination, capture, mustJump, movable, jumped, onLastMove, capturedLastMove }) {
+// "d4: empty, move here", "c3: acorn, selected", "e5: leaf, being captured",
+// and in Fog "e5: hidden, try a jump here", "a5: leaf, found blocking a jump".
+export function squareLabel({
+  square, piece, selected, destination, capture, mustJump, movable, jumped, onLastMove, capturedLastMove, fogged, found, mayCapture,
+}) {
   const notes = [];
   if (selected) notes.push('selected');
-  if (destination) notes.push(capture ? 'jump here' : 'move here');
-  if (mustJump) notes.push('must capture');
+  if (destination) notes.push(fogged ? 'try a jump here' : capture ? 'jump here' : 'move here');
+  if (mustJump) notes.push(mayCapture ? 'may capture' : 'must capture');
   else if (movable && !selected) notes.push('can move');
+  if (found) notes.push('found blocking a jump');
   if (jumped) notes.push('being captured');
   if (capturedLastMove) notes.push('captured in the last move');
   else if (onLastMove) notes.push('last move');
-  return `${squareName(square)}: ${pieceName(piece)}${notes.length ? `, ${notes.join(', ')}` : ''}`;
+  const contents = fogged ? 'hidden' : pieceName(piece);
+  return `${squareName(square)}: ${contents}${notes.length ? `, ${notes.join(', ')}` : ''}`;
 }
 
 const pieceKey = (piece) => (piece ? `${piece.side}${piece.king ? '-king' : ''}` : '');
@@ -73,6 +83,7 @@ export function createAcornsLeavesView(doc) {
   const board = byId('al-board');
   const screen = byId('al-game-screen');
   const modal = byId('al-modal');
+  const handoff = byId('al-handoff');
   const status = byId('al-status');
   const restartButton = screen.querySelector('[data-action="al-restart"]');
   const squares = [];
@@ -145,6 +156,10 @@ export function createAcornsLeavesView(doc) {
     const trail = new Set(model.trail);
     const lastPath = new Set(model.lastMove?.path ?? []);
     const lastCaptures = new Set(model.lastMove?.captures ?? []);
+    const fog = new Set(model.fog ?? []);
+    const found = new Set(model.found ?? []);
+    const inFog = model.variant === 'fog';
+    board.dataset.variant = inFog ? 'fog' : 'classic';
     for (let square = 0; square <= LAST; square++) {
       if (!isDarkSquare(square)) continue;
       const el = squares[square];
@@ -158,8 +173,12 @@ export function createAcornsLeavesView(doc) {
         trail: trail.has(square) && model.selected !== square,
         onLastMove: lastPath.has(square),
         capturedLastMove: lastCaptures.has(square) && !piece,
+        fogged: fog.has(square),
+        found: found.has(square),
       };
-      setPiece(el, piece);
+      setPiece(el, fog.has(square) ? null : piece);
+      el.classList.toggle('is-fog', marks.fogged);
+      el.classList.toggle('is-found', marks.found);
       el.classList.toggle('is-selected', marks.selected);
       el.classList.toggle('is-destination', marks.destination);
       el.classList.toggle('is-jump-target', marks.destination && model.capture);
@@ -172,7 +191,7 @@ export function createAcornsLeavesView(doc) {
       el.classList.toggle('is-last-to', model.lastMove?.path.at(-1) === square && Boolean(piece));
       if (model.phase === 'ready') el.removeAttribute('aria-disabled');
       else el.setAttribute('aria-disabled', 'true');
-      el.setAttribute('aria-label', squareLabel({ square, piece, capture: model.capture, ...marks }));
+      el.setAttribute('aria-label', squareLabel({ square, piece, capture: model.capture, mayCapture: inFog, ...marks }));
     }
 
     for (const side of ['acorn', 'leaf']) {
@@ -252,10 +271,32 @@ export function createAcornsLeavesView(doc) {
     focusBoard() {
       squares[focusSquare].focus();
     },
-    showMatchInfo({ mode, difficulty, humanSide }) {
-      byId('al-match-info').textContent = mode === 'single'
-        ? `Against the Spirit · ${DIFFICULTY_NAMES[difficulty]} · You: ${SIDE_NAMES[humanSide]}`
-        : 'Two players · Acorns move first';
+    showMatchInfo({ mode, difficulty, humanSide, variant = 'classic' }) {
+      const fogged = variant === 'fog';
+      let info;
+      if (mode === 'two') info = fogged ? 'Fog of War · Two players' : 'Two players · Acorns move first';
+      else if (fogged) info = `Fog of War · ${DIFFICULTY_NAMES[difficulty]} Spirit · You: ${SIDE_NAMES[humanSide]}`;
+      else info = `Against the Spirit · ${DIFFICULTY_NAMES[difficulty]} · You: ${SIDE_NAMES[humanSide]}`;
+      byId('al-match-info').textContent = info;
+      screen.dataset.variant = variant;
+    },
+    // Two players in Fog: covers the screen until the next player is ready.
+    // The board's keyboard stop goes back to its usual first square, so it
+    // can't point at the square the last player moved to.
+    showHandoff({ title, text, button }) {
+      setFocusSquare(homeSquare());
+      byId('al-handoff-title').textContent = title;
+      byId('al-handoff-text').textContent = text;
+      const ready = byId('al-handoff-button');
+      ready.textContent = button;
+      handoff.hidden = false;
+      screen.inert = true;
+      ready.focus();
+    },
+    hideHandoff() {
+      if (handoff.hidden) return;
+      handoff.hidden = true;
+      screen.inert = false;
     },
     render,
     announce,

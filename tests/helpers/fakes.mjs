@@ -100,6 +100,11 @@ export function createFakeCheckersView() {
     announce(text) { view.announcements.push(text); },
     showResult(result) { view.result = result; view.results.push(result); },
     hideResult() { view.result = null; },
+    handoff: null, // { title, text, button } while the handoff screen is up
+    handoffs: [],
+    showHandoff(text) { view.handoff = text; view.handoffs.push(text.title); },
+    hideHandoff() { view.handoff = null; },
+    focusBoard() {},
     get said() { return view.announcements[view.announcements.length - 1]; },
   };
   return view;

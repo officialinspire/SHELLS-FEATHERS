@@ -103,7 +103,7 @@
               <p class="badge badge-ready">Ready to play</p>
             </div>
           </div>
-          <p class="card-text">Classic checkers with acorn and leaf pieces. Jump and capture against the forest Spirit or a friend on the same device.</p>
+          <p class="card-text">Checkers with acorn and leaf pieces, in Classic or Fog of War, against the forest Spirit or a friend on the same device.</p>
           <div class="card-actions">
             <a class="btn btn-primary" href="#/acorns-leaves" aria-label="Play Acorns &amp; Leaves">Play</a>
             <a class="btn btn-secondary" href="#/acorns-leaves/how-to-play" aria-label="How to Play Acorns &amp; Leaves">How to Play</a>
@@ -237,6 +237,14 @@
 
       <div class="panel setup-panel">
         <fieldset class="option-group">
+          <legend>Rules</legend>
+          <div class="segmented">
+            <label class="segment"><input type="radio" name="al-variant" value="classic" aria-describedby="al-variant-hint" /><span>Classic</span></label>
+            <label class="segment"><input type="radio" name="al-variant" value="fog" aria-describedby="al-variant-hint" /><span>Fog of War</span></label>
+          </div>
+          <p class="hint" id="al-variant-hint"></p>
+        </fieldset>
+        <fieldset class="option-group">
           <legend>Against the Spirit, you play</legend>
           <div class="segmented">
             <label class="segment"><input type="radio" name="al-side" value="acorn" aria-describedby="al-side-hint" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> Acorns</span></label>
@@ -256,12 +264,12 @@
       </div>
 
       <div class="mode-choices">
-        <a class="mode-btn" href="#/acorns-leaves/play/single">
+        <a class="mode-btn" id="al-play-single" href="#/acorns-leaves/play/single">
           <span class="mode-icon" aria-hidden="true">🎯</span>
           <span class="mode-title">Play the Spirit</span>
           <span class="mode-desc">One player, with the side and difficulty above</span>
         </a>
-        <a class="mode-btn" href="#/acorns-leaves/play/two">
+        <a class="mode-btn" id="al-play-two" href="#/acorns-leaves/play/two">
           <span class="mode-icon" aria-hidden="true">👥</span>
           <span class="mode-title">Two Players</span>
           <span class="mode-desc">Acorns and Leaves take turns on one device</span>
@@ -342,6 +350,12 @@
         </ul>
         <h3>Against the Spirit</h3>
         <p>Pick your side and <strong>Gentle</strong>, <strong>Balanced</strong> or <strong>Wise</strong>. Your pieces start at the bottom.</p>
+        <h3 id="al-fog-rules">Fog of War</h3>
+        <ul>
+          <li>You see your own pieces, and enemy pieces only on squares next to them. Other dark squares are misty: they may hide an enemy piece.</li>
+          <li>The real board decides what is legal, as in Classic. If a capture may be possible, you must try one; if a hidden piece blocks the landing square, it is shown to you and you choose again.</li>
+          <li>With two players, a handoff screen hides the board between turns. The fog lifts when the game ends.</li>
+        </ul>
       </div>
       <a class="btn btn-primary" href="#/acorns-leaves">Play Acorns &amp; Leaves</a>
     </section>
@@ -410,6 +424,15 @@
         <h4>Two players</h4>
         <p id="al-two-player-record"></p>
 
+        <h4>Fog of War against the Spirit</h4>
+        <table class="record-table">
+          <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
+          <tbody id="al-fog-spirit-records"></tbody>
+        </table>
+
+        <h4>Fog of War, two players</h4>
+        <p id="al-fog-two-player-record"></p>
+
         <button type="button" class="btn btn-danger" data-action="reset-al-stats">Clear Acorns &amp; Leaves records</button>
       </div>
     </section>
@@ -444,6 +467,18 @@
           <a class="btn modal-btn" href="#/" data-up>All Games</a>
         </div>
         <button type="button" class="view-board-btn" data-action="al-view-board" aria-keyshortcuts="Escape">View Board</button>
+      </div>
+    </div>
+
+    <!-- Acorns & Leaves, Fog of War with two players: covers the screen between
+         turns; the board behind it holds no pieces. -->
+    <div id="al-handoff" class="handoff" role="dialog" aria-modal="true" aria-labelledby="al-handoff-title" aria-describedby="al-handoff-text" hidden>
+      <div class="handoff-content">
+        <p class="handoff-icon" aria-hidden="true">🌫️</p>
+        <h3 id="al-handoff-title" class="handoff-title">Acorns' turn</h3>
+        <p id="al-handoff-text" class="handoff-text"></p>
+        <button type="button" class="btn btn-primary handoff-btn" id="al-handoff-button" data-action="al-take-control">Show the board</button>
+        <a class="text-link" href="#/acorns-leaves" data-up>Leave this game</a>
       </div>
     </div>
   </main>

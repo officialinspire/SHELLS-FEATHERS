@@ -13,6 +13,8 @@ export const ROUTES = {
   '/acorns-leaves': { screen: 'al-setup-screen', title: 'Acorns & Leaves' },
   '/acorns-leaves/play/single': { screen: 'al-game-screen', args: ['single'], title: 'Acorns & Leaves: vs the Spirit' },
   '/acorns-leaves/play/two': { screen: 'al-game-screen', args: ['two'], title: 'Acorns & Leaves: Two Players' },
+  '/acorns-leaves/fog/single': { screen: 'al-game-screen', args: ['single', 'fog'], title: 'Acorns & Leaves: Fog of War vs the Spirit' },
+  '/acorns-leaves/fog/two': { screen: 'al-game-screen', args: ['two', 'fog'], title: 'Acorns & Leaves: Fog of War, Two Players' },
   '/acorns-leaves/how-to-play': { screen: 'al-howto-screen', title: 'How to Play Acorns & Leaves' },
   '/settings': { screen: 'settings-screen', title: 'Settings' },
   '/your-path': { screen: 'path-screen', title: 'Your Path' },

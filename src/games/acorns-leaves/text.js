@@ -24,10 +24,12 @@ export function listSquares(squares) {
 }
 
 // After a piece is picked up: "Acorn on c3 picked up. It can move to b4 or d4."
-export function pickText({ square, piece, destinations, capture }) {
+// In Fog a jump into a fogged square is only a try: `maybe` says so.
+export function pickText({ square, piece, destinations, capture, maybe = false }) {
   const name = pieceName(piece);
+  const can = maybe ? 'may be able to' : 'can';
   return `${name[0].toUpperCase()}${name.slice(1)} on ${squareName(square)} picked up. `
-    + `It can ${capture ? 'jump' : 'move'} to ${listSquares(destinations)}.`;
+    + `It ${can} ${capture ? 'jump' : 'move'} to ${listSquares(destinations)}.`;
 }
 
 // After one jump of a chain: "Jumped to e5. Keep jumping: c7 or g7."
@@ -114,4 +116,64 @@ export function resultText({ mode, result, humanSide }) {
     ? `${winnerName} captured every ${ONE[loser]}.`
     : `${loserName} ${loserName === 'You' || loserName.endsWith('s') ? 'have' : 'has'} no move left.`;
   return { outcome, title, message };
+}
+
+// ------------------------------------------------------------ Fog of War
+// Fog text says only what the player can see (docs/fog-rules.md §4).
+
+const listNames = (names) => (names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names.join(''));
+
+// Guidance and refusals in Fog: a capture "may" be possible, never "must".
+export function fogGuidance({ stage, mayCapture }) {
+  if (stage === 'keep-jumping') return 'Keep jumping: try the next ring.';
+  if (stage === 'choose-square') return mayCapture ? 'Try a ring to jump to.' : 'Choose a dot to move to.';
+  return mayCapture ? 'A capture may be possible: try a ringed piece first.' : 'Choose a piece to move.';
+}
+
+export const FOG_FEEDBACK = {
+  ...FEEDBACK,
+  'must-capture': 'A capture may be possible: try a ringed piece first.',
+  'must-continue': 'Keep jumping with the same piece: try a ring.',
+};
+
+// A try blocked by a hidden piece (M5, M7).
+export function bumpText({ square, piece, ends, opened }) {
+  let text = `Blocked: a hidden ${pieceName(piece)} is on ${squareName(square)}.`;
+  if (ends) text += ' The jump ends here.';
+  else if (opened) text += ' No capture is left to try, so any move is open.';
+  else text += ' Choose again.';
+  return text;
+}
+
+// "Your turn. A capture may be possible." Never says what the opponent must do.
+export function fogTurnText({ mode, turn, humanSide, mayCapture }) {
+  const who = actorName(mode, turn, humanSide);
+  if (who === 'The Spirit') return "The Spirit's turn.";
+  const whose = who === 'You' ? 'Your' : `${who}'`;
+  return `${whose} turn.${mayCapture ? ' A capture may be possible.' : ''}`;
+}
+
+// The other side's move as the viewer sees it: that it moved, which of the
+// viewer's pieces it took, and which of its pieces came into or went out of
+// view. "The Spirit moved, capturing your acorn on d4. In view now: leaf on e5."
+export function fogMoveText({ who, captured = [], appeared = [], vanished = [] }) {
+  let text = `${who} moved`;
+  if (captured.length) {
+    const names = captured.map(({ square, piece }) => `${pieceName(piece)} on ${squareName(square)}`);
+    text += `, capturing your ${listNames(names)}`;
+  }
+  text += '.';
+  if (appeared.length) text += ` In view now: ${listNames(appeared.map(({ square, piece }) => `${pieceName(piece)} on ${squareName(square)}`))}.`;
+  if (vanished.length) text += ` Out of view: ${listNames(vanished.map(squareName))}.`;
+  return text;
+}
+
+// The handoff screen between two players in Fog.
+export function handoffText(side) {
+  const name = SIDE_NAMES[side];
+  return {
+    title: `${name}' turn`,
+    text: `Pass the device to the ${name} player. The board stays hidden until they are ready.`,
+    button: `Show the ${name}' board`,
+  };
 }

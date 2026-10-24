@@ -78,6 +78,10 @@ test('every route names a screen and a title; both games have a play route per m
     assert.ok(route.screen && route.title, path);
   }
   assert.equal(documentTitle(ROUTES['/acorns-leaves/play/two']), 'Acorns & Leaves: Two Players · Spirit of the Woods');
+  // Fog of War is its own pair of routes on the same match screen.
+  assert.deepEqual(ROUTES['/acorns-leaves/fog/single'].args, ['single', 'fog']);
+  assert.deepEqual(ROUTES['/acorns-leaves/fog/two'].args, ['two', 'fog']);
+  assert.equal(ROUTES['/acorns-leaves/fog/two'].screen, ROUTES['/acorns-leaves/play/two'].screen);
   assert.equal(documentTitle(ROUTES['/']), 'Spirit of the Woods');
   assert.equal(documentTitle(ROUTES['/settings']), 'Settings · Spirit of the Woods');
 });

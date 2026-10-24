@@ -2,7 +2,9 @@
 
 Acorns & Leaves is checkers (draughts) with acorn and leaf pieces. Its rules engine is `src/games/acorns-leaves/engine.js`: pure functions with no user interface. This page records the rules it plays by, the choices made where checkers rule sets differ, and how the Spirit (the computer opponent) chooses its moves. The rules follow **American checkers / English draughts**.
 
-The game is played from the Spirit of the Woods hub, by two players on one device or against the Spirit. The screens only ask the engine what is legal and hand it the move to play; no rule lives in the user interface. Fog of War is not part of this rule set.
+The game is played from the Spirit of the Woods hub, by two players on one device or against the Spirit. The screens only ask the engine what is legal and hand it the move to play; no rule lives in the user interface.
+
+These are the **Classic** rules, with the whole board in view. **Fog of War** is a separate mode that plays by these rules on the real board while each player sees only part of it: see [`fog-rules.md`](fog-rules.md).
 
 ## Board and pieces
 

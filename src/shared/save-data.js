@@ -5,7 +5,8 @@
 // `wins` also counted every two-player win. v2 keeps those numbers in
 // `shellsFeathers.stats.legacy` and records new games per mode and difficulty.
 // Acorns & Leaves (added later in v2) has its own settings and records under
-// `acornsLeaves`; a v2 save without them gets the defaults.
+// `acornsLeaves`, with Fog of War records apart from Classic ones in
+// `acornsLeaves.stats.fog`; a v2 save without them gets the defaults.
 import { SYMBOLS } from '../games/shells-feathers/rules.js';
 import { DIFFICULTIES } from '../games/shells-feathers/ai.js';
 import { SIDES } from '../games/acorns-leaves/engine.js';
@@ -19,6 +20,7 @@ const LEGACY_FIELDS = ['wins', 'losses', 'draws', 'totalGames'];
 const SINGLE_FIELDS = ['wins', 'losses', 'draws'];
 const TWO_PLAYER_FIELDS = ['player1Wins', 'player2Wins', 'draws'];
 const AL_TWO_PLAYER_FIELDS = ['acornWins', 'leafWins', 'draws'];
+const AL_VARIANTS = ['classic', 'fog'];
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const objectOr = (value) => (isObject(value) ? value : {});
@@ -49,11 +51,17 @@ function emptyStats() {
   };
 }
 
-function emptyAcornsLeavesStats() {
+// One set of checkers records: per Spirit difficulty, and two players.
+function checkersRecords(raw = {}) {
+  const single = objectOr(raw.single);
   return {
-    single: Object.fromEntries(AL_DIFFICULTIES.map((d) => [d, countsOf({}, SINGLE_FIELDS)])),
-    twoPlayer: countsOf({}, AL_TWO_PLAYER_FIELDS),
+    single: { ...single, ...Object.fromEntries(AL_DIFFICULTIES.map((d) => [d, countsOf(single[d], SINGLE_FIELDS)])) },
+    twoPlayer: countsOf(raw.twoPlayer, AL_TWO_PLAYER_FIELDS),
   };
+}
+
+function emptyAcornsLeavesStats() {
+  return { ...checkersRecords(), fog: checkersRecords() };
 }
 
 export function createDefaultSave() {
@@ -64,9 +72,10 @@ export function createDefaultSave() {
       settings: { difficulty: 'easy', player1Symbol: 'shell' },
       stats: emptyStats(),
     },
-    // side: the side the player takes against the Spirit.
+    // side: the side the player takes against the Spirit; variant: the rules
+    // last chosen ('classic' or 'fog').
     acornsLeaves: {
-      settings: { difficulty: 'easy', side: 'acorn' },
+      settings: { difficulty: 'easy', side: 'acorn', variant: 'classic' },
       stats: emptyAcornsLeavesStats(),
     },
     migratedFrom: null,
@@ -86,7 +95,6 @@ export function normalizeSave(raw) {
   const checkers = objectOr(raw.acornsLeaves);
   const checkersSettings = objectOr(checkers.settings);
   const checkersStats = objectOr(checkers.stats);
-  const checkersSingle = objectOr(checkersStats.single);
 
   return {
     ...raw,
@@ -115,14 +123,12 @@ export function normalizeSave(raw) {
         ...checkersSettings,
         difficulty: oneOf(checkersSettings.difficulty, AL_DIFFICULTIES, 'easy'),
         side: oneOf(checkersSettings.side, SIDES, 'acorn'),
+        variant: oneOf(checkersSettings.variant, AL_VARIANTS, 'classic'),
       },
       stats: {
         ...checkersStats,
-        single: {
-          ...checkersSingle,
-          ...Object.fromEntries(AL_DIFFICULTIES.map((d) => [d, countsOf(checkersSingle[d], SINGLE_FIELDS)])),
-        },
-        twoPlayer: countsOf(checkersStats.twoPlayer, AL_TWO_PLAYER_FIELDS),
+        ...checkersRecords(checkersStats),
+        fog: { ...objectOr(checkersStats.fog), ...checkersRecords(objectOr(checkersStats.fog)) },
       },
     },
     migratedFrom: raw.migratedFrom === 1 ? 1 : null,
@@ -204,9 +210,10 @@ export function applyGameSettings(save, patch) {
 }
 
 // Acorns & Leaves. outcome: 'win' | 'loss' | 'draw' against the Spirit (from
-// the player's side), 'acorn' | 'leaf' | 'draw' for two players. Mutates `save`.
-export function recordAcornsLeavesResult(save, { mode, difficulty, outcome }) {
-  const stats = save.acornsLeaves.stats;
+// the player's side), 'acorn' | 'leaf' | 'draw' for two players; variant
+// 'fog' records into the Fog of War records. Mutates `save`.
+export function recordAcornsLeavesResult(save, { mode, difficulty, outcome, variant = 'classic' }) {
+  const stats = variant === 'fog' ? save.acornsLeaves.stats.fog : save.acornsLeaves.stats;
   if (mode === 'single') {
     const record = stats.single[oneOf(difficulty, AL_DIFFICULTIES, 'easy')];
     if (outcome === 'win') record.wins++;
@@ -227,4 +234,5 @@ export function applyAcornsLeavesSettings(save, patch) {
   const settings = save.acornsLeaves.settings;
   settings.difficulty = oneOf(patch.difficulty, AL_DIFFICULTIES, settings.difficulty);
   settings.side = oneOf(patch.side, SIDES, settings.side);
+  settings.variant = oneOf(patch.variant, AL_VARIANTS, settings.variant);
 }

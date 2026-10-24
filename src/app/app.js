@@ -42,7 +42,7 @@ export function createApp({ doc, win }) {
       leave: () => session.leave(),
     },
     'al-game-screen': {
-      enter: (mode) => checkers.enter(mode),
+      enter: (mode, variant) => checkers.enter(mode, variant),
       leave: () => checkers.leave(),
     },
   });
@@ -72,6 +72,7 @@ export function createApp({ doc, win }) {
     'al-restart': () => checkers.restart(),
     'al-rematch': () => checkers.playAgain(),
     'al-view-board': () => checkersView.dismissResult(),
+    'al-take-control': () => checkers.takeControl(),
     'reset-al-stats': () => path.resetAcornsLeaves(),
   };
 

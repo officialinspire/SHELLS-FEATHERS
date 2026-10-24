@@ -1,7 +1,7 @@
 // "Your Path": Shells & Feathers totals (same numbers as v1's stats screen),
 // records per Spirit difficulty and for two players, achievements, and the
-// button that clears them; then the Acorns & Leaves records, cleared
-// separately.
+// button that clears them; then the Acorns & Leaves records (Classic and Fog
+// of War), cleared separately.
 import { DIFFICULTIES, DIFFICULTY_NAMES } from '../games/shells-feathers/ai.js';
 import { achievementsFor } from '../games/shells-feathers/achievements.js';
 import { DIFFICULTIES as AL_DIFFICULTIES, DIFFICULTY_NAMES as AL_DIFFICULTY_NAMES } from '../games/acorns-leaves/ai.js';
@@ -59,9 +59,11 @@ export function createPathScreen({ doc, profile, audio, confirm }) {
     )));
 
     const checkers = profile.acornsLeavesStats();
-    byId('al-spirit-records').replaceChildren(...recordRows(AL_DIFFICULTIES, AL_DIFFICULTY_NAMES, checkers.single));
-    const { acornWins, leafWins, draws: checkersDraws } = checkers.twoPlayer;
-    byId('al-two-player-record').textContent = `Acorns wins: ${acornWins} · Leaves wins: ${leafWins} · Draws: ${checkersDraws}`;
+    for (const [records, prefix] of [[checkers, 'al'], [checkers.fog, 'al-fog']]) {
+      byId(`${prefix}-spirit-records`).replaceChildren(...recordRows(AL_DIFFICULTIES, AL_DIFFICULTY_NAMES, records.single));
+      const { acornWins, leafWins, draws: twoDraws } = records.twoPlayer;
+      byId(`${prefix}-two-player-record`).textContent = `Acorns wins: ${acornWins} · Leaves wins: ${leafWins} · Draws: ${twoDraws}`;
+    }
   }
 
   function reset() {

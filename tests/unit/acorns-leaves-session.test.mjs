@@ -64,7 +64,7 @@ test('two players: pick a piece, see its squares, move; the turn passes and the 
   const { view, audio, session, tap } = setup();
   session.enter('two');
   assert.equal(view.orientation, 'acorn');
-  assert.deepEqual(view.matchInfo, { mode: 'two', difficulty: 'easy', humanSide: null });
+  assert.deepEqual(view.matchInfo, { mode: 'two', difficulty: 'easy', humanSide: null, variant: 'classic' });
   assert.equal(view.model.phase, 'ready');
   assert.equal(view.model.turnLabel, "Acorns' Turn");
   assert.equal(view.said, "New game. Acorns' turn.");
@@ -311,7 +311,7 @@ test('side and difficulty apply from the next game; the Spirit is told its diffi
   assert.deepEqual(seen, ['easy']);
   session.restart();
   assert.equal(view.orientation, 'leaf');
-  assert.deepEqual(view.matchInfo, { mode: 'single', difficulty: 'hard', humanSide: 'leaf' });
+  assert.deepEqual(view.matchInfo, { mode: 'single', difficulty: 'hard', humanSide: 'leaf', variant: 'classic' });
   clock.tick(SPIRIT_THINK + SPIRIT_STEP);
   assert.deepEqual(seen, ['easy', 'hard']);
 });

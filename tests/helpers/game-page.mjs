@@ -63,10 +63,12 @@ export class GamePage {
     this.externalRequests = [];
   }
 
-  // A button or link on the visible screen, or in a result dialog while one
-  // is open, by its accessible name. Hidden screens can't match.
+  // A button or link on the visible screen, or in a result dialog or handoff
+  // screen while one is open, by its accessible name. Hidden screens can't
+  // match.
   control(name, { exact = false } = {}) {
-    const scope = this.page.locator('.modal.active, .screen.active:not(:has(~ .modal.active))').first();
+    const cover = '.modal.active, .handoff:not([hidden])';
+    const scope = this.page.locator(`${cover}, .screen.active:not(:has(~ :is(${cover})))`).first();
     return scope.getByRole('button', { name, exact }).or(scope.getByRole('link', { name, exact }));
   }
 
@@ -215,9 +217,10 @@ export class GamePage {
     await this.waitForScreen('al-setup-screen');
   }
 
-  // On the Acorns & Leaves setup screen: side 'Acorns' | 'Leaves';
-  // difficulty 'Gentle' | 'Balanced' | 'Wise'.
-  async chooseCheckersOptions({ side, difficulty } = {}) {
+  // On the Acorns & Leaves setup screen: variant 'Classic' | 'Fog of War';
+  // side 'Acorns' | 'Leaves'; difficulty 'Gentle' | 'Balanced' | 'Wise'.
+  async chooseCheckersOptions({ variant, side, difficulty } = {}) {
+    if (variant) await this.page.getByRole('radio', { name: variant, exact: true }).check();
     if (side) await this.page.getByRole('radio', { name: side, exact: true }).check();
     if (difficulty) await this.page.getByRole('radio', { name: difficulty, exact: true }).check();
   }
