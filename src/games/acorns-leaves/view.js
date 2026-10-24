@@ -24,6 +24,9 @@
 // Fogged squares (model.fog) get mist and are named "hidden"; pieces found by
 // a blocked jump (model.found) are marked. In a two-player game the handoff
 // screen covers everything, and the board behind it holds no pieces.
+//
+// Result dialog: the winning side's piece (both for a draw), the result, and
+// the pieces each side captured.
 import { SIZE, rowOf, colOf, isDarkSquare } from './engine.js';
 import { DIFFICULTY_NAMES } from './ai.js';
 import { squareName, pieceName, SIDE_NAMES } from './text.js';
@@ -146,7 +149,10 @@ export function createAcornsLeavesView(doc) {
     else delete el.dataset.piece;
   }
 
+  let shown = null;
+
   function render(model) {
+    shown = model;
     board.dataset.state = model.phase;
     board.setAttribute('aria-busy', String(model.phase === 'waiting'));
     const destinations = new Set(model.destinations);
@@ -300,9 +306,16 @@ export function createAcornsLeavesView(doc) {
     },
     render,
     announce,
-    showResult({ title, message }) {
+    showResult({ title, message, outcome }) {
       byId('al-modal-title').textContent = title;
       byId('al-modal-message').textContent = message;
+      const winner = shown?.winner;
+      const sides = winner ? [winner] : ['acorn', 'leaf'];
+      byId('al-modal-emblem').replaceChildren(...sides.map((side) => createPieceIcon(doc, { side, king: false }, 'emblem-piece')));
+      byId('al-modal-summary').textContent = shown
+        ? `Captured · Acorns ${shown.captured.acorn} · Leaves ${shown.captured.leaf}`
+        : '';
+      modal.dataset.outcome = outcome ?? '';
       modal.classList.add('active');
       screen.inert = true;
       modal.querySelector('[data-action="al-rematch"]').focus();

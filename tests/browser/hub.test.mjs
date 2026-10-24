@@ -273,8 +273,8 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     });
   }
 
-  await t.test('every control on every screen can be reached, and is at least 44px, at phone, landscape and desktop sizes', async () => {
-    const sizes = [[320, 568], [360, 640], [750, 340], [1280, 800]];
+  await t.test('every control on every screen can be reached, and is at least 44px, at phone (including short Android), landscape and desktop sizes', async () => {
+    const sizes = [[320, 568], [360, 560], [360, 640], [640, 360], [750, 340], [1280, 800]];
     const routes = [
       ['#/', 'hub-screen'],
       ['#/shells-feathers', 'sf-setup-screen'],

@@ -165,6 +165,16 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
     const shown = await game.waitForResult();
     assert.equal(shown.title, titles[result.winner]);
     assert.ok(shown.message.length > 0);
+    // The result panel: the winner's piece (both for a draw) and the captured counts.
+    const panel = await game.page.evaluate(() => ({
+      emblem: [...document.querySelectorAll('#al-modal-emblem use')].map((u) => u.getAttribute('href')),
+      summary: document.getElementById('al-modal-summary').textContent,
+      describedBy: document.getElementById('al-modal').getAttribute('aria-describedby'),
+    }));
+    assert.deepEqual(panel.emblem, result.winner ? [`#al-${result.winner}`] : ['#al-acorn', '#al-leaf']);
+    const captured = (await game.checkersView()).captured;
+    assert.equal(panel.summary, `Captured · Acorns ${captured.acorn} · Leaves ${captured.leaf}`);
+    assert.equal(panel.describedBy, 'al-modal-message al-modal-summary');
     assert.equal((await game.checkersView()).turn, shown.title, 'the turn line shows the result');
     assert.equal((await game.checkersView()).state, 'over');
 
@@ -360,7 +370,9 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
 
   for (const [label, options] of [
     ['narrow phone (320×568, touch)', { device: devices['iPhone SE'] }],
+    ['short Android phone (360×560, touch)', { device: { ...devices['Galaxy S5'], viewport: { width: 360, height: 560 } } }],
     ['phone (390×844)', { viewport: { width: 390, height: 844 } }],
+    ['Android landscape (640×360, touch)', { device: devices['Galaxy S5 landscape'] }],
     ['landscape phone (750×340)', { viewport: { width: 750, height: 340 } }],
     ['desktop (1280×800)', { viewport: { width: 1280, height: 800 } }],
   ]) {

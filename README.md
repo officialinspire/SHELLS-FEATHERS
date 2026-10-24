@@ -33,3 +33,6 @@ The game loads as ES modules, so serve the folder instead of opening index.html 
 
 Tests:
 `npm ci`, then `npx playwright install chromium`, then `npm test` (unit tests in Node plus browser tests in headless Chromium). Code layout, save format and test plan: docs/upgrade-plan.md. Checkers rules and the Spirit's search: docs/acorns-leaves-rules.md. Fog of War: docs/fog-rules.md
+
+Assets and credits:
+Every sound, font and drawing the game uses, with its source and terms: docs/assets.md

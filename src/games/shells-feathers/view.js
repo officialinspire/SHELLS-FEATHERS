@@ -11,8 +11,13 @@
 // Announcements: a polite status region says what just happened ("The Spirit
 // placed a feather on row 2, column 2. Your turn.") and how a round ended.
 //
-// Result dialog: takes focus and makes the board inert while open; "View
-// Board" (or Escape) closes it to show the final board.
+// Header: one chip per player (piece, name, score). The chip of the player
+// to move is marked "To move", and after a win the winner's is marked
+// "Winner", so the turn never depends on color alone.
+//
+// Result dialog: the winning piece (both pieces for a draw), the result, and
+// the session score. It takes focus and makes the board inert while open;
+// "View Board" (or Escape) closes it to show the final board.
 import { DIFFICULTY_NAMES } from './ai.js';
 
 const GLYPHS = { shell: '🐚', feather: '🪶' };
@@ -26,6 +31,7 @@ const RESULTS = {
   player1: { title: 'Player 1 Wins!' },
   player2: { title: 'Player 2 Wins!' },
 };
+const OTHER = { shell: 'feather', feather: 'shell' };
 const ACTORS = { you: 'You', spirit: 'The Spirit', player1: 'Player 1', player2: 'Player 2' };
 const ROWS = ['top', 'middle', 'bottom'];
 const COLUMNS = ['left', 'middle', 'right'];
@@ -83,6 +89,20 @@ export function createShellsFeathersView(doc) {
   const restartButton = screen.querySelector('[data-action="restart-match"]');
   let focusIndex = 0;
   let lastMove = '';
+  let player1Symbol = 'shell';
+  let scoreLine = '';
+
+  // marks: { 1: 'To move' | 'Winner' | '', 2: … }
+  function markChips(marks) {
+    for (const player of [1, 2]) {
+      const chip = byId(`sf-side-${player}`);
+      const tag = chip.querySelector('.side-chip-tag');
+      chip.classList.toggle('is-active', marks[player] === 'To move');
+      chip.classList.toggle('is-winner', marks[player] === 'Winner');
+      tag.textContent = marks[player] ?? '';
+      tag.hidden = !marks[player];
+    }
+  }
 
   function describeCell(index) {
     const symbol = cells[index].dataset.symbol;
@@ -176,10 +196,13 @@ export function createShellsFeathersView(doc) {
         describeCell(i);
       }
     },
-    showMatchInfo({ mode, difficulty, player1Symbol }) {
+    showMatchInfo({ mode, difficulty, player1Symbol: symbol }) {
+      player1Symbol = symbol;
+      byId('player1-glyph').textContent = GLYPHS[symbol];
+      byId('player2-glyph').textContent = GLYPHS[OTHER[symbol]];
       byId('match-info').textContent = mode === 'single'
-        ? `Against the Spirit · ${DIFFICULTY_NAMES[difficulty]} · You play ${GLYPHS[player1Symbol]} ${NAMES[player1Symbol]}`
-        : `Two players · Player 1 plays ${GLYPHS[player1Symbol]} ${NAMES[player1Symbol]}`;
+        ? `Against the Spirit · ${DIFFICULTY_NAMES[difficulty]} · You play ${GLYPHS[symbol]} ${NAMES[symbol]}`
+        : `Two players · Player 1 plays ${GLYPHS[symbol]} ${NAMES[symbol]}`;
     },
     showTurn(mode, isPlayer1, symbol) {
       const el = byId('turn-indicator');
@@ -187,6 +210,7 @@ export function createShellsFeathersView(doc) {
         ? (isPlayer1 ? 'Your Turn' : "Spirit's Turn")
         : `Player ${isPlayer1 ? 1 : 2}'s Turn ${GLYPHS[symbol]}`;
       el.style.color = isPlayer1 ? PLAYER1_COLOR : PLAYER2_COLOR;
+      markChips(isPlayer1 ? { 1: 'To move' } : { 2: 'To move' });
       announce(`${lastMove || 'New round.'} ${turnStatus(mode, isPlayer1)}`);
     },
     // After the last move the turn line shows the result (it stays visible
@@ -195,6 +219,8 @@ export function createShellsFeathersView(doc) {
       const el = byId('turn-indicator');
       el.textContent = RESULTS[outcome].title;
       el.style.color = outcome === 'loss' || outcome === 'player2' ? PLAYER2_COLOR : PLAYER1_COLOR;
+      if (outcome === 'draw') markChips({});
+      else markChips(outcome === 'loss' || outcome === 'player2' ? { 2: 'Winner' } : { 1: 'Winner' });
       announce(`${lastMove} ${resultStatus(outcome, winner, line)}`);
     },
     showScores(mode, scores) {
@@ -202,11 +228,24 @@ export function createShellsFeathersView(doc) {
       byId('player2-label').textContent = mode === 'single' ? 'Spirit: ' : 'Player 2: ';
       byId('player1-score').textContent = scores.player1;
       byId('player2-score').textContent = scores.player2;
+      scoreLine = mode === 'single'
+        ? `Score · You ${scores.player1} · Spirit ${scores.player2}`
+        : `Score · Player 1 ${scores.player1} · Player 2 ${scores.player2}`;
     },
     showResult(outcome, winner) {
       const { title, message = `The ${winner} spirit prevails` } = RESULTS[outcome];
       byId('modal-title').textContent = title;
       byId('modal-message').textContent = message;
+      byId('modal-summary').textContent = scoreLine;
+      const emblem = byId('modal-emblem');
+      const pieces = outcome === 'draw' ? [player1Symbol, OTHER[player1Symbol]] : [winner];
+      emblem.replaceChildren(...pieces.map((symbol) => {
+        const piece = doc.createElement('span');
+        piece.className = 'emblem-piece';
+        piece.textContent = GLYPHS[symbol];
+        return piece;
+      }));
+      modal.dataset.outcome = outcome;
       modal.classList.add('active');
       screen.inert = true;
       modal.querySelector('[data-action="play-again"]').focus();

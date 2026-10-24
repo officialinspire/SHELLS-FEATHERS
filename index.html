@@ -12,54 +12,73 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <!-- Acorns & Leaves pieces, used by the board, cards and rules. Acorns: light
-       wooden disc, dark rim, acorn. Leaves: dark green disc, cream rim, leaf.
-       Kings add a gold ring, a second disc underneath and a crown. -->
+  <!-- Acorns & Leaves pieces, used by the board, cards, rules and result panel.
+       Original artwork (docs/assets.md). Acorns: light wooden disc, dark rim,
+       acorn. Leaves: dark green disc, cream rim, two-tone leaf. Kings add a
+       gold ring, a second disc underneath and a crown. -->
   <svg class="svg-sprite" aria-hidden="true" focusable="false">
     <defs>
+      <radialGradient id="al-acorn-face" cx="38%" cy="32%" r="75%">
+        <stop offset="0" stop-color="#FBEBC6" />
+        <stop offset="1" stop-color="#E2C48E" />
+      </radialGradient>
+      <radialGradient id="al-leaf-face" cx="38%" cy="32%" r="75%">
+        <stop offset="0" stop-color="#3D8452" />
+        <stop offset="1" stop-color="#22552F" />
+      </radialGradient>
+      <linearGradient id="al-gold" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#F6D25A" />
+        <stop offset="1" stop-color="#CF9A1E" />
+      </linearGradient>
+      <linearGradient id="al-nut" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#C98340" />
+        <stop offset="1" stop-color="#99561F" />
+      </linearGradient>
       <g id="al-acorn-emblem">
-        <path d="M33 46H67C67 62 60 72 50 77C40 72 33 62 33 46Z" fill="#B5682A" stroke="#3E2410" stroke-width="3" stroke-linejoin="round" />
-        <path d="M40 53C40 62 43 67 47 70" fill="none" stroke="#E6A964" stroke-width="3" stroke-linecap="round" />
-        <path d="M27 47C27 35 37 29 50 29C63 29 73 35 73 47Z" fill="#6B3D18" stroke="#3E2410" stroke-width="3" stroke-linejoin="round" />
-        <path d="M34 41L40 35M42 42L49 34M51 42L58 34M60 42L66 36" fill="none" stroke="#9A6234" stroke-width="2" stroke-linecap="round" />
+        <path d="M33 47H67C67 62 60 72 50 78C40 72 33 62 33 47Z" fill="url(#al-nut)" stroke="#3E2410" stroke-width="3" stroke-linejoin="round" />
+        <path d="M40 54C40 62 43 67 47 70" fill="none" stroke="#EDB878" stroke-width="3" stroke-linecap="round" />
+        <path d="M26 48C26 35 37 29 50 29C63 29 74 35 74 48Z" fill="#6B3D18" stroke="#3E2410" stroke-width="3" stroke-linejoin="round" />
+        <path d="M31 43Q35 38 39 43Q43 38 47 43Q51 38 55 43Q59 38 63 43Q67 38 70 43M36 37Q40 33 44 37Q48 33 52 37Q56 33 60 37Q63 34 65 36" fill="none" stroke="#A36A38" stroke-width="2" stroke-linecap="round" />
         <path d="M50 29C50 24 52 20 57 18" fill="none" stroke="#3E2410" stroke-width="4" stroke-linecap="round" />
       </g>
       <g id="al-leaf-emblem" transform="rotate(-38 50 50)">
-        <path d="M50 16C68 30 72 54 50 80C28 54 32 30 50 16Z" fill="#DCEFC0" stroke="#173F22" stroke-width="3" stroke-linejoin="round" />
-        <path d="M50 24V86" fill="none" stroke="#2E6A3E" stroke-width="3" stroke-linecap="round" />
-        <path d="M50 40L41 33M50 40L59 33M50 52L39 43M50 52L61 43M50 64L41 56M50 64L59 56" fill="none" stroke="#2E6A3E" stroke-width="2.5" stroke-linecap="round" />
+        <path d="M50 15C69 30 73 55 50 81C27 55 31 30 50 15Z" fill="#E4F2CC" stroke="#173F22" stroke-width="3" stroke-linejoin="round" />
+        <path d="M50 17C69 31 72 55 50 79Z" fill="#BFDC9C" />
+        <path d="M50 15C69 30 73 55 50 81C27 55 31 30 50 15Z" fill="none" stroke="#173F22" stroke-width="3" stroke-linejoin="round" />
+        <path d="M50 22V88" fill="none" stroke="#2E6A3E" stroke-width="3" stroke-linecap="round" />
+        <path d="M50 38L41 31M50 38L59 31M50 50L38 41M50 50L62 41M50 62L40 54M50 62L60 54" fill="none" stroke="#2E6A3E" stroke-width="2.5" stroke-linecap="round" />
       </g>
       <g id="al-crown">
-        <path d="M31 39L28 18L40 28L50 11L60 28L72 18L69 39Z" fill="#FFD447" stroke="#3B2400" stroke-width="3" stroke-linejoin="round" />
-        <path d="M33 34H67" fill="none" stroke="#B8860B" stroke-width="2.5" />
+        <path d="M33 33L30 15L41 24L50 9L59 24L70 15L67 33Z" fill="url(#al-gold)" stroke="#3B2400" stroke-width="3" stroke-linejoin="round" />
+        <path d="M35 29H65" fill="none" stroke="#9C6F08" stroke-width="2.5" />
       </g>
     </defs>
     <symbol id="al-acorn" viewBox="0 0 100 100">
       <circle cx="50" cy="50" r="45" fill="#3E2410" />
-      <circle cx="50" cy="50" r="40" fill="#F1DBAE" />
-      <circle cx="50" cy="50" r="34" fill="none" stroke="#D2A86E" stroke-width="2" />
+      <circle cx="50" cy="50" r="40" fill="url(#al-acorn-face)" />
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#CFA36A" stroke-width="2" />
       <use href="#al-acorn-emblem" />
     </symbol>
     <symbol id="al-leaf" viewBox="0 0 100 100">
       <circle cx="50" cy="50" r="45" fill="#FFF8DC" />
-      <circle cx="50" cy="50" r="40" fill="#2E6A3E" />
-      <circle cx="50" cy="50" r="34" fill="none" stroke="#4E8E5B" stroke-width="2" />
+      <circle cx="50" cy="50" r="40" fill="url(#al-leaf-face)" />
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#5C9A68" stroke-width="2" />
       <use href="#al-leaf-emblem" />
     </symbol>
     <symbol id="al-acorn-king" viewBox="0 0 100 100">
       <circle cx="50" cy="55" r="44" fill="#3E2410" />
       <circle cx="50" cy="49" r="44" fill="#3E2410" />
-      <circle cx="50" cy="49" r="39" fill="#E9B526" />
-      <circle cx="50" cy="49" r="33" fill="#F1DBAE" />
-      <use href="#al-acorn-emblem" transform="translate(50 60) scale(0.56) translate(-50 -50)" />
+      <circle cx="50" cy="49" r="39" fill="url(#al-gold)" />
+      <circle cx="50" cy="49" r="33" fill="url(#al-acorn-face)" />
+      <use href="#al-acorn-emblem" transform="translate(50 57) scale(0.7) translate(-50 -50)" />
       <use href="#al-crown" />
     </symbol>
     <symbol id="al-leaf-king" viewBox="0 0 100 100">
       <circle cx="50" cy="55" r="44" fill="#C9BC93" />
       <circle cx="50" cy="49" r="44" fill="#FFF8DC" />
-      <circle cx="50" cy="49" r="39" fill="#E9B526" />
-      <circle cx="50" cy="49" r="33" fill="#2E6A3E" />
-      <use href="#al-leaf-emblem" transform="translate(50 61) scale(0.54) translate(-50 -50)" />
+      <circle cx="50" cy="49" r="39" fill="url(#al-gold)" />
+      <circle cx="50" cy="49" r="33" fill="url(#al-leaf-face)" />
+      <use href="#al-leaf-emblem" transform="translate(50 58) scale(0.68) translate(-50 -50)" />
       <use href="#al-crown" />
     </symbol>
   </svg>
@@ -70,6 +89,7 @@
       <header class="hub-header">
         <h1 id="hub-title" class="game-title" tabindex="-1">Spirit of the Woods</h1>
         <p class="subtitle">Peaceful games from the forest</p>
+        <div class="decorative-border" aria-hidden="true"></div>
       </header>
 
       <h2 class="section-label">Choose a game</h2>
@@ -115,7 +135,6 @@
         <a class="btn btn-quiet" href="#/settings"><span aria-hidden="true">⚙️</span> Settings</a>
         <a class="btn btn-quiet" href="#/your-path"><span aria-hidden="true">🏆</span> Your Path</a>
       </nav>
-      <div class="decorative-border" aria-hidden="true"></div>
     </section>
 
     <!-- Shells & Feathers: mode and difficulty -->
@@ -166,10 +185,17 @@
       <h2 id="match-title" class="visually-hidden" tabindex="-1">Shells &amp; Feathers match</h2>
       <div class="game-header">
         <p class="match-info" id="match-info"></p>
-        <div class="score-display">
-          <span class="score-label" id="player1-label">Shell: </span><span id="player1-score">0</span>
-          <span class="score-separator" aria-hidden="true">|</span>
-          <span class="score-label" id="player2-label">Feather: </span><span id="player2-score">0</span>
+        <div class="score-display side-chips">
+          <div class="side-chip" id="sf-side-1" data-player="1">
+            <span class="side-chip-glyph" id="player1-glyph" aria-hidden="true">🐚</span>
+            <span class="side-chip-text"><span class="score-label" id="player1-label">Shell: </span><span class="side-chip-count" id="player1-score">0</span></span>
+            <span class="side-chip-tag" hidden></span>
+          </div>
+          <div class="side-chip" id="sf-side-2" data-player="2">
+            <span class="side-chip-glyph" id="player2-glyph" aria-hidden="true">🪶</span>
+            <span class="side-chip-text"><span class="score-label" id="player2-label">Feather: </span><span class="side-chip-count" id="player2-score">0</span></span>
+            <span class="side-chip-tag" hidden></span>
+          </div>
         </div>
         <div class="turn-indicator" id="turn-indicator">Your Turn</div>
       </div>
@@ -283,16 +309,16 @@
       <h2 id="al-match-title" class="visually-hidden" tabindex="-1">Acorns &amp; Leaves match</h2>
       <div class="game-header al-header">
         <p class="match-info" id="al-match-info"></p>
-        <div class="al-sides">
-          <div class="al-side" id="al-side-acorn">
+        <div class="al-sides side-chips">
+          <div class="al-side side-chip" id="al-side-acorn">
             <svg class="al-side-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg>
             <span class="al-side-text"><span class="al-side-name">Acorns</span><span class="visually-hidden al-side-of"></span><span class="al-side-stat">Captured <span class="al-side-count">0</span></span></span>
-            <span class="al-side-tag" hidden></span>
+            <span class="al-side-tag side-chip-tag" hidden></span>
           </div>
-          <div class="al-side" id="al-side-leaf">
+          <div class="al-side side-chip" id="al-side-leaf">
             <svg class="al-side-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg>
             <span class="al-side-text"><span class="al-side-name">Leaves</span><span class="visually-hidden al-side-of"></span><span class="al-side-stat">Captured <span class="al-side-count">0</span></span></span>
-            <span class="al-side-tag" hidden></span>
+            <span class="al-side-tag side-chip-tag" hidden></span>
           </div>
         </div>
         <p class="turn-indicator al-turn" id="al-turn"></p>
@@ -443,10 +469,12 @@
     <p id="al-status" class="visually-hidden" role="status" aria-live="polite"></p>
 
     <!-- Shells & Feathers result -->
-    <div id="game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message">
+    <div id="game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message modal-summary">
       <div class="modal-content">
+        <div class="modal-emblem" id="modal-emblem" aria-hidden="true"></div>
         <h3 id="modal-title" class="modal-title">Victory!</h3>
         <p id="modal-message" class="modal-message">The spirits smile upon you</p>
+        <p id="modal-summary" class="modal-summary"></p>
         <div class="modal-buttons">
           <button type="button" class="btn btn-primary modal-btn" data-action="play-again">Play Again</button>
           <a class="btn modal-btn" href="#/shells-feathers" data-up>Change Mode</a>
@@ -457,10 +485,12 @@
     </div>
 
     <!-- Acorns & Leaves result -->
-    <div id="al-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="al-modal-title" aria-describedby="al-modal-message">
+    <div id="al-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="al-modal-title" aria-describedby="al-modal-message al-modal-summary">
       <div class="modal-content">
+        <div class="modal-emblem" id="al-modal-emblem" aria-hidden="true"></div>
         <h3 id="al-modal-title" class="modal-title">Victory!</h3>
         <p id="al-modal-message" class="modal-message"></p>
+        <p id="al-modal-summary" class="modal-summary"></p>
         <div class="modal-buttons">
           <button type="button" class="btn btn-primary modal-btn" data-action="al-rematch">Rematch</button>
           <a class="btn modal-btn" href="#/acorns-leaves" data-up>Change Mode</a>

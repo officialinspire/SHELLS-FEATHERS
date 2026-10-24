@@ -24,11 +24,24 @@
     --text-muted: #EADFC8;
     --teal: #1F6F66;
     --teal-light: #26857A;
+    /* Filled teal buttons keep cream text at 4.8:1 or more. */
+    --teal-button: #237A70;
+    --teal-button-deep: #1B6158;
+    --gold: #E9B526;
+    --gold-soft: #FFD447;
+    --wood-light: #D9B27A;
+    --wood: #B98652;
+    --wood-deep: #8A5A2E;
     --focus-ring: #FFF8DC;
     --focus-halo: rgba(30, 18, 8, 0.85);
     --font-display: 'Uncial Antiqua', 'Cinzel', serif;
     --font-label: 'Cinzel', Georgia, serif;
     --font-body: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+
+    /* Motion: brief and gentle. Everything is switched off for reduced motion. */
+    --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+    --quick: 0.16s;
+    --gentle: 0.24s;
 }
 
 * {
@@ -62,7 +75,7 @@ body::after {
     background: linear-gradient(135deg, #8B4513 0%, #DEB887 50%, #87CEEB 100%);
 }
 
-/* Drifting light. Fixed, so it never makes the page scrollable. */
+/* Soft light over the gradient. Fixed, so it never makes the page scrollable. */
 body::before {
     content: '';
     position: fixed;
@@ -72,13 +85,6 @@ body::before {
     background-image:
         radial-gradient(circle at 20% 30%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 80% 70%, rgba(64, 224, 208, 0.1) 0%, transparent 50%);
-    animation: floatBackground 20s ease-in-out infinite;
-}
-
-@keyframes floatBackground {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    33% { transform: translate(-5%, -5%) rotate(120deg); }
-    66% { transform: translate(5%, -5%) rotate(240deg); }
 }
 
 #game-container {
@@ -87,7 +93,7 @@ body::before {
     width: 100%;
     max-width: 960px;
     margin: 0 auto;
-    /* Screens fade in from 20px lower; don't let that briefly make the page scroll. */
+    /* Screens fade in from 8px lower; don't let that briefly make the page scroll. */
     overflow: hidden;
     overflow: clip;
 }
@@ -144,7 +150,7 @@ h2[tabindex="-1"]:focus {
     align-items: center;
     justify-content: center;
     gap: 20px;
-    animation: fadeIn 0.4s ease;
+    animation: fadeIn var(--gentle) var(--ease-out);
 }
 
 .screen.active {
@@ -152,7 +158,7 @@ h2[tabindex="-1"]:focus {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -163,35 +169,46 @@ h2[tabindex="-1"]:focus {
     line-height: 1.1;
     color: var(--feather-white);
     text-shadow:
-        3px 3px 6px var(--shadow),
-        0 0 20px rgba(64, 224, 208, 0.5);
-    animation: titleGlow 3s ease-in-out infinite;
-}
-
-@keyframes titleGlow {
-    0%, 100% { text-shadow: 3px 3px 6px var(--shadow), 0 0 20px rgba(64, 224, 208, 0.5); }
-    50% { text-shadow: 3px 3px 6px var(--shadow), 0 0 30px rgba(64, 224, 208, 0.8); }
+        2px 2px 4px var(--shadow),
+        0 0 18px rgba(64, 224, 208, 0.35);
 }
 
 .subtitle,
 .screen-subtitle {
     font-size: clamp(1rem, 3vw, 1.2rem);
-    color: var(--shell-pearl);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
-    margin-top: 8px;
+    color: var(--text-muted);
+    margin-top: 6px;
 }
 
+/* Titles sit on a bark plaque, the same width as the panels below, so they
+   read on every part of the gradient and head the screen clearly. */
 .hub-header,
 .screen-header {
+    width: 100%;
+    max-width: 560px;
+    padding: 14px 18px 16px;
+    background: var(--bark);
+    border: 2px solid var(--bark-edge);
+    border-radius: 20px;
+    box-shadow: 0 6px 14px var(--shadow);
     text-align: center;
+}
+
+.hub-header {
+    max-width: 880px;
+    padding: 18px 18px 16px;
+}
+
+.hub-header .decorative-border {
+    margin: 12px auto 0;
 }
 
 .screen-header h2 {
     font-family: var(--font-display);
-    font-size: clamp(1.8rem, 6.5vw, 2.8rem);
+    font-size: clamp(1.7rem, 6.5vw, 2.5rem);
     line-height: 1.15;
     color: var(--feather-white);
-    text-shadow: 2px 2px 4px var(--shadow), 0 0 14px rgba(0, 0, 0, 0.35);
+    text-shadow: 2px 2px 4px var(--shadow);
 }
 
 .eyebrow {
@@ -200,11 +217,13 @@ h2[tabindex="-1"]:focus {
 }
 
 .section-label {
-    font-size: 1rem;
+    padding: 4px 16px;
+    background: var(--bark-soft);
+    border-radius: 999px;
+    font-size: 0.95rem;
     font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--feather-white);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
 }
 
 .decorative-border {
@@ -243,13 +262,13 @@ h2[tabindex="-1"]:focus {
     text-align: center;
     text-decoration: none;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    transition: transform var(--quick) ease, box-shadow var(--quick) ease, background var(--quick) ease, border-color var(--quick) ease;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
 
 .btn-primary {
-    background: linear-gradient(145deg, var(--teal-light), var(--teal));
+    background: linear-gradient(145deg, var(--teal-button), var(--teal));
     border-color: var(--turquoise);
 }
 
@@ -273,9 +292,22 @@ h2[tabindex="-1"]:focus {
     box-shadow: none;
 }
 
-.btn:active {
+/* Hover and pressed states. The enabled check sits in :where() so each
+   variant's own state below overrides the plain button's. */
+.btn:where(:not(:disabled):not([aria-disabled="true"])):active {
     transform: translateY(1px);
     box-shadow: 0 1px 2px var(--shadow), inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(145deg, var(--dark-brown), var(--primary-brown));
+}
+
+.btn-primary:where(:not(:disabled):not([aria-disabled="true"])):active {
+    background: linear-gradient(145deg, var(--teal), var(--teal-button-deep));
+}
+
+.btn-secondary:where(:not(:disabled):not([aria-disabled="true"])):active,
+.btn-quiet:where(:not(:disabled):not([aria-disabled="true"])):active,
+.btn-danger:where(:not(:disabled):not([aria-disabled="true"])):active {
+    background: rgba(43, 27, 14, 0.55);
 }
 
 .btn:disabled,
@@ -288,23 +320,24 @@ h2[tabindex="-1"]:focus {
 }
 
 @media (hover: hover) {
-    .btn:not(:disabled):not([aria-disabled="true"]):hover {
+    .btn:where(:not(:disabled):not([aria-disabled="true"])):hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 12px var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.3);
         background: linear-gradient(145deg, var(--secondary-brown), var(--primary-brown));
     }
 
-    .btn-primary:not(:disabled):hover {
-        background: linear-gradient(145deg, #2B9487, var(--teal-light));
-    }
-
-    .btn-secondary:hover,
-    .btn-quiet:hover {
-        background: rgba(255, 248, 220, 0.16);
+    .btn-primary:where(:not(:disabled):not([aria-disabled="true"])):hover {
+        background: linear-gradient(145deg, var(--teal), var(--teal-button-deep));
         border-color: var(--feather-white);
     }
 
-    .btn-danger:hover {
+    .btn-secondary:where(:not(:disabled)):hover,
+    .btn-quiet:where(:not(:disabled)):hover {
+        background: rgba(43, 27, 14, 0.4);
+        border-color: var(--feather-white);
+    }
+
+    .btn-danger:where(:not(:disabled)):hover {
         background: rgba(255, 107, 53, 0.2);
     }
 }
@@ -326,23 +359,28 @@ h2[tabindex="-1"]:focus {
     max-width: 640px;
 }
 
-.back-link {
+.back-link,
+.text-link {
     padding: 8px 16px;
     border: 1.5px solid rgba(245, 222, 179, 0.45);
     border-radius: 999px;
     background: var(--bark-soft);
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: background var(--quick) ease, border-color var(--quick) ease;
 }
 
 .text-link {
-    padding: 4px 8px;
     text-decoration: underline;
     text-underline-offset: 4px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.back-link:active,
+.text-link:active {
+    background: var(--bark-edge);
 }
 
 @media (hover: hover) {
-    .back-link:hover {
+    .back-link:hover,
+    .text-link:hover {
         background: var(--bark);
         border-color: var(--feather-white);
     }
@@ -482,7 +520,7 @@ h2[tabindex="-1"]:focus {
     width: 84px;
     height: 84px;
     padding: 6px;
-    background: radial-gradient(circle, #D9B486, #A8743F);
+    background: linear-gradient(145deg, var(--wood), var(--wood-deep));
     border: 2px solid var(--dark-brown);
     border-radius: 12px;
 }
@@ -491,11 +529,12 @@ h2[tabindex="-1"]:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 248, 220, 0.3);
-    border: 1px solid rgba(101, 67, 33, 0.45);
+    background: linear-gradient(160deg, var(--wood-light), #C99A62);
+    border: 1px solid rgba(101, 67, 33, 0.6);
     border-radius: 6px;
     font-size: 15px;
     line-height: 1;
+    text-shadow: 0 0 1px rgba(43, 27, 14, 0.9), 0 1px 2px rgba(43, 27, 14, 0.5);
 }
 
 .checkers-mini {
@@ -596,7 +635,7 @@ h2[tabindex="-1"]:focus {
     border: 2px solid var(--primary-brown);
     border-radius: 15px;
     font-weight: 600;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    transition: background var(--quick) ease, border-color var(--quick) ease, transform var(--quick) ease;
 }
 
 .segment input:checked + span {
@@ -667,7 +706,7 @@ h2[tabindex="-1"]:focus {
     text-align: center;
     text-decoration: none;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: transform var(--quick) ease, box-shadow var(--quick) ease, border-color var(--quick) ease;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
@@ -675,11 +714,12 @@ h2[tabindex="-1"]:focus {
 .mode-btn:active {
     transform: translateY(1px);
     box-shadow: 0 2px 4px var(--shadow);
+    border-color: var(--sand);
 }
 
 @media (hover: hover) {
     .mode-btn:hover {
-        transform: translateY(-4px);
+        transform: translateY(-2px);
         border-color: var(--turquoise);
         box-shadow: 0 8px 20px var(--shadow);
     }
@@ -736,40 +776,111 @@ h2[tabindex="-1"]:focus {
 
 .score-display {
     color: var(--feather-white);
-    font-size: 1.1rem;
-    margin-bottom: 8px;
+    font-size: 1.05rem;
 }
 
-.score-separator {
-    margin: 0 15px;
-    color: var(--turquoise);
+/* One chip per player or side: piece, name, count. The one to move gets a
+   bright edge and a "To move" tag; the winner a gold edge and "Winner". */
+.side-chips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 4px 0 6px;
 }
 
+.side-chip {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 6px 8px 3px;
+    background: rgba(43, 27, 14, 0.45);
+    border: 2px solid rgba(245, 222, 179, 0.25);
+    border-radius: 14px;
+    text-align: left;
+    transition: background var(--gentle) ease, border-color var(--gentle) ease;
+}
+
+.side-chip.is-active {
+    background: rgba(64, 224, 208, 0.16);
+    border-color: var(--turquoise);
+}
+
+.side-chip[data-player="2"].is-active {
+    background: rgba(255, 107, 53, 0.16);
+    border-color: var(--sunset-orange);
+}
+
+.side-chip.is-winner {
+    background: rgba(255, 212, 71, 0.18);
+    border-color: var(--gold-soft);
+}
+
+.side-chip-glyph {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(160deg, var(--wood-light), #C99A62);
+    border: 2px solid var(--dark-brown);
+    border-radius: 50%;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.side-chip-text {
+    min-width: 0;
+    font-weight: 600;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.side-chip-tag {
+    position: absolute;
+    top: -10px;
+    right: 8px;
+    padding: 1px 8px;
+    background: var(--turquoise);
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.side-chip[data-player="2"].is-active .side-chip-tag {
+    background: var(--sunset-orange);
+}
+
+.side-chip.is-winner .side-chip-tag {
+    background: var(--gold-soft);
+}
+
+/* The turn line: steady (no pulsing), colored per player, and always worded. */
 .turn-indicator {
     font-size: 1.2rem;
     color: var(--turquoise);
     font-weight: 600;
     text-shadow: 1px 1px 2px var(--shadow);
-    animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-/* Game board (look unchanged from v1); sized to fit the screen's height too. */
+/* Game board: a solid wooden tray with lighter wooden squares, so pale
+   shells and brown feathers both stand out. Sized to fit the screen's height
+   too. */
 .game-board {
     --board-size: min(90vw, 450px, max(220px, calc(100vh - 300px)));
     position: relative;
     width: var(--board-size);
     height: var(--board-size);
-    background: radial-gradient(circle, rgba(222, 184, 135, 0.3), rgba(139, 69, 19, 0.3));
+    background: linear-gradient(145deg, var(--wood-deep), #6E4523);
     border-radius: 20px;
     padding: 10px;
     box-shadow:
-        0 10px 30px var(--shadow),
-        inset 0 2px 5px rgba(255, 255, 255, 0.2);
+        0 10px 24px var(--shadow),
+        inset 0 2px 4px rgba(255, 248, 220, 0.2),
+        inset 0 -3px 6px rgba(43, 27, 14, 0.35);
     border: 3px solid var(--dark-brown);
 }
 
@@ -799,14 +910,17 @@ h2[tabindex="-1"]:focus {
     padding: 0;
     color: inherit;
     font: inherit;
-    font-size: calc(var(--board-size) * 0.11);
+    font-size: calc(var(--board-size) * 0.12);
     line-height: 1;
-    background: rgba(255, 248, 220, 0.1);
-    border: 2px solid rgba(139, 69, 19, 0.3);
+    background: linear-gradient(160deg, var(--wood-light), #C99A62);
+    border: 2px solid rgba(74, 46, 22, 0.7);
     border-radius: 15px;
+    box-shadow: inset 0 2px 2px rgba(255, 248, 220, 0.35), inset 0 -2px 4px rgba(74, 46, 22, 0.3);
+    /* A thin dark edge around each piece keeps it clear of the wood. */
+    text-shadow: 0 0 1px rgba(43, 27, 14, 0.9), 0 2px 3px rgba(43, 27, 14, 0.45);
     cursor: pointer;
     /* Not "all": the focus ring and edges must appear instantly. */
-    transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+    transition: transform var(--quick) ease, background var(--quick) ease, box-shadow var(--quick) ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -817,15 +931,15 @@ h2[tabindex="-1"]:focus {
 /* Hover and press feedback only while the player can move. */
 @media (hover: hover) {
     .board-overlay[data-state="ready"] .cell:hover:not(.occupied) {
-        background: rgba(64, 224, 208, 0.2);
-        transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(64, 224, 208, 0.3);
+        background: linear-gradient(160deg, #E6C793, var(--wood-light));
+        box-shadow: inset 0 0 0 3px var(--teal);
     }
 }
 
 .board-overlay[data-state="ready"] .cell:active:not(.occupied) {
-    transform: scale(0.95);
-    background: rgba(64, 224, 208, 0.3);
+    transform: scale(0.97);
+    background: linear-gradient(160deg, #C99A62, var(--wood));
+    box-shadow: inset 0 0 0 3px var(--teal), inset 0 2px 4px rgba(43, 27, 14, 0.35);
 }
 
 /* The Spirit is thinking: empty squares wait. */
@@ -839,8 +953,9 @@ h2[tabindex="-1"]:focus {
 }
 
 .board-overlay[data-state="over"] .cell:not(.occupied) {
-    background: rgba(255, 248, 220, 0.04);
+    background: rgba(201, 154, 98, 0.45);
     border-style: dashed;
+    box-shadow: none;
 }
 
 /* Focus: a dark ring outside and a cream edge inside. Neither uses
@@ -854,22 +969,22 @@ h2[tabindex="-1"]:focus {
 
 .cell.occupied {
     cursor: not-allowed;
-    animation: placeSymbol 0.5s ease;
+    animation: placeSymbol var(--gentle) var(--ease-out);
 }
 
+/* A piece settles into place: a small grow and fade-in, no spin. */
 @keyframes placeSymbol {
-    0% { transform: scale(0) rotate(0deg); }
-    50% { transform: scale(1.2) rotate(180deg); }
-    100% { transform: scale(1) rotate(360deg); }
+    from { transform: scale(0.82); opacity: 0.4; }
+    to { transform: scale(1); opacity: 1; }
 }
 
-/* Winning squares: gold glow plus a solid edge, so the line doesn't rely on
-   color alone. */
+/* Winning squares: gold, a solid edge (so the line doesn't rely on color
+   alone) and a soft glow that brightens twice, then stays. */
 .cell.winner {
-    background: rgba(255, 215, 0, 0.4);
+    background: linear-gradient(160deg, #F6DC8E, #E2B653);
     border: 3px solid var(--dark-brown);
-    box-shadow: 0 0 24px rgba(255, 215, 0, 0.65);
-    animation: winnerGlow 1s ease infinite;
+    box-shadow: 0 0 14px rgba(255, 212, 71, 0.7), inset 0 2px 2px rgba(255, 248, 220, 0.5);
+    animation: winnerGlow 0.9s ease-in-out 2;
 }
 
 .cell.winner:focus-visible {
@@ -877,14 +992,7 @@ h2[tabindex="-1"]:focus {
 }
 
 @keyframes winnerGlow {
-    0%, 100% {
-        background: rgba(255, 215, 0, 0.3);
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-    }
-    50% {
-        background: rgba(255, 215, 0, 0.5);
-        box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
-    }
+    50% { box-shadow: 0 0 26px rgba(255, 212, 71, 0.95), inset 0 2px 2px rgba(255, 248, 220, 0.5); }
 }
 
 .game-controls {
@@ -916,6 +1024,28 @@ h2[tabindex="-1"]:focus {
     .match-screen .game-header { align-self: end; }
     .match-screen .game-controls { align-self: start; }
 
+    .side-chip {
+        gap: 6px;
+        padding: 6px 6px 3px;
+    }
+
+    .side-chip-glyph,
+    .al-side-piece {
+        width: 28px;
+        height: 28px;
+    }
+
+    .side-chip-glyph {
+        font-size: 16px;
+    }
+
+    /* Shells & Feathers has room for one chip per row here, so "Player 1: 0"
+       stays on one line. */
+    #game-screen .side-chips {
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: 12px;
+    }
+
     .game-board {
         --board-size: min(calc(100vh - 32px), 52vw, 450px);
     }
@@ -928,7 +1058,9 @@ h2[tabindex="-1"]:focus {
 
 }
 
-/* Result dialog */
+/* Result panel, the same in both games: the winning piece in a wooden
+   medallion (both pieces for a draw), the result, a summary line, then the
+   actions. A win gets one soft gold glow on the medallion; nothing loops. */
 .modal {
     display: none;
     position: fixed;
@@ -936,8 +1068,8 @@ h2[tabindex="-1"]:focus {
     z-index: 1000;
     padding: 16px;
     overflow-y: auto;
-    background: rgba(0, 0, 0, 0.7);
-    animation: fadeIn 0.3s ease;
+    background: rgba(30, 18, 8, 0.72);
+    animation: fadeIn var(--gentle) var(--ease-out);
 }
 
 .modal.active {
@@ -950,32 +1082,86 @@ h2[tabindex="-1"]:focus {
     width: 100%;
     max-width: 440px;
     margin: auto;
-    padding: 32px 24px;
-    background: linear-gradient(145deg, var(--primary-brown), var(--secondary-brown));
-    border: 3px solid var(--dark-brown);
-    border-radius: 25px;
-    box-shadow: 0 10px 40px var(--shadow);
+    padding: 24px 22px 18px;
+    background: linear-gradient(160deg, #5A3A1E, #3A2411);
+    border: 2px solid var(--bark-edge);
+    border-radius: 24px;
+    box-shadow: 0 10px 40px var(--shadow), inset 0 0 0 1px rgba(245, 222, 179, 0.18);
     text-align: center;
-    animation: modalSlide 0.5s ease;
+    animation: modalRise var(--gentle) var(--ease-out);
 }
 
-@keyframes modalSlide {
-    from { transform: translateY(-50px); opacity: 0; }
+@keyframes modalRise {
+    from { transform: translateY(12px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-emblem {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.modal-emblem:empty {
+    display: none;
+}
+
+.emblem-piece {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    padding: 4px;
+    background: linear-gradient(160deg, var(--wood-light), #C99A62);
+    border: 3px solid var(--dark-brown);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(245, 222, 179, 0.35);
+    font-size: 34px;
+    line-height: 1;
+    text-shadow: 0 0 1px rgba(43, 27, 14, 0.9), 0 2px 3px rgba(43, 27, 14, 0.45);
+}
+
+.modal:is([data-outcome="win"], [data-outcome="player1"], [data-outcome="player2"], [data-outcome="acorn"], [data-outcome="leaf"]) .emblem-piece {
+    box-shadow: 0 0 0 3px var(--gold), 0 0 16px rgba(255, 212, 71, 0.45);
+    animation: emblemGlow 1.2s ease-out 1;
+}
+
+@keyframes emblemGlow {
+    from { box-shadow: 0 0 0 3px var(--gold), 0 0 0 rgba(255, 212, 71, 0); }
+    40% { box-shadow: 0 0 0 3px var(--gold), 0 0 28px rgba(255, 212, 71, 0.8); }
 }
 
 .modal-title {
     font-family: var(--font-display);
-    font-size: clamp(1.8rem, 7vw, 2.5rem);
-    color: var(--turquoise);
-    margin-bottom: 12px;
+    font-size: clamp(1.7rem, 7vw, 2.3rem);
+    line-height: 1.15;
+    color: var(--feather-white);
+    margin-bottom: 8px;
     text-shadow: 2px 2px 4px var(--shadow);
 }
 
 .modal-message {
-    font-size: 1.2rem;
-    color: var(--feather-white);
-    margin-bottom: 24px;
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.modal-summary {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 4px 14px;
+    background: rgba(43, 27, 14, 0.6);
+    border: 1px solid rgba(245, 222, 179, 0.3);
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--sand);
+}
+
+.modal-summary:empty {
+    display: none;
 }
 
 .modal-buttons {
@@ -994,17 +1180,29 @@ h2[tabindex="-1"]:focus {
 }
 
 .modal-buttons .btn:not(.btn-primary) {
-    background: rgba(43, 27, 14, 0.35);
-    border-color: var(--sand);
+    background: rgba(255, 248, 220, 0.06);
+    border-color: rgba(245, 222, 179, 0.7);
     box-shadow: none;
+}
+
+.modal-buttons .btn:not(.btn-primary):active {
+    background: rgba(43, 27, 14, 0.55);
+}
+
+@media (hover: hover) {
+    .modal-buttons .btn:not(.btn-primary):hover {
+        background: rgba(43, 27, 14, 0.4);
+        border-color: var(--feather-white);
+    }
 }
 
 .view-board-btn {
     min-height: 44px;
-    margin-top: 12px;
-    padding: 6px 12px;
+    margin-top: 10px;
+    padding: 6px 16px;
     background: none;
-    border: 0;
+    border: 1.5px solid transparent;
+    border-radius: 999px;
     color: var(--feather-white);
     font-family: var(--font-label);
     font-size: 0.95rem;
@@ -1014,20 +1212,63 @@ h2[tabindex="-1"]:focus {
     cursor: pointer;
 }
 
-/* Short landscape screens: a wider, flatter dialog that fits without scrolling. */
+.view-board-btn:active {
+    background: rgba(43, 27, 14, 0.55);
+}
+
+@media (hover: hover) {
+    .view-board-btn:hover {
+        border-color: rgba(245, 222, 179, 0.6);
+    }
+}
+
+/* Short landscape screens: a wider, flatter dialog that fits without
+   scrolling; the medallion sits beside the title. */
 @media (orientation: landscape) and (max-height: 540px) {
     .modal-content {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: 16px;
+        align-items: center;
         max-width: 600px;
-        padding: 16px 20px;
+        padding: 14px 20px;
+    }
+
+    .modal-content > :not(.modal-emblem) {
+        grid-column: 1 / -1;
+    }
+
+    .modal-content > .modal-title {
+        grid-column: 2;
+        margin-bottom: 0;
+        text-align: left;
+    }
+
+    .modal-emblem {
+        margin-bottom: 0;
+    }
+
+    .emblem-piece {
+        width: 48px;
+        height: 48px;
+        font-size: 26px;
     }
 
     .modal-title {
-        margin-bottom: 4px;
-        font-size: 1.9rem;
+        font-size: 1.8rem;
     }
 
     .modal-message {
-        margin-bottom: 14px;
+        margin: 6px 0 6px;
+    }
+
+    .modal-summary,
+    .view-board-btn {
+        justify-self: center;
+    }
+
+    .modal-summary {
+        margin-bottom: 12px;
     }
 
     .modal-buttons .btn {
@@ -1057,35 +1298,9 @@ h2[tabindex="-1"]:focus {
     margin-bottom: 8px;
 }
 
+/* The two sides use the shared chips (.side-chip, above). */
 .al-sides {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    margin-bottom: 6px;
-}
-
-.al-side {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    padding: 3px 8px;
-    background: rgba(43, 27, 14, 0.45);
-    border: 2px solid rgba(245, 222, 179, 0.25);
-    border-radius: 14px;
-    text-align: left;
-}
-
-/* The side to move: bright edge plus a "To move" tag, not color alone. */
-.al-side.is-active {
-    background: rgba(64, 224, 208, 0.16);
-    border-color: var(--turquoise);
-}
-
-.al-side.is-winner {
-    background: rgba(255, 212, 71, 0.18);
-    border-color: #FFD447;
+    margin-top: 0;
 }
 
 .al-side-piece {
@@ -1120,24 +1335,7 @@ h2[tabindex="-1"]:focus {
     color: var(--feather-white);
 }
 
-.al-side-tag {
-    position: absolute;
-    top: -9px;
-    right: 8px;
-    padding: 1px 8px;
-    background: var(--turquoise);
-    border-radius: 999px;
-    color: var(--ink);
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-}
-
-.al-side.is-winner .al-side-tag {
-    background: #FFD447;
-}
-
-.al-turn[data-side="acorn"] { color: #F5DEB3; }
+.al-turn[data-side="acorn"] { color: var(--sand); }
 .al-turn[data-side="leaf"] { color: #BDE8A8; }
 .al-turn[data-side="draw"] { color: var(--turquoise); }
 
@@ -1205,7 +1403,7 @@ h2[tabindex="-1"]:focus {
     height: 86%;
     pointer-events: none;
     filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45));
-    transition: transform 0.15s ease, opacity 0.15s ease;
+    transition: transform var(--quick) ease, opacity var(--quick) ease;
 }
 
 /* Coordinates: ranks down the left edge, files along the bottom. */
@@ -1220,10 +1418,27 @@ h2[tabindex="-1"]:focus {
     pointer-events: none;
 }
 
+/* Light squares hold the board's rounded corners (a8 and h1), so their
+   labels keep clear of the curve. */
 .al-rank { top: 2px; left: 3px; }
 .al-file { right: 3px; bottom: 2px; }
-.al-square.dark :is(.al-rank, .al-file) { color: #E8D3A9; }
+.al-square.dark .al-rank { top: 1px; left: 1px; }
+.al-square.dark .al-file { right: 1px; bottom: 1px; }
 .al-square.light :is(.al-rank, .al-file) { color: #6B4A2B; }
+
+/* On dark squares a label can overlap a piece or a ring, so it sits on its
+   own small dark backing (light on the gold and misty squares). */
+.al-square.dark :is(.al-rank, .al-file) {
+    padding: 1px 2px;
+    background: rgba(43, 27, 14, 0.7);
+    border-radius: 3px;
+    color: var(--feather-white);
+}
+
+.al-square.dark:is(.is-selected, .is-fog) :is(.al-rank, .al-file) {
+    background: rgba(255, 248, 220, 0.7);
+    color: var(--ink);
+}
 
 /* The last move's route, and the route so far of an unfinished chain. */
 .al-square.dark.is-last { background: #8E6B3D; }
@@ -1257,7 +1472,7 @@ h2[tabindex="-1"]:focus {
     box-shadow: 0 0 0 2px var(--ink), inset 0 0 0 2px var(--ink);
 }
 
-/* Pieces that must capture: an orange ring. */
+/* Pieces that must capture: a steady orange ring with a dark edge. */
 .al-square.must-jump::before {
     content: '';
     position: absolute;
@@ -1266,13 +1481,7 @@ h2[tabindex="-1"]:focus {
     height: 96%;
     border: 4px solid var(--sunset-orange);
     border-radius: 50%;
-    box-shadow: 0 0 10px rgba(255, 107, 53, 0.85);
-    animation: alMustJump 1.2s ease-in-out infinite;
-}
-
-@keyframes alMustJump {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.55; }
+    box-shadow: 0 0 0 1px var(--ink), 0 0 8px rgba(255, 107, 53, 0.7);
 }
 
 /* A piece being jumped in an unfinished chain: faded, with a cross. A
@@ -1298,11 +1507,11 @@ h2[tabindex="-1"]:focus {
 }
 
 .al-square.is-last-to .al-piece {
-    animation: alLand 0.3s ease;
+    animation: alLand var(--gentle) var(--ease-out);
 }
 
 @keyframes alLand {
-    from { transform: scale(0.7); }
+    from { transform: scale(0.85); }
     to { transform: scale(1); }
 }
 
@@ -1333,27 +1542,28 @@ h2[tabindex="-1"]:focus {
 }
 
 /* Fog of War: unseen dark squares are misty (a hatched veil, so they differ
-   from plain squares by pattern as well as shade); their coordinates stay. */
+   from plain squares by pattern as well as shade); their coordinates stay, in
+   dark ink. */
 .al-square.dark.is-fog {
     background-image:
-        repeating-linear-gradient(135deg, rgba(255, 248, 220, 0.16) 0 3px, transparent 3px 8px),
-        linear-gradient(rgba(196, 190, 176, 0.55), rgba(150, 144, 132, 0.55));
+        repeating-linear-gradient(135deg, rgba(255, 248, 220, 0.22) 0 3px, transparent 3px 8px),
+        linear-gradient(rgba(200, 194, 182, 0.72), rgba(170, 164, 152, 0.72));
 }
 
-/* A hidden piece found by a blocked jump: an orange dashed frame, and a short
+/* A hidden piece found by a blocked jump: an orange frame, and a short
    shake when it is found. */
 .al-square.is-found {
     box-shadow: inset 0 0 0 3px var(--sunset-orange);
 }
 
 .al-square.is-found .al-piece {
-    animation: alBump 0.4s ease;
+    animation: alBump 0.3s ease;
 }
 
 @keyframes alBump {
     0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-6%); }
-    75% { transform: translateX(6%); }
+    25% { transform: translateX(-4%); }
+    75% { transform: translateX(4%); }
 }
 
 /* Two players in Fog: the handoff screen covers everything between turns. */
@@ -1456,13 +1666,13 @@ h2[tabindex="-1"]:focus {
     }
 
     .al-board-frame {
-        --al-board: min(calc(100vw - 26px), max(256px, calc(100vh - 278px)));
+        --al-board: min(calc(100vw - 26px), max(256px, calc(100vh - 272px)));
         padding: 3px;
     }
 
     @supports (height: 100dvh) {
         .al-board-frame {
-            --al-board: min(calc(100vw - 26px), max(256px, calc(100dvh - 278px)));
+            --al-board: min(calc(100vw - 26px), max(256px, calc(100dvh - 272px)));
         }
     }
 
@@ -1827,13 +2037,16 @@ h2[tabindex="-1"]:focus {
     }
 }
 
-/* Respect a request for less motion. */
+/* Respect a request for less motion: no fades, slides, glows or eased state
+   changes. Every state still shows at once (no animation keeps its end state;
+   the end state is the element's own style). "none" rather than a tiny
+   duration, which would give every property a one-frame transition. */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
     *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
     }
 }

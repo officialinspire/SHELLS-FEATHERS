@@ -10,7 +10,8 @@
 | Stage 3: Shells & Feathers match flows, board accessibility, gestures | `bb5708d` |
 | Stage 4: Acorns & Leaves Classic Checkers rules engine | `2fc7c37` |
 | Stage 5: Acorns & Leaves playable (board, two players, the Spirit) | `e05a922` |
-| Stage 6: Acorns & Leaves Fog of War mode | the commit that adds §0.1 |
+| Stage 6: Acorns & Leaves Fog of War mode | `69852ea` |
+| Stage 7: one Spirit of the Woods look (polish, motion, accessibility, assets) | the commit that adds §0.1 |
 | Live site | https://officialinspire.github.io/SHELLS-FEATHERS/ still serves v1 from `main`. Nothing from this branch is merged or deployed. |
 
 The existing Shells & Feathers tic-tac-toe game must stay playable at every step of the upgrade. Each stage ends with every test green and the game deployable as is.
@@ -21,7 +22,90 @@ Sections 1–3 are the audit of v1 and stay as they were written, as a record of
 
 ## 0. Status
 
-### 0.1 Stage 6: Fog of War for Acorns & Leaves
+### 0.1 Stage 7: one Spirit of the Woods look
+
+The hub and both games now share one look, polished as one collection. The palette (browns, sand, cream, turquoise and sunset orange on the brown-to-sky gradient), the Uncial Antiqua and Cinzel type, and the Shells & Feathers pieces and wording are kept. Nothing about play, rules, routes or saves changed. Assets and their sources are listed in [`assets.md`](assets.md).
+
+**Hierarchy.**
+- Every screen opens with its title on a bark plaque, the same width as the panels below it. Before, titles, subtitles, "Choose a game" and the "How to Play" links sat straight on the light middle of the gradient. "Choose a game" and the text links are now small bark pills.
+- The decorative turquoise-and-orange rule moved under the hub title.
+
+**Boards.**
+- **Shells & Feathers** is a solid wooden tray with lighter wooden squares, after the board on the owner's title card. Before, it was a pale, see-through board. Pieces have a thin dark edge, so pale shells and brown feathers both stand out.
+- **Hover and press:** a teal inner ring.
+- **Winning line:** gold squares with the existing 3px dark edge.
+- **Acorns & Leaves:**
+  - Coordinates on dark squares sit on a small backing, so they stay readable over pieces, rings and route tints.
+  - Fogged squares are lighter mist with dark coordinates. The "must capture" ring is steady instead of blinking.
+
+**Pieces.** The acorn and leaf pieces were redrawn as original SVG:
+- shaded discs;
+- a scaled acorn cap;
+- a two-tone leaf;
+- a gold-gradient crown;
+- on kings, a larger emblem, so it still reads on 36px squares.
+
+The symbol IDs are unchanged.
+
+**Turn cues.** Shells & Feathers now has one chip per player, like Acorns & Leaves: the piece, the name and the score.
+- The player to move gets a colored edge and a "To move" tag: turquoise for Player 1 or you, orange for Player 2 or the Spirit.
+- After a win, the winner's chip turns gold with a "Winner" tag.
+- The turn line no longer pulses.
+- Both games share the same chip styles.
+
+**Result panels.** Both games use one panel:
+- a wooden medallion with the winning piece (both pieces for a draw);
+- the result and message as before;
+- a summary line: the session score in Shells & Feathers, the captured counts in Acorns & Leaves. Screen readers read it with the result (`aria-describedby`);
+- the actions.
+
+Victory feedback is restrained: the medallion gets one soft gold glow, and the winning squares glow twice and then stay gold. There is no confetti and nothing loops.
+
+**Buttons.**
+- **Fixed:** hover and press on teal buttons, and hover on outlined buttons, fell back to the plain brown button's style. The plain button's state rules had higher specificity. They now sit in `:where()`, so each kind keeps its own hover and press.
+- **States:** every button kind has a distinct hover, press, disabled and focus state.
+- **Contrast:** teal buttons are a little deeper, so their text meets 4.5:1.
+
+**Motion.**
+- **Removed:** every endless animation (the drifting background light, the title glow, the turn line pulse, the winning-square pulse, the blinking capture ring).
+- **Softened:**
+
+  | | Before | Now |
+  |---|---|---|
+  | Screen change | 0.4 s, 20px slide | 0.24 s, 8px |
+  | Result panel | 0.5 s, 50px drop | 0.24 s, 12px rise |
+  | Shells & Feathers piece | 0.5 s spin | 0.24 s settle |
+- **Reduced motion:** `prefers-reduced-motion` turns every animation and transition off (`none`); every state still shows at once.
+  - Before, the rule cut every duration to 0.01 ms. That gave every property on every element a one-frame transition, so a chip or the turn line could show its old color for a frame.
+
+**Layout on short screens.**
+- **Chips:** in landscape (640×360) the Shells & Feathers chips cut "Player 1: 0" to "Pl…".
+  - Chip text now wraps instead of being cut off.
+  - On short landscape screens the two Shells & Feathers chips stack, one per row, so the name and score stay on one line.
+  - Chip pieces are smaller there.
+- **Result panel in landscape:** the medallion sits beside the title, and the panel fits without scrolling.
+- **Checkers squares:** on a 360×560 Android screen (a Galaxy S5 with browser bars) they were 35px. The board now uses the spare height, giving 36px squares, and the whole match still fits.
+- **No scroll blocking:** menus, How to Play, Settings and Your Path scroll normally. Matches and result panels fit without scrolling at every size checked.
+
+**Audit (scripted; before → after).** Every screen and overlay was checked at 360×640, 360×560, 640×360 and 1280×800:
+
+| Check | Before | After |
+|---|---|---|
+| Text below WCAG AA | 111 of 1417 runs | 0 of 1439 |
+| Controls under 44px (checkers squares under 36px) | 64 squares on the 360×560 screen | 0 |
+| Focused controls without a visible ring | 0 | 0 |
+| Clipped text | 0 | 0 |
+
+How contrast was measured: each text run was compared with the pixels actually rendered behind it, with the text hidden. Text shadows were ignored, so the figures are conservative.
+
+**Assets.** [`assets.md`](assets.md) lists every file, font and drawing, with its source and terms. Open items for the owner:
+- the six MP3s have no recorded source or license;
+- the two PNGs in the repository are unused;
+- the README's "Native-American–inspired" and "ancient motifs" wording is not sourced, or shown anywhere in the game.
+
+No ceremonial or cultural imagery was added.
+
+### 0.2 Stage 6: Fog of War for Acorns & Leaves
 
 Fog of War is a separate Acorns & Leaves mode, chosen with "Rules: Classic / Fog of War" on the setup screen. It has its own routes (`#/acorns-leaves/fog/single`, `…/fog/two`) and its own records. **Classic is unchanged:** same rules, full visibility, and its tests pass as before. The exact rules are in [`fog-rules.md`](fog-rules.md), written before the code.
 
@@ -78,7 +162,7 @@ Each game was recorded once in the Fog records. The match fitted the screen, the
 - the board after a handoff;
 - the result, and the revealed final board.
 
-### 0.2 Stage 5: Acorns & Leaves is playable
+### 0.3 Stage 5: Acorns & Leaves is playable
 
 The checkers engine from Stage 4 now drives a real game in the hub. The hub card says "Ready to play" and leads to a setup screen (side and Spirit difficulty), then a match for two players on one device or against the Spirit, then a result dialog with Rematch, Change Mode, All Games and View Board. Records appear in Your Path. Shells & Feathers is unchanged, and there is no Fog of War.
 
@@ -176,7 +260,7 @@ Each game was recorded exactly once, in the right bucket. No page errors in any 
 
 The 320 px draw run found guidance and result text wrapping to three lines and pushing the controls off screen, and side names being cut short. Fixed: shorter wording, a tighter header, "You"/"Spirit" names with the side spoken, and a fit check with the longest guidance.
 
-### 0.3 Stage 4: the Acorns & Leaves rules engine
+### 0.4 Stage 4: the Acorns & Leaves rules engine
 
 `src/games/acorns-leaves/engine.js` is a pure Classic Checkers engine (American checkers / English draughts), separate from any user interface. The full rules and every rule choice are in [`docs/acorns-leaves-rules.md`](acorns-leaves-rules.md).
 
@@ -202,7 +286,7 @@ The 320 px draw run found guidance and result text wrapping to three lines and p
 
 **Still a preview (until Stage 5).** The hub card, preview notice and rules page said the rules were ready but the board wasn't, and stated the forward-only captures, the free choice between captures, crowning ending the move and the draw rule. Shells & Feathers was unchanged. Fog of War was not part of this stage.
 
-### 0.4 Stage 3: Shells & Feathers inside the hub
+### 0.5 Stage 3: Shells & Feathers inside the hub
 
 The game keeps everything it had:
 - Shell 🐚 and Feather 🪶 pieces;
@@ -241,7 +325,7 @@ On all three: no errors, no sideways scrolling, and exactly two games recorded. 
 
 **Known limit (unchanged).** Two tabs playing at once each keep their own copy of the records, and the last one saved wins. Nothing is double-counted, but one tab's games can be overwritten.
 
-### 0.5 Stage 2: the game hub
+### 0.6 Stage 2: the game hub
 
 The opening screen is now a hub for Spirit of the Woods games.
 
@@ -285,7 +369,7 @@ Settings (sound, music) and Your Path (totals, records per difficulty and two-pl
 | P3 (CSS) | **Fixed.** The unused celebration styles are removed. The unused PNGs remain. |
 | ST1 | **Fixed.** Your Path shows the per-mode breakdown next to the v1-style totals. |
 
-### 0.6 Stage 1: modules, lifecycle, save migration
+### 0.7 Stage 1: modules, lifecycle, save migration
 
 **Done in Stage 1.**
 - `index.js` is split into ES modules under `src/` (§4), with explicit lifecycles for screens, matches, timers and music fades.
@@ -702,15 +786,16 @@ npm test                          # = npm run test:unit && npm run test:browser
 | `lifecycle.test.mjs` | Audit bugs A1, A2, A3, M1 and M2 reproduced in the real UI and shown fixed. Leaving the match by Change Mode, the browser Back button or a typed URL. |
 | `storage.test.mjs` | v1 player upgrades and keeps records (including after more games and a reload; v1 key untouched by the migration, then mirrored). Malformed, `null` and `{}` v1 values. Corrupt v2 rebuilt from v1. Storage that throws. Settings, pieces and difficulty surviving a reload. |
 | `match-flows.test.mjs` | **First move and the Spirit's turn:** the board is busy, taps are ignored, and both moves are announced. **Win and draw:** the board locks, winning squares are named and edged, the result and line are announced, and a draw adds to neither score. **Scoring once:** the winning square is clicked twice in one task and pressed with Enter three times; then View Board, taps after the end, Restart, Back/Forward and reload. Exactly one game is recorded. **Cancelling the Spirit's move:** Restart, switching to an Acorns & Leaves match, and going home during its turn; nothing scored, no stale move. **Keyboard:** arrows, Home/End, Enter/Space, taken squares refuse, and a dark focus ring on empty, taken and winning squares. **Phone (320×568, touch):** pinch zoom allowed; a touch drag scrolls the setup screen; no `touchmove` is blocked anywhere; no page-wide overscroll setting; only the board uses `touch-action: manipulation`; squares are 60 px or more; a swipe across the board is not a move; a touch game plays to a result. |
-| `acorns-leaves.test.mjs` | **Board and pieces:** the engine's starting position as drawn, 32 dark-square buttons, separate acorn and leaf drawings (rim and emblem), kings with a crown. **Picking and moving:** selection, destinations, square names, announcements, refusals. **Capture sequence:** compulsory capture with both capturing pieces ringed, a double jump square by square (piece moves on, jumped leaf marked, route tinted, other picks and Escape refused), captured counts, the recapture. **Whole games:** two players to a result with every move checked against the engine, the board locked after the end, Restart, one record, Your Path; against the Spirit (Playwright's clock) to a result, with stray clicks and Escape ignored during its turn and every one of its moves matched to a legal move, then Rematch. **Cancelling:** Restart, Change Mode, Back, going home and switching to Shells & Feathers during the Spirit's turn. **Turned board:** playing the Leaves puts h8 bottom-left, the Spirit opens, keys follow the screen. **Keyboard only:** Tab to the game, arrows, Enter/Space, Escape, focus ring above neighbours. **Layout:** at 320×568 (touch), 390×844, 750×340 and 1280×800 the whole match fits with the longest guidance, squares are at least 36 px, and the capture line plays. **Phone gestures:** a swipe is not a move, nothing blocks touch. **Your Path:** records shown and cleared apart from Shells & Feathers; saved side and difficulty preselected. |
+| `acorns-leaves.test.mjs` | **Board and pieces:** the engine's starting position as drawn, 32 dark-square buttons, separate acorn and leaf drawings (rim and emblem), kings with a crown. **Picking and moving:** selection, destinations, square names, announcements, refusals. **Capture sequence:** compulsory capture with both capturing pieces ringed, a double jump square by square (piece moves on, jumped leaf marked, route tinted, other picks and Escape refused), captured counts, the recapture. **Whole games:** two players to a result with every move checked against the engine, the result panel (the winner's piece, or both for a draw, and the captured counts), the board locked after the end, Restart, one record, Your Path; against the Spirit (Playwright's clock) to a result, with stray clicks and Escape ignored during its turn and every one of its moves matched to a legal move, then Rematch. **Cancelling:** Restart, Change Mode, Back, going home and switching to Shells & Feathers during the Spirit's turn. **Turned board:** playing the Leaves puts h8 bottom-left, the Spirit opens, keys follow the screen. **Keyboard only:** Tab to the game, arrows, Enter/Space, Escape, focus ring above neighbours. **Layout:** at 320×568 (touch), 360×560 (Android, touch), 390×844, 640×360 (Android landscape, touch), 750×340 and 1280×800 the whole match fits with the longest guidance, squares are at least 36 px, and the capture line plays. **Phone gestures:** a swipe is not a move, nothing blocks touch. **Your Path:** records shown and cleared apart from Shells & Feathers; saved side and difficulty preselected. |
 | `acorns-leaves-fog.test.mjs` | **Fog of War in the page:** the rules choice and its routes; a whole two-player game checked square by square against each player's view (pieces, drawn pieces, fog, names), with every handoff covering the screen, holding no piece or mark, and resetting the keyboard stop; a whole game against the Spirit with leak checks every turn; a blocked try revealing exactly one square; Restart during the Spirit's turn; Classic still showing everything; phone and landscape layout. |
-| `hub.test.mjs` | **Hub:** both cards are ready to play, with Play and How to Play; the checkers card shows the starting position with the game's pieces; both How to Play pages (the checkers one covers every rule choice and the board marks). **Full trip:** hub → setup → match → result → Play Again → Change Mode → other mode → All Games → Settings → Your Path achievements. **History:** Back/Forward (fresh match on Forward; "Change Mode" adds no history entry), reload, deep links, unknown links. **Keyboard only:** Tab to the game, arrow keys and Enter/Space to win, the dialog takes and keeps focus, Escape shows the board. **Devices:** narrow phone 320×568 with touch, and desktop 1280×800, each playing both modes to a result with the match fitting on screen. **Reachability:** at 320×568, 360×640, 750×340 and 1280×800, every link, button and input on every screen (and in both result dialogs) can be scrolled into view, is not covered, and is at least 44×44 px (checkers squares at least 36×36), including the Fog handoff screen and the Fog match; no sideways scrolling. |
+| `polish.test.mjs` | **The shared look (Stage 7).** Shells & Feathers chips: "To move" follows the turn, "Winner" marks the winner and clears on the next round, nothing after a draw; the scores and labels are unchanged. **Result panel:** the winning piece, both pieces for a draw, and the session score, read with the result. **Motion:** every animation seen on the hub, the match, a piece placed, the winning line, the result panel and a capture to make is finite and done within 2 s; the test fails if any loops. **Reduced motion:** nothing animates and buttons change state at once, while the winning line still shows gold and edged. |
+| `hub.test.mjs` | **Hub:** both cards are ready to play, with Play and How to Play; the checkers card shows the starting position with the game's pieces; both How to Play pages (the checkers one covers every rule choice and the board marks). **Full trip:** hub → setup → match → result → Play Again → Change Mode → other mode → All Games → Settings → Your Path achievements. **History:** Back/Forward (fresh match on Forward; "Change Mode" adds no history entry), reload, deep links, unknown links. **Keyboard only:** Tab to the game, arrow keys and Enter/Space to win, the dialog takes and keeps focus, Escape shows the board. **Devices:** narrow phone 320×568 with touch, and desktop 1280×800, each playing both modes to a result with the match fitting on screen. **Reachability:** at 320×568, 360×560 (a short Android screen), 360×640, 640×360, 750×340 and 1280×800, every link, button and input on every screen (and in both result dialogs) can be scrolled into view, is not covered, and is at least 44×44 px (checkers squares at least 36×36), including the Fog handoff screen and the Fog match; no sideways scrolling. |
 
 ### 6.2 How each stage was verified beyond the suite
 
 **Stage 1.**
 - **AI:** v1's `index.js` (from `main`) was loaded in a Node VM and compared with `src/games/shells-feathers/ai.js` on every AI-to-move position, for both symbol assignments, every difficulty and five seeded random sources. 62,910 comparisons, 0 differences.
-- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.6.
+- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.7.
 - **Mutation check:** key safeguards were removed one at a time (timer disposal on teardown, fade cancellation, the storage guards, the v1 migration). The suite failed each time.
 
 **Stage 2.**
@@ -725,7 +810,7 @@ npm test                          # = npm run test:unit && npm run test:browser
   - saving the difficulty choice.
 
 **Stage 3.**
-- **Match-flow audit** in Chromium before and after the fixes (§0.4), and the **phone smoke test** on three emulated phones (§0.4).
+- **Match-flow audit** in Chromium before and after the fixes (§0.5), and the **phone smoke test** on three emulated phones (§0.5).
 - **Mutation check:** each of these was removed one at a time, and the suite failed each time:
   - the waiting and locked board states;
   - turn announcements;
@@ -740,10 +825,10 @@ npm test                          # = npm run test:unit && npm run test:browser
 
   Removing one or two layers changes nothing observable. With all three removed, the score-once test fails.
 
-**Stage 4.** Nine rule bugs were put into the engine one at a time; the engine tests failed for each (§0.3).
+**Stage 4.** Nine rule bugs were put into the engine one at a time; the engine tests failed for each (§0.4).
 
 **Stage 5.**
-- **Scripted playtests** on emulated desktop and phones, with long-task measurement and screenshots (§0.2).
+- **Scripted playtests** on emulated desktop and phones, with long-task measurement and screenshots (§0.3).
 - **Mutation check:** each of these was introduced one at a time, and the suite failed each time:
   - the board taking picks while the Spirit acts;
   - a teardown that keeps the old timers;
@@ -767,7 +852,7 @@ npm test                          # = npm run test:unit && npm run test:browser
 - **Redundant layer:** removing only the "score once" guard is not observable. As in Shells & Feathers, the rules already refuse moves after the end, and the session ignores picks once there is a result.
 
 **Stage 6.**
-- **Scripted Fog playtests** on emulated desktop and phones. The scripted player saw only the page; screenshots and long tasks were reviewed (§0.1).
+- **Scripted Fog playtests** on emulated desktop and phones. The scripted player saw only the page; screenshots and long tasks were reviewed (§0.2).
 - **Leak and rule check:** each of these was introduced one at a time, and the suite failed every time (16 of 16):
   - drawing the real board on the player's turn, or during the Spirit's turn;
   - handing the Spirit the real board;
@@ -782,6 +867,11 @@ npm test                          # = npm run test:unit && npm run test:browser
   - the Spirit deciding when its pause ends;
   - fogged squares named "empty";
   - the Spirit's move animated.
+
+**Stage 7.**
+- **Before and after screenshots** of the same 14 screens and overlays at four sizes, made with the same script on Stage 6 (`69852ea`) and on this commit, and reviewed side by side: hub, both setups, both matches, both result panels, a capture chain, the final board, Fog, the handoff, How to Play, Settings and Your Path.
+- **Audit script:** contrast against the rendered pixels, touch-target size, focus rings and clipped text, on every screen and overlay (§0.1).
+- **Mutation check:** an endless pulse was put back on the turn line, and `polish.test.mjs` failed.
 
 ### 6.3 Remaining automated checks to add
 
