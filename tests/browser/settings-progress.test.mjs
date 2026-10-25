@@ -81,7 +81,7 @@ test('settings and progress', { timeout: 300_000 }, async (t) => {
     await slide(page, 'sfx-volume', 20);
     assert.equal(await page.evaluate(() => window.__plays.at(-1)), 'button-select', 'a sample at the new level');
     assert.equal((await game.audioState('button-select')).volume, 0.2);
-    await page.locator('label', { has: page.locator('input[value="reduce"]') }).click();
+    await page.locator('#settings-screen label', { has: page.locator('input[value="reduce"]') }).click();
     assert.equal(await page.evaluate(() => document.documentElement.dataset.motion), 'reduce');
     assert.match(await page.locator('#motion-hint').textContent(), /^Reduce:/);
 

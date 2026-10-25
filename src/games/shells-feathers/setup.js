@@ -1,11 +1,8 @@
 // The Shells & Feathers setup screen: Player 1's pieces and the Spirit's
 // difficulty (radio groups), saved as soon as they change. The two mode
-// buttons are plain links handled by the router.
-const HINTS = {
-  easy: 'Gentle: the Spirit picks open squares at random.',
-  medium: 'Balanced: the Spirit usually finds the strongest move.',
-  hard: 'Wise: the Spirit never loses. A draw is a great result.',
-};
+// buttons are plain links handled by the router. The difficulty hint is
+// ai.js's own description of each level.
+import { LEVEL_WORDS as HINTS } from './ai.js';
 
 export function initShellsFeathersSetup({ doc, profile, audio }) {
   const symbolInputs = [...doc.querySelectorAll('input[name="sf-symbol"]')];

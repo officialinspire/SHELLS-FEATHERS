@@ -79,6 +79,42 @@ export function guidance({ stage, mustCapture }) {
   return mustCapture ? 'You must capture: choose a ringed piece.' : 'Choose a piece to move.';
 }
 
+// The rule behind what is happening, for the match panel on wide screens.
+// Fixed sentences that name no square, so in Fog they can't give anything
+// away; the session picks one from what the viewer can see.
+export const RULE_NOTES = {
+  move: 'Pieces move one square diagonally forward onto an empty dark square; kings move both ways.',
+  capture: 'Captures are compulsory: when any of your pieces can jump, you must jump.',
+  chain: 'A jump that can go on must: the same piece keeps jumping until no jump is left.',
+  crowned: 'A piece that reaches the far row is crowned: kings move and jump diagonally both ways.',
+  blocked: 'That piece has no empty square and no jump on its diagonals, so it can\'t move now.',
+  destination: 'Only the marked squares are moves for the piece you picked up.',
+  fogMove: 'Fog of War: you see your own pieces and only the enemy pieces next to them.',
+  fogCapture: 'A capture may be hiding in the fog, so try a ringed piece first. A hidden piece can block it.',
+  fogBump: 'A hidden piece blocked that try. Now you know where it is: choose again.',
+};
+
+// phase: 'ready' | 'waiting' | 'over' | 'handoff'; stage as for guidance();
+// capture: a capture is (Classic) or may be (Fog) compulsory; outcome: the
+// last refused pick (turn.js choose()), if any; crowned: the last move, as
+// far as the viewer saw it, crowned a piece; spirit: the Spirit's level in
+// words, while it thinks.
+export function ruleNote({
+  variant, phase, stage, capture, outcome, crowned, spirit,
+}) {
+  const fog = variant === 'fog';
+  if (phase === 'over' || phase === 'handoff') return '';
+  if (crowned) return RULE_NOTES.crowned;
+  if (phase === 'waiting') return spirit ?? '';
+  if (outcome === 'bumped') return RULE_NOTES.fogBump;
+  if (outcome === 'must-capture') return fog ? RULE_NOTES.fogCapture : RULE_NOTES.capture;
+  if (outcome === 'blocked') return RULE_NOTES.blocked;
+  if (outcome === 'not-a-destination') return RULE_NOTES.destination;
+  if (outcome === 'must-continue' || stage === 'keep-jumping') return RULE_NOTES.chain;
+  if (capture) return fog ? RULE_NOTES.fogCapture : RULE_NOTES.capture;
+  return fog ? RULE_NOTES.fogMove : RULE_NOTES.move;
+}
+
 // What to say when a pick does nothing (see turn.js choose()).
 export const FEEDBACK = {
   'must-capture': 'You must capture: choose a ringed piece instead.',

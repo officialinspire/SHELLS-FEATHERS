@@ -77,6 +77,13 @@ async function assertConsistent(game, viewer) {
   assert.equal(leavesDrawn, DARK.filter((s) => dom[s].piece && !dom[s].piece.startsWith(viewer)).length, 'no hidden piece drawn');
 }
 
+// The side panel's last move, rule note and hint.
+const panelText = (game) => game.page.evaluate(() => ({
+  last: document.getElementById('al-last').textContent,
+  note: document.getElementById('al-note').textContent,
+  hint: document.getElementById('al-hint').textContent,
+}));
+
 const records = (game) => game.page.evaluate(() => JSON.parse(localStorage.getItem('spiritOfTheWoods:v2')).acornsLeaves);
 
 test('Acorns & Leaves: Fog of War', { timeout: 900_000 }, async (t) => {
@@ -132,6 +139,8 @@ test('Acorns & Leaves: Fog of War', { timeout: 900_000 }, async (t) => {
       // stop is back on a3, and the announcement says only that a move was made.
       assert.deepEqual(await page.locator('#al-board [tabindex="0"]').evaluateAll((els) => els.map((el) => el.dataset.square)), [String(sq(5, 0))]);
       assert.match(await game.checkersStatus(), /^(New game|Move made)\. (Acorns|Leaves)' turn: pass the device\.$/);
+      // The side panel says nothing about the board either.
+      assert.deepEqual(await panelText(game), { last: 'None yet.', note: '', hint: '' });
       tally.handoffs++;
       await game.press(`Show the ${name}' board`);
       assert.equal(await handoff.isVisible(), false);
@@ -203,6 +212,11 @@ test('Acorns & Leaves: Fog of War', { timeout: 900_000 }, async (t) => {
         if ((await game.checkersView()).state !== 'over') {
           assert.match(said, /^The Spirit moved[,.]/);
           assert.doesNotMatch(said, /from [a-h][1-8]/, 'its route is never described');
+          // The panel's last move is exactly what was said, and its rule
+          // note names no square.
+          const panel = await panelText(game);
+          assert.ok(said.startsWith(panel.last), `"${panel.last}" is what was said`);
+          assert.doesNotMatch(panel.note, /\b[a-h][1-8]\b/);
         }
         continue;
       }

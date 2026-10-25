@@ -98,7 +98,7 @@ test('save data', { timeout: 120_000 }, async (t) => {
     await game.openShellsFeathers();
     assert.equal(await checked('input[name="sf-difficulty"][value="hard"]'), true);
     assert.equal(await checked('input[name="sf-symbol"][value="feather"]'), true);
-    assert.match(await game.page.locator('#sf-difficulty-hint').textContent(), /^Wise:/);
+    assert.match(await game.page.locator('#sf-difficulty-hint').textContent(), /^Wise takes a win/);
 
     await game.startMatch('single');
     assert.match(await game.page.locator('#match-info').textContent(), /Wise · You play Feather/);

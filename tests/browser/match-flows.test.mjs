@@ -171,7 +171,9 @@ test('Shells & Feathers match flows', { timeout: 300_000 }, async (t) => {
     const empty = await focused();
     await press('ArrowUp', 'ArrowRight', 'Enter'); // P1 completes the top row
     assert.equal((await game.waitForResult()).title, 'Player 1 Wins!');
-    await press('Escape', 'Shift+Tab'); // from Restart back into the board (the winning square)
+    // From Play Again (in the side panel) back into the board: the winning square.
+    await press('Escape');
+    for (let i = 0; i < 6 && (await focused()).index === undefined; i++) await press('Shift+Tab');
     const winner = await focused();
     await press('ArrowDown');
     const occupied = await focused();

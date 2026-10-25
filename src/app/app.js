@@ -8,13 +8,21 @@
 //
 // Sound starts only after the player's first tap, click or key press (any
 // later one unlocks it again if the browser refused a sound), and the music
-// pauses while the page is hidden.
+// pauses while the page is hidden. So does a match: a hidden page holds it
+// like the match menu does, and it goes on when the page is shown again.
+//
+// Focus after an action is predictable: Restart and Play Again/Rematch put
+// it on the board; closing a menu or dialog returns it to what opened it. If
+// a window resize hides the control that has focus (the side panel's
+// buttons exist only on wide screens), focus moves to the match's Menu
+// button.
 import { openStorage } from '../shared/storage.js';
 import { createProfile } from '../shared/profile.js';
 import { createAudio } from '../shared/audio.js';
 import { createNavigator } from './navigation.js';
 import { createRouter, documentTitle } from './router.js';
 import { initSettingsScreen, applyMotion } from './settings-screen.js';
+import { createSoundMotion } from './sound-motion.js';
 import { createPathScreen } from './path-screen.js';
 import { createConfirmDialog } from './confirm-dialog.js';
 import { createToast } from './toast.js';
@@ -87,12 +95,24 @@ export function createApp({ doc, win }) {
   });
 
   const actions = {
-    'restart-match': () => session.restart(),
-    'play-again': () => session.playAgain(),
+    'restart-match': () => {
+      session.restart();
+      view.focusBoard();
+    },
+    'play-again': () => {
+      session.playAgain();
+      view.focusBoard();
+    },
     'view-board': () => view.dismissResult(),
     'reset-stats': () => path.reset(),
-    'al-restart': () => checkers.restart(),
-    'al-rematch': () => checkers.playAgain(),
+    'al-restart': () => {
+      checkers.restart();
+      checkersView.focusBoard();
+    },
+    'al-rematch': () => {
+      checkers.playAgain();
+      checkersView.focusBoard();
+    },
     'al-view-board': () => checkersView.dismissResult(),
     'al-take-control': () => checkers.takeControl(),
     'reset-al-stats': () => path.resetAcornsLeaves(),
@@ -129,13 +149,26 @@ export function createApp({ doc, win }) {
   function init() {
     doc.addEventListener('click', onClick);
     installDialogFocus(doc);
-    view.bindCells((index) => session.selectCell(index), { onPause: () => session.pause(), onResume: () => session.resume() });
+    // Each match menu has its own sound and motion controls.
+    const menuSettings = (id) => createSoundMotion({
+      doc, root: doc.getElementById(id).querySelector('[data-menu-view="settings"]'), win, profile, audio,
+    });
+    const sfSettings = menuSettings('sf-menu');
+    const alSettings = menuSettings('al-menu');
+    view.bindCells((index) => session.selectCell(index), {
+      onPause: () => session.pause(),
+      onResume: () => session.resume(),
+      onSettings: () => sfSettings.show(),
+    });
     checkersView.bind({
       onSelect: (square) => checkers.selectSquare(square),
       onCancel: () => checkers.cancelSelection(),
       onPause: () => checkers.pause(),
       onResume: () => checkers.resume(),
+      onSettings: () => alSettings.show(),
     });
+    openHelpWhereItFits();
+    rescueFocusOnResize();
     initShellsFeathersSetup({ doc, profile, audio });
     initAcornsLeavesSetup({ doc, profile, audio });
     settingsScreen = initSettingsScreen({ doc, win, profile, audio, confirmDialog, onDeletedAll: deletedAll });
@@ -145,12 +178,41 @@ export function createApp({ doc, win }) {
     const unlock = () => audio.unlock();
     for (const type of ['pointerdown', 'keydown', 'touchend']) doc.addEventListener(type, unlock, { capture: true, passive: true });
     doc.addEventListener('visibilitychange', () => {
+      for (const game of [session, checkers]) {
+        if (doc.hidden) game.pause('hidden');
+        else game.resume('hidden');
+      }
       if (doc.hidden) audio.suspend();
       else audio.resume();
     });
     audio.startMusic();
     router.start();
     for (const note of profile.notes) console.info(`Spirit of the Woods: ${note}`);
+  }
+
+  // The side panel's "Rules and keys" starts open where the window is tall
+  // enough to show it beside the board, and then stays as the player leaves
+  // it (in memory only: nothing more is stored).
+  function openHelpWhereItFits() {
+    for (const help of doc.querySelectorAll('details[data-help]')) help.open = win.innerHeight >= 860;
+  }
+
+  // The browser may already have moved focus to the page itself when the
+  // focused control disappears, so this looks at the last control focused.
+  function rescueFocusOnResize() {
+    let last = null;
+    let pending = false;
+    doc.addEventListener('focusin', (event) => { last = event.target; });
+    win.addEventListener('resize', () => {
+      if (pending) return;
+      pending = true;
+      win.requestAnimationFrame(() => {
+        pending = false;
+        const el = doc.activeElement && doc.activeElement !== doc.body ? doc.activeElement : last;
+        if (!el || el === doc.body || !el.isConnected || el.getClientRects().length) return;
+        doc.querySelector('.screen.active .menu-btn')?.focus();
+      });
+    });
   }
 
   return { init };

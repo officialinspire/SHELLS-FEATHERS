@@ -4,6 +4,7 @@
 // (a/A acorn, l/L leaf, '.' empty); Acorns move up the board.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { RULE_NOTES } from '../../src/games/acorns-leaves/text.js';
 import { createSession, DELAYS } from '../../src/games/acorns-leaves/session.js';
 import { createInitialState, positionFromRows, legalMoves, squareAt, rowsFromBoard } from '../../src/games/acorns-leaves/engine.js';
 import { createProfile } from '../../src/shared/profile.js';
@@ -369,4 +370,71 @@ test('the match menu pauses the game: the Spirit and the result wait, picks are 
   // A new match counts from 0 again.
   session.restart();
   assert.equal(view.model.played, 0);
+});
+
+test('the panel: what the last move did and the rule behind what is happening', () => {
+  const { view, session, tap } = setup({
+    position: { rows: ['.l......', '......l.', '........', '..l.l...', '........', '..l.....', '.a......', '....a...'] },
+  });
+  session.enter('two');
+  assert.equal(view.model.lastText, '');
+  assert.equal(view.model.note, RULE_NOTES.capture, 'a capture is open, so it is compulsory');
+  tap(sq(7, 4));
+  assert.equal(view.model.note, RULE_NOTES.capture, 'refused: must capture');
+  tap(sq(6, 1), sq(4, 3));
+  assert.equal(view.model.note, RULE_NOTES.chain);
+  // Escape mid-chain says why the piece can't go back.
+  session.cancelSelection();
+  assert.equal(view.said, 'Keep jumping with the same piece: choose a ring.');
+  assert.equal(view.model.hint, 'Keep jumping with the same piece: choose a ring.');
+  assert.equal(view.model.feedback, true);
+  tap(sq(2, 5), sq(0, 7));
+  assert.equal(view.model.lastText, 'Acorns jumped from b2 to d4 to f6 to h8, capturing 3 leaves. The acorn on h8 is now a king.');
+  assert.equal(view.model.note, RULE_NOTES.crowned, 'the crowning is explained on the next turn');
+  tap(sq(0, 1), sq(1, 2));
+  assert.equal(view.model.lastText, 'Leaves moved from b8 to c7.');
+  assert.notEqual(view.model.note, RULE_NOTES.crowned);
+
+  // A piece with no move (a1 behind its own b2), then a square it can't reach.
+  const boxed = setup({ position: { rows: ['.l......', '........', '........', '........', '........', '........', '.a......', 'a.......'] } });
+  boxed.session.enter('two');
+  boxed.tap(sq(7, 0));
+  assert.equal(boxed.view.model.note, RULE_NOTES.blocked);
+  assert.equal(boxed.view.model.hint, 'That piece has no move right now.');
+  boxed.tap(sq(6, 1), sq(3, 4));
+  assert.equal(boxed.view.model.note, RULE_NOTES.destination);
+  assert.equal(boxed.view.model.note.match(/[a-h][1-8]/), null);
+});
+
+test('against the Spirit the panel says how it thinks at this level', () => {
+  const { view, session, tap, clock } = setup({ difficulty: 'medium' });
+  session.enter('single');
+  tap(sq(5, 2), sq(4, 3));
+  assert.equal(view.model.phase, 'waiting');
+  assert.match(view.model.note, /^Balanced looks 3 moves ahead/);
+  clock.tick(SPIRIT_THINK + 10 * SPIRIT_STEP);
+  assert.match(view.model.lastText, /^The Spirit moved from/);
+});
+
+test('holds: the menu and a hidden page each freeze the match until both let go', () => {
+  const { view, session, tap, clock, spiritMoves } = setup();
+  session.enter('single');
+  tap(sq(5, 2), sq(4, 3));
+  session.pause('hidden');
+  session.pause('menu');
+  session.resume('menu');
+  clock.tick(10_000);
+  assert.equal(spiritMoves.length, 0, 'still hidden');
+  session.resume('hidden');
+  clock.tick(SPIRIT_THINK + 10 * SPIRIT_STEP);
+  assert.equal(spiritMoves.length, 1);
+  // A new match started while held starts held.
+  session.pause('hidden');
+  session.restart();
+  tap(sq(5, 2), sq(4, 3));
+  assert.equal(view.model.selected, null, 'no picks while held');
+  session.resume('hidden');
+  tap(sq(5, 2), sq(4, 3));
+  clock.tick(SPIRIT_THINK + 10 * SPIRIT_STEP);
+  assert.equal(spiritMoves.length, 2);
 });

@@ -4,8 +4,8 @@
 //
 // Lifecycle: enter(mode) when the match screen opens, restart() for
 // "Restart", playAgain() for "Play Again", leave() when the screen closes,
-// and pause()/resume() while the match menu is open (the Spirit's move and
-// the result dialog wait).
+// and pause()/resume() while the match menu is open or the page is hidden
+// (the Spirit's move and the result dialog wait).
 // Each match owns a timer scope; starting another match or leaving disposes
 // it, so a pending Spirit move, result dialog or music restart from an old
 // match can never fire.
@@ -18,7 +18,8 @@
 // either player's with two players; the music pauses for it), a gentle
 // falling pair of notes for a loss and a settling chord for a draw.
 import { createMatch } from './match.js';
-import { chooseMove } from './ai.js';
+import { chooseMove, LEVEL_WORDS } from './ai.js';
+import { hintText, RULE_NOTE } from './view.js';
 import { createTimerScope } from '../../shared/timers.js';
 
 export const DELAYS = { spiritMove: 800, resultModal: 800, musicRestart: 300 };
@@ -29,6 +30,7 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
   let timers = null;
   let spiritThinking = false;
   let scoredMatch = null;
+  const holds = new Set();
   const scores = { player1: 0, player2: 0 };
 
   function enter(newMode) {
@@ -62,6 +64,7 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
     const { difficulty, player1Symbol } = profile.gameSettings();
     match = createMatch({ mode, player1Symbol, difficulty });
     timers = createTimerScope(clock);
+    if (holds.size) timers.pause();
     view.clearBoard();
     view.showMatchInfo({ mode, difficulty, player1Symbol });
     view.setBoardState('ready');
@@ -86,7 +89,11 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
 
   function place(index) {
     const move = match.play(index);
-    if (!move) return;
+    if (!move) {
+      // A taken square: say so (the turn goes on).
+      if (match.board[index] !== null) showHint({ taken: true });
+      return;
+    }
     const byPlayer1 = move.symbol === match.player1Symbol;
     const actor = mode === 'single' ? (byPlayer1 ? 'you' : 'spirit') : (byPlayer1 ? 'player1' : 'player2');
     view.placePiece(move.index, move.symbol, actor);
@@ -138,15 +145,41 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
     }
     view.showScores(mode, scores);
     view.showFinalTurn(outcome, winner, line);
+    showHint();
     timers.after(delays.resultModal, () => view.showResult(outcome, winner, unlocked));
   }
 
   function showTurn() {
     view.showTurn(mode, match.turn === match.player1Symbol, match.turn);
+    showHint();
   }
 
-  const pause = () => timers?.pause();
-  const resume = () => timers?.resume();
+  function showHint({ taken = false } = {}) {
+    const phase = match.result ? 'over' : spiritThinking ? 'waiting' : 'ready';
+    const { winner = null, line = null } = match.result ?? {};
+    let note = RULE_NOTE;
+    if (phase === 'waiting') note = LEVEL_WORDS[match.difficulty];
+    else if (phase === 'over') note = '';
+    view.showHint({
+      text: hintText({
+        phase, mode, isPlayer1: match.turn === match.player1Symbol, symbol: match.turn, outcome: match.outcome, winner, line, taken,
+      }),
+      note,
+      tone: taken ? 'feedback' : phase,
+    });
+  }
+
+  // The round freezes while anything holds it: the menu ('menu') or a
+  // hidden page ('hidden'). It goes on when the last hold is let go.
+  function pause(reason = 'menu') {
+    holds.add(reason);
+    timers?.pause();
+  }
+
+  function resume(reason = 'menu') {
+    holds.delete(reason);
+    if (!holds.size) timers?.resume();
+  }
 
   return { enter, leave, restart, playAgain, selectCell, pause, resume };
 }

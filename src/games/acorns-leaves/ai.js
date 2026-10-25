@@ -189,3 +189,24 @@ export function planMove(state, {
 
 // The Spirit's move for the side to move, or null when it has none.
 export const chooseMove = (state, options) => planMove(state, options).move;
+
+// The levels in words, built from LEVELS and LIMITS so they always say what
+// the Spirit really does (the setup screen and the match panel show them).
+// A "move" here is one side's move.
+export const moves = (n) => `${n} move${n === 1 ? '' : 's'}`;
+export const andList = (parts) => (parts.length > 1 ? `${parts.slice(0, -1).join(', ')}${parts.length > 2 ? ',' : ''} and ${parts.at(-1)}` : parts[0]);
+export function choiceWords(margin) {
+  if (margin === 0) return 'always plays its best move';
+  return margin >= MAN / 4
+    ? 'picks any move nearly as good as its best, so it can miss a trap'
+    : 'varies between moves almost as good as its best';
+}
+
+export function describeLevel(difficulty) {
+  const { depth, quiescence, margin } = LEVELS[difficulty];
+  const ahead = depth > 3 ? `up to ${moves(depth)} ahead (as far as ${LIMITS.maxNodes.toLocaleString('en')} positions or ${LIMITS.timeLimitMs} ms allow)` : `${moves(depth)} ahead`;
+  const parts = [`looks ${ahead}`];
+  if (quiescence > 0) parts.push('follows captures through');
+  parts.push(choiceWords(margin));
+  return `${DIFFICULTY_NAMES[difficulty]} ${andList(parts)}.`;
+}

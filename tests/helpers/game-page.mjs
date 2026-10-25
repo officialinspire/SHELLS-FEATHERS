@@ -95,10 +95,11 @@ export class GamePage {
   }
 
   // Waits for running transitions (screen fade-in, piece placement) to end,
-  // so measurements see the layout a player sees.
+  // so measurements see the layout a player sees. Animations held by the
+  // match menu (paused) are left alone.
   settle() {
     return this.page.evaluate(() => Promise.all(document.getAnimations()
-      .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+      .filter((a) => a.playState !== 'paused' && a.effect?.getComputedTiming().iterations !== Infinity)
       .map((a) => a.finished.catch(() => {}))));
   }
 

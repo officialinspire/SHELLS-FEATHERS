@@ -3,6 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createSession, DELAYS } from '../../src/games/shells-feathers/session.js';
+import { RULE_NOTE } from '../../src/games/shells-feathers/view.js';
+import { LEVEL_WORDS, BEST_SHARE, chooseMove } from '../../src/games/shells-feathers/ai.js';
 import { createProfile } from '../../src/shared/profile.js';
 import { openStorage } from '../../src/shared/storage.js';
 import { createFakeClock, createFakeView, createFakeAudio, createMemoryStorage } from '../helpers/fakes.mjs';
@@ -294,4 +296,34 @@ test('the match menu pauses the round: the Spirit\'s move and the result dialog 
   s2.resume();
   c2.tick(DELAYS.resultModal);
   assert.notEqual(v2.result, null);
+});
+
+test('the hint line: whose turn and which piece, the Spirit thinking, a taken square, how the round ended', () => {
+  const { session, clock, view } = setup({ difficulty: 'medium' });
+  session.enter('single');
+  assert.deepEqual(view.hint, { text: 'Your turn: place a shell on any empty square.', note: RULE_NOTE, tone: 'ready' });
+  session.selectCell(4);
+  assert.equal(view.hint.text, 'The Spirit is thinking…');
+  assert.equal(view.hint.note, LEVEL_WORDS.medium, 'the panel says how this level plays');
+  clock.tick(DELAYS.spiritMove);
+  session.selectCell(4);
+  assert.deepEqual(view.hint, { text: 'That square is taken: choose an empty one.', note: RULE_NOTE, tone: 'feedback' });
+  session.selectCell(8);
+  assert.equal(view.hint.tone, 'waiting');
+
+  const two = setup({ player1Symbol: 'feather' });
+  two.session.enter('two');
+  assert.equal(two.view.hint.text, 'Player 1: place a feather on any empty square.');
+  for (const i of [0, 3, 1, 4]) two.session.selectCell(i);
+  assert.equal(two.view.hint.text, 'Player 1: place a feather on any empty square.');
+  two.session.selectCell(2);
+  assert.deepEqual(two.view.hint, { text: 'Three feathers in the top row.', note: '', tone: 'over' });
+});
+
+test('Balanced is described as it plays: its best move about 7 times in 10', () => {
+  assert.equal(BEST_SHARE, 0.7);
+  assert.match(LEVEL_WORDS.medium, /about 7 times in 10/);
+  // Measured: with an rng just under and just over the share.
+  const board = ['shell', 'shell', null, null, null, null, null, null, null];
+  assert.equal(chooseMove(board, { ai: 'feather', human: 'shell', difficulty: 'medium', rng: () => 0.69 }), 2, 'best: block');
 });

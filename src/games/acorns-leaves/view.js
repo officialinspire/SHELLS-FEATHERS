@@ -15,9 +15,13 @@
 // picks), "waiting" (the Spirit is moving; every square is aria-disabled) and
 // "over".
 //
-// Menu: Restart, Change Mode and All Games sit in the match menu
-// (match-menu.js), which pauses the match while it is open. Once the game is
-// over, Rematch shows under the board as well.
+// Menu: Restart, Change Mode, All Games and Settings sit in the match menu
+// (match-menu.js), which pauses the match while it is open. On wide screens
+// a side panel also shows the guidance, the last move as the player was told
+// it (model.lastText), the rule behind what is happening (model.note), rules
+// and keys, and Restart and Change Mode; once the game is over, Rematch
+// shows there (under the board on a phone). The screen's data-phase
+// (play | over) lets styles.css show the right controls.
 //
 // Marks, each drawn as a shape as well as a color: a dot on a square the
 // picked-up piece can move to (a ring for a jump), an orange ring around a
@@ -99,8 +103,7 @@ export function createAcornsLeavesView(doc) {
   const modal = byId('al-modal');
   const handoff = byId('al-handoff');
   const status = byId('al-status');
-  const controls = screen.querySelector('.game-controls');
-  const rematchButton = controls.querySelector('[data-action="al-rematch"]');
+  const rematchButton = screen.querySelector('.game-controls [data-action="al-rematch"]');
   let taps = null;
   let menu = null;
   let played = 0;
@@ -169,7 +172,7 @@ export function createAcornsLeavesView(doc) {
   function render(model) {
     shown = model;
     board.dataset.state = model.phase;
-    controls.hidden = model.phase !== 'over';
+    screen.dataset.phase = model.phase === 'over' ? 'over' : 'play';
     byId('al-menu-note').hidden = model.phase === 'over';
     // A move has just been played: stray taps right after it are ignored
     // (board-taps.js). `played` starts again at 0 in a new match.
@@ -244,6 +247,8 @@ export function createAcornsLeavesView(doc) {
     const hint = byId('al-hint');
     hint.textContent = model.hint;
     hint.dataset.tone = model.feedback ? 'feedback' : model.phase;
+    byId('al-last').textContent = model.lastText || 'None yet.';
+    byId('al-note').textContent = model.note ?? '';
   }
 
   // Repeating the same text wouldn't be announced again, so alternate a
@@ -268,7 +273,7 @@ export function createAcornsLeavesView(doc) {
   return {
     // onPause/onResume: the match menu opened/closed.
     bind({
-      onSelect, onCancel, onPause = () => {}, onResume = () => {},
+      onSelect, onCancel, onPause = () => {}, onResume = () => {}, onSettings = () => {},
     }) {
       taps = createBoardTaps({
         board,
@@ -281,7 +286,7 @@ export function createAcornsLeavesView(doc) {
         },
       });
       menu = createMatchMenu({
-        doc, menu: byId('al-menu'), opener: byId('al-menu-button'), screen, onOpen: onPause, onClose: onResume,
+        doc, menu: byId('al-menu'), opener: byId('al-menu-button'), screen, onOpen: onPause, onClose: onResume, onSettings,
       });
       board.addEventListener('keydown', (event) => {
         const el = event.target.closest('button[data-square]');

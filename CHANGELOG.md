@@ -28,6 +28,12 @@ The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two 
   - the session score;
   - gentle, brief motion that respects reduced-motion settings.
 - **Keyboard and screen readers:** both games are fully playable with the keyboard. Every square, move and result is announced.
+- **Desktop play:**
+  - **Layout:** on wide screens the board sits beside a side panel: turn and status, the last move, a one-line rule note, Rules and keys, Restart, Change Mode, and Play Again once the game is over.
+  - **Keyboard:** fully playable, with focus put back predictably after every action, and a focus ring that never looks like the picked-up piece.
+  - **Explanations:** forced captures, continuing jumps, crowning, blocked pieces, the Spirit's thinking (with how its level plays) and results are explained in short text. In Fog it only ever says what that player could see.
+  - **Pause:** the menu has its own Settings, and the game stays paused while you change them. The game also pauses while the page is hidden.
+- **Difficulty descriptions** now say exactly how the Spirit plays at each level, in Classic and separately in Fog, built from its real settings.
 - **Phone play:**
   - **Board first:** the board takes all the room the header and guidance leave, at any phone size, toolbar state and orientation. Short screens scroll instead of clipping, and landscape puts the board beside the header.
   - **Menu:** Restart, Change Mode and All Games moved into a **Menu** that pauses the game, and the Spirit waits behind it. Play Again or Rematch shows under the board once a game is over.

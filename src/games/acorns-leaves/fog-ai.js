@@ -15,7 +15,9 @@
 // (12,000 positions or 40 ms), so a slow device imagines fewer boards.
 import { FOG } from './fog.js';
 import { legalMoves, playLegalMove, opponent, rowOf, crownRowOf } from './engine.js';
-import { createSearch, shuffled, LIMITS } from './ai.js';
+import {
+  createSearch, shuffled, LIMITS, DIFFICULTY_NAMES, moves as movesAhead, andList, choiceWords,
+} from './ai.js';
 
 // worlds: boards imagined per decision; depth: plies searched on each;
 // quiescence: extra plies while captures are forced; margin as in ai.js.
@@ -107,3 +109,12 @@ export function planFogStep(seen, {
 
 // The Spirit's next step in Fog, from its own view only.
 export const chooseFogStep = (seen, options) => planFogStep(seen, options).step;
+
+// The Fog levels in words, built from FOG_LEVELS (see describeLevel in ai.js).
+export function describeFogLevel(difficulty) {
+  const { worlds, depth, margin } = FOG_LEVELS[difficulty];
+  const parts = worlds === 1
+    ? ['guesses once where your hidden pieces stand', `looks ${movesAhead(depth)} ahead`]
+    : [`imagines ${worlds} ways your hidden pieces could stand`, `looks ${movesAhead(depth)} ahead on each`];
+  return `${DIFFICULTY_NAMES[difficulty]} ${andList([...parts, choiceWords(margin)])}. It never sees through the fog.`;
+}

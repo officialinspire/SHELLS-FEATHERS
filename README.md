@@ -20,8 +20,8 @@ Tic-tac-toe on a wooden board.
 - **Turns:** players take turns placing one piece on an empty square. **Player 1 always moves first**; choose whether Player 1 plays shells or feathers before the game.
 - **Against the Spirit** you are Player 1:
   - **Gentle** picks open squares at random.
-  - **Balanced** plays its best move most of the time.
-  - **Wise** never loses, so a draw against it is a good result.
+  - **Balanced** plays its best move about 7 times in 10, and otherwise a random open square.
+  - **Wise** takes a win, blocks yours, and otherwise searches ahead for the strongest square. It never loses, so a draw against it is a good result.
 - **Two players** share the device. The chips above the board show whose turn it is ("To move") and who won ("Winner"), and keep the score for the session.
 
 ## Acorns & Leaves
@@ -37,7 +37,11 @@ Checkers (American checkers / English draughts) with acorn and leaf pieces on an
 - **Crowning:** a piece reaching the far row becomes a king (gold ring and crown). Crowning ends the move.
 - **Winning:** capture every enemy piece, or leave the other side with no legal move.
 - **Draw:** 40 moves by each side with no capture and no ordinary piece moved.
-- **Against the Spirit:** pick your side (your pieces start at the bottom) and Gentle, Balanced or Wise.
+- **Against the Spirit:** pick your side (your pieces start at the bottom) and a level. The setup screen says exactly how each one plays:
+  - **Gentle** looks 1 move ahead and picks any move nearly as good as its best, so it can miss a trap.
+  - **Balanced** looks 3 moves ahead, follows captures through, and varies between near-equal moves.
+  - **Wise** looks up to 12 moves ahead (as far as 12,000 positions or 40 ms allow) and always plays its best move.
+  - In **Fog of War** the Spirit sees only what you would: it imagines where your hidden pieces might be (once for Gentle, 4 ways for Balanced, 8 for Wise) and looks 1, 2 or 3 moves ahead on each.
 
 ### Fog of War
 
@@ -55,13 +59,15 @@ A separate mode with the same rules on the real board, but you see only part of 
 | Menus and buttons | Tap or click | Tab / Shift+Tab, then Enter or Space |
 | Place a shell or feather | Tap a square | Arrow keys (Home/End along a row), then Enter or Space |
 | Move a checker | Tap a piece, then a marked square: a dot is a move, a ring is a jump. In a chain, tap each landing square. Tap the piece again to put it back. No dragging. | Arrow keys move between dark squares; Enter or Space picks up the piece, then chooses the square; Escape puts it back. |
-| Pause, restart, change mode | **Menu**, above the board | Tab to Menu, Enter; Escape closes it |
+| Pause, settings, restart, change mode | **Menu**, above the board (on a wide screen Restart and Change Mode are also in the side panel) | Tab to Menu, Enter; Escape steps back and closes it |
 | Close a result and see the board | "View Board" | Escape |
 | Go back | The ← button, or the browser's Back | Browser Back (Alt+←) |
 
 Screen readers hear every square's name and contents, each move, and the result. Pieces that must capture are ringed in orange. The piece picked up sits on a gold square with a cream ring.
 
 On a phone the board takes all the room the rest of the screen leaves, in portrait or landscape. A scroll, a pinch or a stray second tap is never taken as a move.
+
+On a wide screen a side panel beside the board shows whose turn it is, what to do, the last move, the rule behind what is happening, and the rules and keys. The game pauses while the menu or its Settings is open, and while the page is hidden.
 
 ## Settings, Your Path and saved data
 

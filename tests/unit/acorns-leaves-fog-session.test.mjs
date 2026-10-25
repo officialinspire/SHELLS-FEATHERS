@@ -66,6 +66,22 @@ function assertNoLeak(model) {
     for (const square of model[list]) assert.ok(!fog.has(square) && model.board[square], `${list} ${square}`);
   }
   if (model.selected !== null) assert.ok(!fog.has(model.selected));
+  // The panel's rule note names no square; behind the handoff there is
+  // neither a note nor a last move.
+  assert.doesNotMatch(model.note, /\b[a-h][1-8]\b/, `rule note "${model.note}"`);
+  if (model.phase === 'handoff') assert.deepEqual([model.lastText, model.note, model.hint], ['', '', '']);
+}
+
+// The panel's "last move" line is always something the player now looking
+// was told: its own move, or the other side's as far as it could see it.
+function assertLastToldOnly(view) {
+  for (const [i, model] of view.models.entries()) {
+    if (!model.lastText || model.phase === 'over') continue;
+    assert.ok(view.announcements.some((a) => a.includes(model.lastText)), `model ${i}: "${model.lastText}" was never said`);
+    if (model.mode === 'single' && model.lastText.startsWith('The Spirit')) {
+      assert.doesNotMatch(model.lastText, /from [a-h][1-8]|king/, 'the Spirit\'s route and crownings stay hidden');
+    }
+  }
 }
 
 test('Fog against the Spirit: the player is drawn only their view, offered only what looks possible', () => {
@@ -204,7 +220,10 @@ test('two players in Fog: a handoff before every turn, with no piece behind it, 
   session.takeControl();
   assert.equal(view.said, "Leaves moved. In view now: leaf on e5. Acorns' turn. A capture may be possible.");
   assert.deepEqual(view.model.mustJump, [sq(4, 3)]);
+  assert.equal(view.model.lastText, 'Leaves moved. In view now: leaf on e5.', 'the panel shows what the Acorns were told');
+  assert.match(view.model.note, /^A capture may be hiding in the fog/);
   view.models.forEach(assertNoLeak);
+  assertLastToldOnly(view);
 });
 
 test('restarting or leaving in Fog: the Spirit\'s pending move and the handoff are cancelled', () => {
@@ -279,6 +298,9 @@ test('a whole Fog game against the real Spirit ends, with every model leak-free,
     else tap(view.model.destinations[0]);
   }
   view.models.forEach(assertNoLeak);
+  assertLastToldOnly(view);
+  assert.ok(view.models.some((m) => m.lastText.startsWith('The Spirit moved')), 'its moves are listed as told');
+  assert.ok(view.models.some((m) => m.phase === 'waiting' && /imagines 4 ways/.test(m.note)), 'the panel says how it thinks');
   clock.tick(DELAYS.resultModal);
   const { fog } = profile.acornsLeavesStats();
   const total = Object.values(fog.single).reduce((n, r) => n + r.wins + r.losses + r.draws, 0);

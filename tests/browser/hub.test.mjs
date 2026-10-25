@@ -241,13 +241,19 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     assert.deepEqual(await game.cells(), ['🐚', '🐚', '🐚', '🪶', '🪶', '', '', '', '']);
     assert.match(await page.locator('.cell[data-index="0"]').getAttribute('aria-label'), /Row 1, column 1: shell, winning line/);
 
-    // Back past the board to the Menu button; Change Mode is in the menu.
-    await page.keyboard.press('Shift+Tab');
-    assert.equal((await active()).index, '2', 'the board keeps one tab stop');
-    await page.keyboard.press('Shift+Tab');
-    assert.equal((await active()).label, 'Menu');
+    // Back through the side panel (Rules and keys) and the board to the Menu
+    // button; the board keeps one tab stop, on the square last used.
+    const stops = [];
+    for (let i = 0; i < 8 && (await active()).label !== 'Menu'; i++) {
+      await page.keyboard.press('Shift+Tab');
+      const at = await active();
+      stops.push(at.index ?? at.label);
+    }
+    assert.deepEqual(stops, ['Rules and keys', '2', 'Menu']);
     await page.keyboard.press('Enter');
     assert.equal((await active()).label, 'Resume', 'the menu takes focus');
+    await page.keyboard.press('Tab');
+    assert.equal((await active()).label, 'Settings');
     await page.keyboard.press('Tab');
     assert.equal((await active()).label, 'Restart');
     await page.keyboard.press('Tab');
@@ -306,7 +312,9 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     const unreachable = (scope) => game.page.evaluate((selector) => {
       const problems = [];
       for (const el of document.querySelectorAll(`${selector} :is(a, button, input)`)) {
-        if (el.closest('[hidden]')) continue; // e.g. Play Again before the game is over
+        // Not shown at this size or in this state (Play Again before the game
+        // is over, the side panel's controls on a phone).
+        if (el.closest('[hidden]') || !el.checkVisibility()) continue;
         el.scrollIntoView({ block: 'center', inline: 'center' });
         const r = el.getBoundingClientRect();
         const onScreen = r.width > 0 && r.left >= -1 && r.right <= innerWidth + 1 && r.top >= -1 && r.bottom <= innerHeight + 1;

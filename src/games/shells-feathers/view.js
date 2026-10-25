@@ -10,9 +10,12 @@
 // thinking) and "over" (the round has ended); outside "ready", empty squares
 // are aria-disabled.
 //
-// Menu: Restart, Change Mode and All Games sit in the match menu
-// (match-menu.js), which pauses the match while it is open. Once the round
-// is over, Play Again shows under the board as well.
+// Menu: Restart, Change Mode, All Games and Settings sit in the match menu
+// (match-menu.js), which pauses the match while it is open. On wide screens
+// a side panel also shows the hint, the rule behind it, rules and keys, and
+// Restart and Change Mode; once the round is over, Play Again shows there
+// (under the board on a phone). The screen's data-phase (play | over) lets
+// styles.css show the right controls.
 //
 // Announcements: a polite status region says what just happened ("The Spirit
 // placed a feather on row 2, column 2. Your turn.") and how a round ended.
@@ -93,6 +96,24 @@ export function resultStatus(outcome, winner, line) {
   return `${RESULTS[outcome].title} Three ${pieces} in ${lineName(line)}.`;
 }
 
+// The hint line under the board: what to do now, or how the round ended.
+// phase: 'ready' | 'waiting' | 'over'; taken: the last tap was on a taken
+// square.
+export function hintText({
+  phase, mode, isPlayer1, symbol, outcome, winner, line, taken = false,
+}) {
+  if (phase === 'over') {
+    if (outcome === 'draw') return 'A draw: the board is full with no three in a row.';
+    return `Three ${winner === 'shell' ? 'shells' : 'feathers'} in ${lineName(line)}.`;
+  }
+  if (phase === 'waiting') return 'The Spirit is thinking…';
+  if (taken) return 'That square is taken: choose an empty one.';
+  const who = mode === 'single' ? 'Your turn' : `Player ${isPlayer1 ? 1 : 2}`;
+  return `${who}: place a ${NAMES[symbol].toLowerCase()} on any empty square.`;
+}
+
+export const RULE_NOTE = 'Three in a row wins: across, down or diagonally. A full board with no row is a draw.';
+
 export function createShellsFeathersView(doc) {
   const byId = (id) => doc.getElementById(id);
   const cells = [];
@@ -101,8 +122,7 @@ export function createShellsFeathersView(doc) {
   const screen = byId('game-screen');
   const modal = byId('game-modal');
   const status = byId('sf-status');
-  const controls = screen.querySelector('.game-controls');
-  const playAgainButton = controls.querySelector('[data-action="play-again"]');
+  const playAgainButton = screen.querySelector('.game-controls [data-action="play-again"]');
   let taps = null;
   let menu = null;
   let focusIndex = 0;
@@ -157,7 +177,7 @@ export function createShellsFeathersView(doc) {
 
   return {
     // onPause/onResume: the match menu opened/closed.
-    bindCells(onSelect, { onPause = () => {}, onResume = () => {} } = {}) {
+    bindCells(onSelect, { onPause = () => {}, onResume = () => {}, onSettings = () => {} } = {}) {
       taps = createBoardTaps({
         board,
         selector: '.cell',
@@ -169,7 +189,7 @@ export function createShellsFeathersView(doc) {
         },
       });
       menu = createMatchMenu({
-        doc, menu: byId('sf-menu'), opener: byId('sf-menu-button'), screen, onOpen: onPause, onClose: onResume,
+        doc, menu: byId('sf-menu'), opener: byId('sf-menu-button'), screen, onOpen: onPause, onClose: onResume, onSettings,
       });
       cells.forEach((cell, index) => {
         cell.addEventListener('keydown', (event) => {
@@ -190,8 +210,10 @@ export function createShellsFeathersView(doc) {
     focusBoard() {
       cells[focusIndex].focus();
     },
+    // A new round: the keyboard stop goes back to the first square.
     clearBoard() {
       lastMove = '';
+      setFocusIndex(0);
       for (const cell of cells) {
         cell.replaceChildren();
         delete cell.dataset.symbol;
@@ -202,7 +224,7 @@ export function createShellsFeathersView(doc) {
     // 'ready' | 'waiting' | 'over'
     setBoardState(state) {
       board.dataset.state = state;
-      controls.hidden = state !== 'over';
+      screen.dataset.phase = state === 'over' ? 'over' : 'play';
       byId('sf-menu-note').hidden = state === 'over';
       board.setAttribute('aria-busy', String(state === 'waiting'));
       for (const cell of cells) {
@@ -254,6 +276,14 @@ export function createShellsFeathersView(doc) {
       if (outcome === 'draw') markChips({});
       else markChips(outcome === 'loss' || outcome === 'player2' ? { 2: 'Winner' } : { 1: 'Winner' });
       announce(`${lastMove} ${resultStatus(outcome, winner, line)}`);
+    },
+    // The hint line, and the panel's note on wide screens. tone: 'feedback'
+    // for a refused tap.
+    showHint({ text, note = '', tone = '' }) {
+      const hint = byId('sf-hint');
+      hint.textContent = text;
+      hint.dataset.tone = tone;
+      byId('sf-note').textContent = note;
     },
     showScores(mode, scores) {
       byId('player1-label').textContent = mode === 'single' ? 'You: ' : 'Player 1: ';

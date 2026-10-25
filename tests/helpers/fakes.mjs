@@ -91,6 +91,8 @@ export function createFakeView() {
     },
     hideResult() { view.result = null; },
     hideMenu() {},
+    hint: null, // { text, note, tone }
+    showHint(hint) { view.hint = hint; },
     get pieces() { return view.board.filter(Boolean).length; },
   };
   return view;

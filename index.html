@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#654321" />
   <meta name="description" content="Spirit of the Woods: peaceful forest games. Play Shells &amp; Feathers (tic-tac-toe) and Acorns &amp; Leaves (checkers) against the forest Spirit or a friend." />
   <title>Spirit of the Woods</title>
-  <link rel="stylesheet" href="styles.css?v=b4d02615b7" />
+  <link rel="stylesheet" href="styles.css?v=db461db6dc" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
@@ -288,9 +288,24 @@
 
       <p id="board-help" class="visually-hidden">Use the arrow keys to move between squares, and Enter or Space to place a piece.</p>
 
-      <!-- Shown once the round is over (the rest is in the menu) -->
-      <div class="game-controls" hidden>
-        <button type="button" class="btn btn-primary control-btn" data-action="play-again">Play Again</button>
+      <!-- What to do now (every screen size) -->
+      <p class="match-hint" id="sf-hint"></p>
+      <!-- Wide screens only: the rule behind it, short rules and keys, and the
+           match controls (on a phone they are in the menu) -->
+      <div class="match-notes">
+        <p class="match-note" id="sf-note"></p>
+      </div>
+      <details class="match-help" data-help="shells-feathers">
+        <summary>Rules and keys</summary>
+        <ul>
+          <li>Take turns placing a piece on an empty square. Three in a row (across, down or diagonally) wins; a full board with no row is a draw.</li>
+          <li><kbd>Tab</kbd> to the board, arrow keys to move, <kbd>Enter</kbd> or <kbd>Space</kbd> to place. <kbd>Esc</kbd> closes a dialog.</li>
+        </ul>
+      </details>
+      <div class="game-controls">
+        <button type="button" class="btn btn-primary control-btn over-only" data-action="play-again">Play Again</button>
+        <button type="button" class="btn control-btn desktop-only" data-action="restart-match">Restart</button>
+        <a class="btn control-btn desktop-only" href="#/shells-feathers" data-up>Change Mode</a>
       </div>
     </section>
 
@@ -314,7 +329,7 @@
         <h3>Against the Spirit</h3>
         <ul>
           <li>You are Player 1 and the forest Spirit answers each move.</li>
-          <li><strong>Gentle</strong> picks open squares at random. <strong>Balanced</strong> usually finds the strongest move. <strong>Wise</strong> never loses, so a draw is a great result.</li>
+          <li><strong>Gentle</strong> picks open squares at random. <strong>Balanced</strong> plays its best move about 7 times in 10. <strong>Wise</strong> never loses, so a draw is a great result.</li>
         </ul>
         <h3>Two players</h3>
         <p>Share one device and take turns. The turn line above the board shows whose move it is.</p>
@@ -406,12 +421,31 @@
           <div id="al-board" class="al-board" role="group" aria-label="Checkers board" aria-describedby="al-board-help" data-state="ready"></div>
         </div>
       </div>
-      <p class="al-hint" id="al-hint"></p>
+      <p class="al-hint match-hint" id="al-hint"></p>
       <p id="al-board-help" class="visually-hidden">Use the arrow keys to move between the dark squares. Press Enter or Space on a piece to pick it up, then on the square it should move to. Escape puts the piece back.</p>
 
-      <!-- Shown once the game is over (the rest is in the menu) -->
-      <div class="game-controls" hidden>
-        <button type="button" class="btn btn-primary control-btn" data-action="al-rematch">Rematch</button>
+      <!-- Wide screens only: the last move as you were told it, the rule
+           behind what is happening, short rules and keys, and the match
+           controls (on a phone they are in the menu) -->
+      <div class="match-notes">
+        <p class="match-last"><span class="match-note-label">Last move</span> <span id="al-last"></span></p>
+        <p class="match-note" id="al-note"></p>
+      </div>
+      <details class="match-help" data-help="acorns-leaves">
+        <summary>Rules and keys</summary>
+        <ul>
+          <li>Move one square diagonally forward onto an empty dark square. Jump an enemy piece to capture it.</li>
+          <li>Captures are compulsory, and a jump that can go on must.</li>
+          <li>A piece reaching the far row is crowned: kings move and jump both ways.</li>
+          <li>Win by capturing every enemy piece or leaving them no move.</li>
+          <li class="fog-only">Fog of War: you see your own pieces and only the enemy pieces next to them.</li>
+          <li>Arrow keys move between dark squares; <kbd>Enter</kbd> or <kbd>Space</kbd> picks up a piece and moves it; <kbd>Esc</kbd> puts it back.</li>
+        </ul>
+      </details>
+      <div class="game-controls">
+        <button type="button" class="btn btn-primary control-btn over-only" data-action="al-rematch">Rematch</button>
+        <button type="button" class="btn control-btn desktop-only" data-action="al-restart">Restart</button>
+        <a class="btn control-btn desktop-only" href="#/acorns-leaves" data-up>Change Mode</a>
       </div>
     </section>
 
@@ -456,7 +490,7 @@
           <li>Keyboard: arrow keys move between dark squares, Enter or Space picks, Escape puts the piece back.</li>
         </ul>
         <h3>Against the Spirit</h3>
-        <p>Pick your side and <strong>Gentle</strong>, <strong>Balanced</strong> or <strong>Wise</strong>. Your pieces start at the bottom.</p>
+        <p>Pick your side and <strong>Gentle</strong>, <strong>Balanced</strong> or <strong>Wise</strong>. Your pieces start at the bottom. Gentle looks one move ahead and can miss a trap; Balanced looks three moves ahead; Wise looks as far ahead as a moment allows and always plays its best move. In Fog of War the Spirit sees only what you would, and guesses at the rest.</p>
         <h3 id="al-fog-rules">Fog of War</h3>
         <ul>
           <li>You see your own pieces, and enemy pieces only on squares next to them. Other dark squares are misty: they may hide an enemy piece.</li>
@@ -481,21 +515,21 @@
         <h3 class="panel-title">Sound</h3>
         <label class="setting-row" for="music-toggle">
           <span class="setting-label">Music</span>
-          <span class="switch"><input type="checkbox" id="music-toggle" role="switch" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
+          <span class="switch"><input type="checkbox" id="music-toggle" role="switch" data-setting="music" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
         </label>
         <div class="volume-row">
           <label class="volume-label" for="music-volume">Music volume</label>
-          <input type="range" class="volume-slider" id="music-volume" min="0" max="100" step="5" value="30" />
-          <output class="volume-value" id="music-volume-value" for="music-volume">30%</output>
+          <input type="range" class="volume-slider" id="music-volume" data-setting="musicVolume" min="0" max="100" step="5" value="30" />
+          <output class="volume-value" id="music-volume-value" for="music-volume" data-setting-value="musicVolume">30%</output>
         </div>
         <label class="setting-row" for="audio-toggle">
           <span class="setting-label">Sound effects</span>
-          <span class="switch"><input type="checkbox" id="audio-toggle" role="switch" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
+          <span class="switch"><input type="checkbox" id="audio-toggle" role="switch" data-setting="sfx" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
         </label>
         <div class="volume-row">
           <label class="volume-label" for="sfx-volume">Effects volume</label>
-          <input type="range" class="volume-slider" id="sfx-volume" min="0" max="100" step="5" value="50" />
-          <output class="volume-value" id="sfx-volume-value" for="sfx-volume">50%</output>
+          <input type="range" class="volume-slider" id="sfx-volume" data-setting="sfxVolume" min="0" max="100" step="5" value="50" />
+          <output class="volume-value" id="sfx-volume-value" for="sfx-volume" data-setting-value="sfxVolume">50%</output>
         </div>
         <p class="hint">Sound starts after your first tap, click or key press, and pauses while the page is hidden.</p>
       </div>
@@ -504,11 +538,11 @@
         <fieldset class="option-group">
           <legend>Motion</legend>
           <div class="segmented segmented-stack">
-            <label class="segment"><input type="radio" name="motion" value="system" aria-describedby="motion-hint" /><span>Match device</span></label>
-            <label class="segment"><input type="radio" name="motion" value="reduce" aria-describedby="motion-hint" /><span>Reduce</span></label>
-            <label class="segment"><input type="radio" name="motion" value="full" aria-describedby="motion-hint" /><span>Full</span></label>
+            <label class="segment"><input type="radio" name="motion" value="system" data-setting="motion" aria-describedby="motion-hint" /><span>Match device</span></label>
+            <label class="segment"><input type="radio" name="motion" value="reduce" data-setting="motion" aria-describedby="motion-hint" /><span>Reduce</span></label>
+            <label class="segment"><input type="radio" name="motion" value="full" data-setting="motion" aria-describedby="motion-hint" /><span>Full</span></label>
           </div>
-          <p class="hint" id="motion-hint"></p>
+          <p class="hint" id="motion-hint" data-setting-hint="motion"></p>
         </fieldset>
       </div>
 
@@ -632,15 +666,54 @@
     <!-- Shells & Feathers: the match menu (Menu button in the match header) -->
     <div id="sf-menu" class="modal match-menu" role="dialog" aria-modal="true" aria-labelledby="sf-menu-title" aria-describedby="sf-menu-info sf-menu-note">
       <div class="modal-content menu-content">
-        <h3 id="sf-menu-title" class="modal-title">Paused</h3>
-        <p id="sf-menu-info" class="modal-message menu-info"></p>
-        <div class="modal-buttons">
-          <button type="button" class="btn btn-primary modal-btn" data-menu-close>Resume</button>
-          <button type="button" class="btn modal-btn" data-action="restart-match">Restart</button>
-          <a class="btn modal-btn" href="#/shells-feathers" data-up>Change Mode</a>
-          <a class="btn modal-btn" href="#/" data-up>All Games</a>
+        <div class="menu-view" data-menu-view="pause">
+          <h3 id="sf-menu-title" class="modal-title">Paused</h3>
+          <p id="sf-menu-info" class="modal-message menu-info"></p>
+          <div class="modal-buttons">
+            <button type="button" class="btn btn-primary modal-btn" data-menu-close>Resume</button>
+            <button type="button" class="btn modal-btn" data-menu-settings>Settings</button>
+            <button type="button" class="btn modal-btn" data-action="restart-match">Restart</button>
+            <a class="btn modal-btn" href="#/shells-feathers" data-up>Change Mode</a>
+            <a class="btn modal-btn" href="#/" data-up>All Games</a>
+          </div>
+          <p id="sf-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
         </div>
-        <p id="sf-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
+        <div class="menu-view" data-menu-view="settings" hidden>
+          <h3 id="sf-menu-settings-title" class="modal-title" tabindex="-1">Settings</h3>
+          <p class="modal-message menu-info">The game stays paused while you change these.</p>
+          <div class="menu-settings">
+            <label class="setting-row" for="sf-menu-music">
+              <span class="setting-label">Music</span>
+              <span class="switch"><input type="checkbox" id="sf-menu-music" role="switch" data-setting="music" /><span class="toggle-switch" aria-hidden="true"></span></span>
+            </label>
+            <div class="volume-row">
+              <label class="volume-label" for="sf-menu-music-volume">Music volume</label>
+              <input type="range" class="volume-slider" id="sf-menu-music-volume" data-setting="musicVolume" min="0" max="100" step="5" value="30" />
+              <output class="volume-value" for="sf-menu-music-volume" data-setting-value="musicVolume">30%</output>
+            </div>
+            <label class="setting-row" for="sf-menu-sfx">
+              <span class="setting-label">Sound effects</span>
+              <span class="switch"><input type="checkbox" id="sf-menu-sfx" role="switch" data-setting="sfx" /><span class="toggle-switch" aria-hidden="true"></span></span>
+            </label>
+            <div class="volume-row">
+              <label class="volume-label" for="sf-menu-sfx-volume">Effects volume</label>
+              <input type="range" class="volume-slider" id="sf-menu-sfx-volume" data-setting="sfxVolume" min="0" max="100" step="5" value="50" />
+              <output class="volume-value" for="sf-menu-sfx-volume" data-setting-value="sfxVolume">50%</output>
+            </div>
+            <fieldset class="option-group">
+              <legend>Motion</legend>
+              <div class="segmented">
+                <label class="segment"><input type="radio" name="sf-menu-motion" value="system" data-setting="motion" aria-describedby="sf-menu-motion-hint" /><span>Match device</span></label>
+                <label class="segment"><input type="radio" name="sf-menu-motion" value="reduce" data-setting="motion" aria-describedby="sf-menu-motion-hint" /><span>Reduce</span></label>
+                <label class="segment"><input type="radio" name="sf-menu-motion" value="full" data-setting="motion" aria-describedby="sf-menu-motion-hint" /><span>Full</span></label>
+              </div>
+              <p class="hint" id="sf-menu-motion-hint" data-setting-hint="motion"></p>
+            </fieldset>
+          </div>
+          <div class="modal-buttons">
+            <button type="button" class="btn btn-primary modal-btn" data-menu-back>Done</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -664,15 +737,54 @@
     <!-- Acorns & Leaves: the match menu (Menu button in the match header) -->
     <div id="al-menu" class="modal match-menu" role="dialog" aria-modal="true" aria-labelledby="al-menu-title" aria-describedby="al-menu-info al-menu-note">
       <div class="modal-content menu-content">
-        <h3 id="al-menu-title" class="modal-title">Paused</h3>
-        <p id="al-menu-info" class="modal-message menu-info"></p>
-        <div class="modal-buttons">
-          <button type="button" class="btn btn-primary modal-btn" data-menu-close>Resume</button>
-          <button type="button" class="btn modal-btn" data-action="al-restart">Restart</button>
-          <a class="btn modal-btn" href="#/acorns-leaves" data-up>Change Mode</a>
-          <a class="btn modal-btn" href="#/" data-up>All Games</a>
+        <div class="menu-view" data-menu-view="pause">
+          <h3 id="al-menu-title" class="modal-title">Paused</h3>
+          <p id="al-menu-info" class="modal-message menu-info"></p>
+          <div class="modal-buttons">
+            <button type="button" class="btn btn-primary modal-btn" data-menu-close>Resume</button>
+            <button type="button" class="btn modal-btn" data-menu-settings>Settings</button>
+            <button type="button" class="btn modal-btn" data-action="al-restart">Restart</button>
+            <a class="btn modal-btn" href="#/acorns-leaves" data-up>Change Mode</a>
+            <a class="btn modal-btn" href="#/" data-up>All Games</a>
+          </div>
+          <p id="al-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
         </div>
-        <p id="al-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
+        <div class="menu-view" data-menu-view="settings" hidden>
+          <h3 id="al-menu-settings-title" class="modal-title" tabindex="-1">Settings</h3>
+          <p class="modal-message menu-info">The game stays paused while you change these.</p>
+          <div class="menu-settings">
+            <label class="setting-row" for="al-menu-music">
+              <span class="setting-label">Music</span>
+              <span class="switch"><input type="checkbox" id="al-menu-music" role="switch" data-setting="music" /><span class="toggle-switch" aria-hidden="true"></span></span>
+            </label>
+            <div class="volume-row">
+              <label class="volume-label" for="al-menu-music-volume">Music volume</label>
+              <input type="range" class="volume-slider" id="al-menu-music-volume" data-setting="musicVolume" min="0" max="100" step="5" value="30" />
+              <output class="volume-value" for="al-menu-music-volume" data-setting-value="musicVolume">30%</output>
+            </div>
+            <label class="setting-row" for="al-menu-sfx">
+              <span class="setting-label">Sound effects</span>
+              <span class="switch"><input type="checkbox" id="al-menu-sfx" role="switch" data-setting="sfx" /><span class="toggle-switch" aria-hidden="true"></span></span>
+            </label>
+            <div class="volume-row">
+              <label class="volume-label" for="al-menu-sfx-volume">Effects volume</label>
+              <input type="range" class="volume-slider" id="al-menu-sfx-volume" data-setting="sfxVolume" min="0" max="100" step="5" value="50" />
+              <output class="volume-value" for="al-menu-sfx-volume" data-setting-value="sfxVolume">50%</output>
+            </div>
+            <fieldset class="option-group">
+              <legend>Motion</legend>
+              <div class="segmented">
+                <label class="segment"><input type="radio" name="al-menu-motion" value="system" data-setting="motion" aria-describedby="al-menu-motion-hint" /><span>Match device</span></label>
+                <label class="segment"><input type="radio" name="al-menu-motion" value="reduce" data-setting="motion" aria-describedby="al-menu-motion-hint" /><span>Reduce</span></label>
+                <label class="segment"><input type="radio" name="al-menu-motion" value="full" data-setting="motion" aria-describedby="al-menu-motion-hint" /><span>Full</span></label>
+              </div>
+              <p class="hint" id="al-menu-motion-hint" data-setting-hint="motion"></p>
+            </fieldset>
+          </div>
+          <div class="modal-buttons">
+            <button type="button" class="btn btn-primary modal-btn" data-menu-back>Done</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -735,36 +847,37 @@
   <script type="importmap">
   {
     "imports": {
-      "./src/app/app.js": "./src/app/app.js?v=26cc4e5aa7",
+      "./src/app/app.js": "./src/app/app.js?v=63f22ae8e5",
       "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
       "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
       "./src/app/navigation.js": "./src/app/navigation.js?v=df1ca271ed",
       "./src/app/path-screen.js": "./src/app/path-screen.js?v=96702974d7",
       "./src/app/router.js": "./src/app/router.js?v=1707f9f2ce",
-      "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=4c5ae018aa",
+      "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=81c7b2624e",
+      "./src/app/sound-motion.js": "./src/app/sound-motion.js?v=9aa88402af",
       "./src/app/toast.js": "./src/app/toast.js?v=dd91f8d7e8",
-      "./src/games/acorns-leaves/ai.js": "./src/games/acorns-leaves/ai.js?v=acdcb110fd",
+      "./src/games/acorns-leaves/ai.js": "./src/games/acorns-leaves/ai.js?v=ec51e2bd96",
       "./src/games/acorns-leaves/engine.js": "./src/games/acorns-leaves/engine.js?v=f4ae64291c",
-      "./src/games/acorns-leaves/fog-ai.js": "./src/games/acorns-leaves/fog-ai.js?v=6d7e5fc1ab",
+      "./src/games/acorns-leaves/fog-ai.js": "./src/games/acorns-leaves/fog-ai.js?v=9792d8c2f9",
       "./src/games/acorns-leaves/fog.js": "./src/games/acorns-leaves/fog.js?v=c6a4aaa2c2",
       "./src/games/acorns-leaves/pieces.js": "./src/games/acorns-leaves/pieces.js?v=778ba9533a",
-      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=5411f26c46",
-      "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=bc2760e7a3",
-      "./src/games/acorns-leaves/text.js": "./src/games/acorns-leaves/text.js?v=749bf91783",
+      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=bf0808efe3",
+      "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=9e8a476f8f",
+      "./src/games/acorns-leaves/text.js": "./src/games/acorns-leaves/text.js?v=5229e61624",
       "./src/games/acorns-leaves/turn.js": "./src/games/acorns-leaves/turn.js?v=4c32d00fbb",
-      "./src/games/acorns-leaves/view.js": "./src/games/acorns-leaves/view.js?v=414ca95277",
-      "./src/games/shells-feathers/ai.js": "./src/games/shells-feathers/ai.js?v=06e0515b61",
+      "./src/games/acorns-leaves/view.js": "./src/games/acorns-leaves/view.js?v=818d078e2c",
+      "./src/games/shells-feathers/ai.js": "./src/games/shells-feathers/ai.js?v=50536a19f8",
       "./src/games/shells-feathers/match.js": "./src/games/shells-feathers/match.js?v=dd264e8ee4",
       "./src/games/shells-feathers/rules.js": "./src/games/shells-feathers/rules.js?v=6f838579f5",
-      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=fe6fce9a9c",
-      "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=94021cc0b1",
-      "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=084b20f135",
+      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=46412f2a1e",
+      "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=b2a7ee3fd9",
+      "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=c297258ce9",
       "./src/main.js": "./src/main.js?v=b0d0ca161a",
       "./src/shared/achievements.js": "./src/shared/achievements.js?v=8ea8ab6102",
       "./src/shared/audio.js": "./src/shared/audio.js?v=7d60edf7a0",
       "./src/shared/board-taps.js": "./src/shared/board-taps.js?v=0d80361510",
       "./src/shared/icons.js": "./src/shared/icons.js?v=6688127809",
-      "./src/shared/match-menu.js": "./src/shared/match-menu.js?v=a37d756308",
+      "./src/shared/match-menu.js": "./src/shared/match-menu.js?v=5240555d5f",
       "./src/shared/profile.js": "./src/shared/profile.js?v=74e5693fb0",
       "./src/shared/save-data.js": "./src/shared/save-data.js?v=3c16c6a91b",
       "./src/shared/storage.js": "./src/shared/storage.js?v=40ebff7603",

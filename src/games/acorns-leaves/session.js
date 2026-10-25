@@ -10,8 +10,8 @@
 //
 // Lifecycle: enter(mode, variant) when the match screen opens, restart() for
 // "Restart", playAgain() for "Rematch", leave() when the screen closes, and
-// pause()/resume() while the match menu is open (the Spirit's move, its
-// steps and the result dialog wait). Each match owns a timer scope; starting
+// pause()/resume() while the match menu is open or the page is hidden (the
+// Spirit's move, its steps and the result dialog wait). Each match owns a timer scope; starting
 // another match or leaving disposes it, so a pending Spirit move, result
 // dialog or music restart from an old match can never fire.
 //
@@ -40,14 +40,14 @@
 // against the Spirit its move is a tap, or a capture when it took one of
 // your pieces, and its crowning is silent.
 import { createInitialState, applyMove, analyze, isDarkSquare, SIDES } from './engine.js';
-import { chooseMove as spiritChoice } from './ai.js';
-import { chooseFogStep as fogSpiritChoice } from './fog-ai.js';
+import { chooseMove as spiritChoice, describeLevel } from './ai.js';
+import { chooseFogStep as fogSpiritChoice, describeFogLevel } from './fog-ai.js';
 import {
   startTurn, choose, cancel, mustCapture, inChain, movablePieces, destinations, jumpedSoFar, displayBoard, selectedSquare,
 } from './turn.js';
 import * as fog from './fog.js';
 import {
-  moveText, turnText, turnLabel, guidance, resultText, pickText, jumpText, FEEDBACK, SIDE_NAMES,
+  moveText, turnText, turnLabel, guidance, resultText, pickText, jumpText, FEEDBACK, SIDE_NAMES, ruleNote,
   fogGuidance, FOG_FEEDBACK, bumpText, fogTurnText, fogMoveText, handoffText,
 } from './text.js';
 import { createTimerScope } from '../../shared/timers.js';
@@ -76,6 +76,7 @@ export function createSession({
   let timers = null;
   let spiritActing = false;
   let scoredMatch = null;
+  const holds = new Set();
 
   const fogged = () => variant === 'fog';
 
@@ -114,10 +115,12 @@ export function createSession({
       humanSide: mode === 'single' ? side : null,
       difficulty,
       captured: { acorn: 0, leaf: 0 }, // pieces each side has taken
-      lastMove: null, // { by, path, captures, taken: [{ square, piece }] }
+      lastMove: null, // { by, path, captures, crowned, taken: [{ square, piece }] }
+      told: '', // the last move as the player now looking was told it
       result: null,
       resultText: null,
       feedback: null,
+      refused: null, // the outcome behind `feedback` (turn.js choose())
       handoff: false,
       // Fog: the opponent pieces each side could see after its own last move,
       // to tell it what came into or went out of view since.
@@ -127,6 +130,7 @@ export function createSession({
       for (const s of SIDES) match.inView[s] = fog.opponentsInView(fog.observe(match.state.board, s), s);
     }
     timers = createTimerScope(clock);
+    if (holds.size) timers.pause();
     // Against the Spirit the player's pieces sit at the bottom.
     view.setOrientation(match.humanSide ?? 'acorn');
     view.showMatchInfo({ mode, difficulty, humanSide: match.humanSide, variant });
@@ -149,10 +153,13 @@ export function createSession({
   function beginTurn(lead) {
     match.turn = rules.start(match.state);
     match.feedback = null;
+    match.refused = null;
     spiritActing = isSpiritTurn();
     if (fogged() && mode === 'two') {
-      // The board stays hidden until the next player takes the device.
+      // The board stays hidden until the next player takes the device, and
+      // nothing about the last move is shown until then.
       match.handoff = true;
+      match.told = '';
       render();
       view.announce(`${lead} ${SIDE_NAMES[match.state.turn]}' turn: pass the device.`);
       view.showHandoff(handoffText(match.state.turn));
@@ -182,6 +189,7 @@ export function createSession({
   function takeControl() {
     if (!match || !match.handoff) return;
     match.handoff = false;
+    match.told = opponentMoveText(match.state.turn);
     view.hideHandoff();
     render();
     view.announce(`${opponentMoveText(match.state.turn)} ${turnLine()}`.trim());
@@ -195,6 +203,7 @@ export function createSession({
     const { turn, outcome, move, found } = rules.choose(before, square);
     match.turn = turn;
     match.feedback = rules.feedback[outcome] ?? null;
+    match.refused = match.feedback || outcome === 'bumped' ? outcome : null;
     if (outcome === 'bumped') {
       const text = bumpText({
         square: found, piece: match.state.board[found], ends: Boolean(move), opened: fog.mayCapture(before) && !fog.mayCapture(turn),
@@ -228,12 +237,21 @@ export function createSession({
     }
   }
 
-  // Escape: puts a picked-up piece back (not once it has jumped).
+  // Escape: puts a picked-up piece back. Once it has jumped it must go on,
+  // and Escape says so.
   function cancelSelection() {
     if (!match || match.result || match.handoff || spiritActing || timers.paused) return;
-    if (!match.turn.path.length || rules.inChain(match.turn)) return;
+    if (!match.turn.path.length) return;
+    if (rules.inChain(match.turn)) {
+      match.feedback = rules.feedback['must-continue'];
+      match.refused = 'must-continue';
+      render();
+      view.announce(match.feedback);
+      return;
+    }
     match.turn = rules.cancel(match.turn);
     match.feedback = null;
+    match.refused = null;
     render();
     view.announce('Piece put back.');
   }
@@ -292,7 +310,9 @@ export function createSession({
     match.state = applyMove(match.state, move);
     match.played += 1;
     match.captured[piece.side] += move.captures.length;
-    match.lastMove = { by: piece.side, path: move.path, captures: move.captures, taken };
+    match.lastMove = {
+      by: piece.side, path: move.path, captures: move.captures, crowned: Boolean(move.crowned), taken,
+    };
     const byPlayer = mode === 'two' ? piece.side === 'acorn' : piece.side === match.humanSide;
     for (const id of moveSounds({ byPlayer, move })) audio.playSfx(id);
     if (mode === 'single' && piece.side === match.humanSide) {
@@ -302,13 +322,16 @@ export function createSession({
       ];
       if (unlocked.length) notify(unlocked);
     }
-    const said = `${prefix} ${moveText({ mode, humanSide: match.humanSide, move, piece })}`.trim();
+    const moved = moveText({ mode, humanSide: match.humanSide, move, piece });
+    const said = `${prefix} ${moved}`.trim();
     const { result } = analyze(match.state);
     if (result) {
+      match.told = moved; // the game is over: the fog lifts
       finish(result, said);
       return;
     }
     if (!fogged()) {
+      match.told = moved;
       beginTurn(said);
       return;
     }
@@ -318,7 +341,8 @@ export function createSession({
       return;
     }
     // Against the Spirit you are told its move only as far as you can see it.
-    beginTurn(piece.side === match.humanSide ? said : opponentMoveText(match.humanSide));
+    match.told = piece.side === match.humanSide ? moved : opponentMoveText(match.humanSide);
+    beginTurn(piece.side === match.humanSide ? said : match.told);
   }
 
   // Two players sharing the device in Fog: sounds must not tell either of
@@ -395,8 +419,21 @@ export function createSession({
       winner: match.result?.winner ?? null,
       hint,
       feedback: phase === 'ready' && Boolean(match.feedback),
+      lastText: match.told,
+      note: ruleNote({
+        variant,
+        phase,
+        stage: inChain(turn) ? 'keep-jumping' : 'choose-piece',
+        capture: must,
+        outcome: phase === 'ready' ? match.refused : null,
+        crowned: Boolean(match.lastMove?.crowned) && phase !== 'over',
+        spirit: spiritWords(),
+      }),
     });
   }
+
+  // The Spirit's level in words, while it thinks.
+  const spiritWords = () => (fogged() ? describeFogLevel(match.difficulty) : describeLevel(match.difficulty));
 
   // Fog: everything drawn comes from the viewer's view (fog.js), never the
   // real board, until the game is over.
@@ -427,11 +464,14 @@ export function createSession({
       winner: match.result?.winner ?? null,
       hint: '',
       feedback: false,
+      lastText: '',
+      note: '',
     };
     const last = match.lastMove;
     if (phase === 'over') {
       model.board = [...state.board];
       model.lastMove = last && { path: last.path, captures: last.captures };
+      model.lastText = match.told;
       model.turnLabel = match.resultText.title;
       model.hint = match.resultText.message;
     } else if (phase === 'handoff') {
@@ -460,12 +500,33 @@ export function createSession({
         model.hint = match.feedback ?? fogGuidance({ stage, mayCapture: may });
         model.feedback = Boolean(match.feedback);
       }
+      // Only what this viewer was told, and a rule note that names no
+      // square; the Spirit's crowning is never mentioned (it can't be seen).
+      model.lastText = match.told;
+      model.note = ruleNote({
+        variant,
+        phase,
+        stage: fog.inChain(turn) ? 'keep-jumping' : 'choose-piece',
+        capture: phase === 'ready' && fog.mayCapture(turn),
+        outcome: phase === 'ready' ? match.refused : null,
+        crowned: Boolean(last?.crowned) && last.by === viewer,
+        spirit: spiritWords(),
+      });
     }
     view.render(model);
   }
 
-  const pause = () => timers?.pause();
-  const resume = () => timers?.resume();
+  // The match freezes while anything holds it: the menu ('menu') or a
+  // hidden page ('hidden'). It goes on when the last hold is let go.
+  function pause(reason = 'menu') {
+    holds.add(reason);
+    timers?.pause();
+  }
+
+  function resume(reason = 'menu') {
+    holds.delete(reason);
+    if (!holds.size) timers?.resume();
+  }
 
   return {
     enter, leave, restart, playAgain, selectSquare, cancelSelection, takeControl, pause, resume,

@@ -1,17 +1,25 @@
 // The Spirit (single-player opponent). Same strategy as v1:
 //   easy   "Gentle"   - random empty cell
-//   medium "Balanced" - best move 70% of the time, otherwise random
+//   medium "Balanced" - best move BEST_SHARE (70%) of the time, otherwise random
 //   hard   "Wise"     - win, else block, else minimax (never loses)
 // Randomness comes from `rng` so tests can make it deterministic.
 import { winningLine, isFull, emptyCells } from './rules.js';
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'];
 export const DIFFICULTY_NAMES = { easy: 'Gentle', medium: 'Balanced', hard: 'Wise' };
+export const BEST_SHARE = 0.7;
+
+// The levels in words (setup screen, match panel), from the same numbers.
+export const LEVEL_WORDS = {
+  easy: 'Gentle picks any open square at random.',
+  medium: `Balanced plays its best move about ${Math.round(BEST_SHARE * 10)} times in 10, and otherwise a random open square.`,
+  hard: 'Wise takes a win, blocks yours, and otherwise searches ahead for the strongest square. It never loses.',
+};
 
 export function chooseMove(board, { ai, human, difficulty, rng = Math.random }) {
   switch (difficulty) {
     case 'easy': return randomMove(board, rng);
-    case 'medium': return rng() < 0.7 ? bestMove(board, ai, human, rng) : randomMove(board, rng);
+    case 'medium': return rng() < BEST_SHARE ? bestMove(board, ai, human, rng) : randomMove(board, rng);
     case 'hard': default: return bestMove(board, ai, human, rng);
   }
 }
