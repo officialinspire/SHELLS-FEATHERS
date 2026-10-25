@@ -234,6 +234,43 @@ test('settings and progress', { timeout: 300_000 }, async (t) => {
     assert.deepEqual(game.pageErrors, []);
   });
 
+  await t.test('dialogs keep the keyboard: Tab wraps inside, and Escape works even after a click on the backdrop', async () => {
+    const game = await openGame(harness, { viewport: { width: 1280, height: 800 } });
+    const { page } = game;
+    const focused = () => page.evaluate(() => {
+      const el = document.activeElement;
+      return { id: el.id, text: el.textContent.trim(), inDialog: Boolean(el.closest('.modal.active')) };
+    });
+    // The delete-data dialog: two buttons, Tab and Shift+Tab cycle between them.
+    await game.goTo('#/settings', 'settings-screen');
+    await game.press('Delete all saved data');
+    const order = [];
+    for (let i = 0; i < 5; i++) {
+      order.push((await focused()).id);
+      await page.keyboard.press('Tab');
+    }
+    assert.deepEqual(order, ['confirm-cancel', 'confirm-accept', 'confirm-cancel', 'confirm-accept', 'confirm-cancel']);
+    await page.keyboard.press('Shift+Tab');
+    assert.equal((await focused()).id, 'confirm-cancel', 'Shift+Tab wraps backwards too');
+    await page.mouse.click(5, 5); // the backdrop: focus drops to the page
+    await page.keyboard.press('Escape');
+    assert.equal(await game.modalOpen(), false, 'Escape still closes it');
+    assert.equal(await game.storageItem('spiritOfTheWoods:v2') !== null, true, 'and nothing was deleted');
+
+    // A result dialog: never tabs out to the page behind.
+    await game.goTo('#/shells-feathers/play/two', 'game-screen');
+    for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
+    await game.waitForResult();
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.press('Tab');
+      assert.ok((await focused()).inDialog, `Tab ${i + 1} stayed in the dialog`);
+    }
+    await page.mouse.click(5, 5);
+    await page.keyboard.press('Escape');
+    assert.equal(await game.modalOpen(), false);
+    assert.deepEqual(game.pageErrors, []);
+  });
+
   await t.test('blocked storage: the game says progress isn\'t being kept, settings still apply, and Delete all reports it could not', async () => {
     const game = await openGame(harness, {
       viewport: { width: 390, height: 844 },

@@ -18,6 +18,7 @@ import { initSettingsScreen, applyMotion } from './settings-screen.js';
 import { createPathScreen } from './path-screen.js';
 import { createConfirmDialog } from './confirm-dialog.js';
 import { createToast } from './toast.js';
+import { installDialogFocus } from './dialog-focus.js';
 import { createShellsFeathersView } from '../games/shells-feathers/view.js';
 import { createSession } from '../games/shells-feathers/session.js';
 import { initShellsFeathersSetup } from '../games/shells-feathers/setup.js';
@@ -127,6 +128,7 @@ export function createApp({ doc, win }) {
 
   function init() {
     doc.addEventListener('click', onClick);
+    installDialogFocus(doc);
     view.bindCells((index) => session.selectCell(index));
     checkersView.bind({ onSelect: (square) => checkers.selectSquare(square), onCancel: () => checkers.cancelSelection() });
     initShellsFeathersSetup({ doc, profile, audio });

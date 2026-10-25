@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#654321" />
   <meta name="description" content="Spirit of the Woods: peaceful forest games. Play Shells &amp; Feathers (tic-tac-toe) and Acorns &amp; Leaves (checkers) against the forest Spirit or a friend." />
   <title>Spirit of the Woods</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=5bd436ff8b" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
@@ -620,6 +620,45 @@
   <audio id="loss-sound" preload="auto"><source src="sounds/result-loss.wav" type="audio/wav" /></audio>
   <audio id="achievement-sound" preload="auto"><source src="sounds/achievement.wav" type="audio/wav" /></audio>
 
-  <script type="module" src="src/main.js"></script>
+  <!-- asset versions (tools/stamp-assets.mjs) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "./src/app/app.js": "./src/app/app.js?v=04b04123ee",
+      "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
+      "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
+      "./src/app/navigation.js": "./src/app/navigation.js?v=df1ca271ed",
+      "./src/app/path-screen.js": "./src/app/path-screen.js?v=76a2bafe0a",
+      "./src/app/router.js": "./src/app/router.js?v=1707f9f2ce",
+      "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=4c5ae018aa",
+      "./src/app/toast.js": "./src/app/toast.js?v=dd91f8d7e8",
+      "./src/games/acorns-leaves/ai.js": "./src/games/acorns-leaves/ai.js?v=acdcb110fd",
+      "./src/games/acorns-leaves/engine.js": "./src/games/acorns-leaves/engine.js?v=f4ae64291c",
+      "./src/games/acorns-leaves/fog-ai.js": "./src/games/acorns-leaves/fog-ai.js?v=6d7e5fc1ab",
+      "./src/games/acorns-leaves/fog.js": "./src/games/acorns-leaves/fog.js?v=c6a4aaa2c2",
+      "./src/games/acorns-leaves/pieces.js": "./src/games/acorns-leaves/pieces.js?v=409be175d4",
+      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=17d01dd096",
+      "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=bc2760e7a3",
+      "./src/games/acorns-leaves/text.js": "./src/games/acorns-leaves/text.js?v=5d5c8090df",
+      "./src/games/acorns-leaves/turn.js": "./src/games/acorns-leaves/turn.js?v=4c32d00fbb",
+      "./src/games/acorns-leaves/view.js": "./src/games/acorns-leaves/view.js?v=d57fe22f87",
+      "./src/games/shells-feathers/ai.js": "./src/games/shells-feathers/ai.js?v=06e0515b61",
+      "./src/games/shells-feathers/match.js": "./src/games/shells-feathers/match.js?v=dd264e8ee4",
+      "./src/games/shells-feathers/rules.js": "./src/games/shells-feathers/rules.js?v=6f838579f5",
+      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=258f90a383",
+      "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=94021cc0b1",
+      "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=a9a44bcb10",
+      "./src/main.js": "./src/main.js?v=b0d0ca161a",
+      "./src/shared/achievements.js": "./src/shared/achievements.js?v=8ea8ab6102",
+      "./src/shared/audio.js": "./src/shared/audio.js?v=7d60edf7a0",
+      "./src/shared/profile.js": "./src/shared/profile.js?v=74e5693fb0",
+      "./src/shared/save-data.js": "./src/shared/save-data.js?v=3c16c6a91b",
+      "./src/shared/storage.js": "./src/shared/storage.js?v=40ebff7603",
+      "./src/shared/timers.js": "./src/shared/timers.js?v=e293fcedd2"
+    }
+  }
+  </script>
+  <script type="module" src="src/main.js?v=b0d0ca161a"></script>
+  <!-- /asset versions -->
 </body>
 </html>
