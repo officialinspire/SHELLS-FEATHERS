@@ -14,7 +14,9 @@ Features:
 💾 Persistent win/loss stats stored locally
 ⚙️ Built fully in-browser — no frameworks, no dependencies
 🌲 Game hub: Shells & Feathers (Tic-Tac-Toe) and Acorns & Leaves (Checkers: Classic, or Fog of War where you see only what is next to your pieces), each against the forest Spirit (Gentle, Balanced or Wise) or a friend on the same device
-🏆 Your Path: each game's records per difficulty, and Shells & Feathers achievements
+🏆 Your Path: each game's records (your games against the Spirit apart from two-player ones; Classic and Fog of War) and achievements in both games, each unlocked once
+🔊 Settings shared by every game: music and sound effects with their own volumes, and motion (match the device, reduce or full); sound starts only after your first tap or key press
+🗑️ Clearing progress or deleting all saved data always says exactly what it removes first
 ⌨️ Playable by touch, mouse or keyboard, on phones and desktop; browser Back/Forward move between screens
 
 Built With:

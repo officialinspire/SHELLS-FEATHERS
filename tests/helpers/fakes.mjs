@@ -52,6 +52,10 @@ export function createMemoryStorage(entries = {}, { failReads = false, failWrite
       if (failWrites) throw new Error('QuotaExceededError');
       map.set(key, String(value));
     },
+    removeItem(key) {
+      if (failWrites) throw new Error('SecurityError');
+      map.delete(key);
+    },
   };
 }
 
@@ -77,7 +81,12 @@ export function createFakeView() {
     finalTurn: null,
     showFinalTurn(outcome, winner, line) { view.finalTurn = { outcome, winner, line }; },
     showScores(mode, scores) { view.scores = { ...scores }; },
-    showResult(outcome, winner) { view.result = { outcome, winner }; view.resultsShown.push(outcome); },
+    resultAchievements: null, // the achievements the last result dialog listed
+    showResult(outcome, winner, achievements = []) {
+      view.result = { outcome, winner };
+      view.resultsShown.push(outcome);
+      view.resultAchievements = achievements;
+    },
     hideResult() { view.result = null; },
     get pieces() { return view.board.filter(Boolean).length; },
   };
@@ -98,7 +107,12 @@ export function createFakeCheckersView() {
     showMatchInfo(info) { view.matchInfo = { ...info }; },
     render(model) { view.model = model; view.models.push(model); },
     announce(text) { view.announcements.push(text); },
-    showResult(result) { view.result = result; view.results.push(result); },
+    resultAchievements: null, // the achievements the last result dialog listed
+    showResult(result, achievements = []) {
+      view.result = result;
+      view.results.push(result);
+      view.resultAchievements = achievements;
+    },
     hideResult() { view.result = null; },
     handoff: null, // { title, text, button } while the handoff screen is up
     handoffs: [],
@@ -119,17 +133,51 @@ export function createFakeAudio() {
     stopSfx: (id) => calls.push(`stop:${id}`),
     startMusic: () => calls.push('music:start'),
     stopMusic: () => calls.push('music:stop'),
+    stopEffects: () => calls.push('stop:effects'),
   };
 }
 
-// An <audio>-like element for audio.js tests.
+// An <audio>-like element for audio.js tests. Like a real one, setting the
+// volume outside 0–1 throws. `refuse(name)` makes the next play() reject with
+// that error (as browsers do before a user gesture: NotAllowedError);
+// `hold()` makes it return a promise that settles only when the test calls
+// the returned { resolve, reject }.
 export function createFakeAudioElement() {
+  let volume = 1;
+  let next = null;
   return {
     paused: true,
-    volume: 1,
     loop: false,
     currentTime: 0,
-    play() { this.paused = false; return Promise.resolve(); },
+    plays: 0,
+    get volume() { return volume; },
+    set volume(v) {
+      if (!(v >= 0 && v <= 1)) throw new RangeError(`IndexSizeError: volume ${v}`);
+      volume = v;
+    },
+    refuse(name) { next = { refuse: name }; },
+    hold() {
+      const handle = {};
+      next = { hold: handle };
+      return handle;
+    },
+    play() {
+      this.plays++;
+      const how = next;
+      next = null;
+      if (how?.refuse) {
+        const err = Object.assign(new Error(how.refuse), { name: how.refuse });
+        return Promise.reject(err);
+      }
+      this.paused = false;
+      if (how?.hold) {
+        return new Promise((resolve, reject) => {
+          how.hold.resolve = resolve;
+          how.hold.reject = (name) => reject(Object.assign(new Error(name), { name }));
+        });
+      }
+      return Promise.resolve();
+    },
     pause() { this.paused = true; },
   };
 }

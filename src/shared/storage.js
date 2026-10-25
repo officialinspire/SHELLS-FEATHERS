@@ -8,6 +8,16 @@ export function openStorage(getArea = () => globalThis.localStorage) {
     read(key) {
       try { return area ? area.getItem(key) : null; } catch { return null; }
     },
+    // Removes `key`; true when it is gone afterwards.
+    remove(key) {
+      try {
+        if (!area) return false;
+        area.removeItem(key);
+        return area.getItem(key) === null;
+      } catch {
+        return false;
+      }
+    },
     write(key, value) {
       try {
         if (!area) return false;

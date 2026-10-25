@@ -11,7 +11,8 @@
 | Stage 4: Acorns & Leaves Classic Checkers rules engine | `2fc7c37` |
 | Stage 5: Acorns & Leaves playable (board, two players, the Spirit) | `e05a922` |
 | Stage 6: Acorns & Leaves Fog of War mode | `69852ea` |
-| Stage 7: one Spirit of the Woods look (polish, motion, accessibility, assets) | the commit that adds §0.1 |
+| Stage 7: one Spirit of the Woods look (polish, motion, accessibility, assets) | `9e8fad9` |
+| Stage 8: shared settings, sound, Your Path, achievements, saved data | the commit that adds §0.1 |
 | Live site | https://officialinspire.github.io/SHELLS-FEATHERS/ still serves v1 from `main`. Nothing from this branch is merged or deployed. |
 
 The existing Shells & Feathers tic-tac-toe game must stay playable at every step of the upgrade. Each stage ends with every test green and the game deployable as is.
@@ -22,7 +23,88 @@ Sections 1–3 are the audit of v1 and stay as they were written, as a record of
 
 ## 0. Status
 
-### 0.1 Stage 7: one Spirit of the Woods look
+### 0.1 Stage 8: settings, sound, Your Path and achievements
+
+**Settings.**
+- Settings holds only what every game shares:
+  - **Music** and **Sound effects**, each with a switch and its own volume slider (0–100%; the slider moves the sound as you drag, and the effects slider plays a sample when let go);
+  - **Motion:** "Match device" follows `prefers-reduced-motion`; "Reduce" and "Full" override it;
+  - **Delete all saved data.**
+- Each game's own options (pieces, side, rules, the Spirit's difficulty) stay on that game's setup screen. Settings links to them rather than repeating them.
+- Everything is saved in the v2 save (§5.1) and applies at once.
+- Motion is applied as `<html data-motion>`, which `styles.css` reads.
+
+**Sound.**
+- **Nothing plays until the first tap, click or key press.** The music is wanted from the start and begins on that gesture. It is no longer preloaded: its 7.2 MB file loads only when it first plays.
+- **`play()` handling** (`src/shared/audio.js`):
+  - **Refused** for lack of a gesture (NotAllowedError): sound locks again, and the next gesture retries the music.
+  - **Aborted** by a pause (AbortError): expected, and ignored.
+  - **Late refusal:** one that arrives after a newer request is ignored, so it can't undo that request.
+  - **Old browsers:** `play()` that throws, or returns nothing, is handled.
+- **Fades:** only one runs at a time. A volume change mid-fade retargets it, and the volume is kept within 0–1.
+- **Switches and volumes:**
+  - turning effects off, or their volume to 0, stops one that is playing;
+  - music at volume 0 is paused rather than played silently.
+- **Navigation and visibility:** leaving a match stops its victory theme, and the music pauses while the page is hidden.
+- **New sounds:** placement and the other side's move (wooden taps), capture, crowning, a revealed piece (Fog), a draw, a loss, and an achievement chime. They are original, synthesized by `tools/make-sounds.py`.
+- **Kept, trimmed and re-encoded:** the owner's menu, Shells & Feathers placement, new-game, victory and music files (`tools/prepare-audio.sh`):
+  - the short effects had up to half a second of silence before them;
+  - their levels differed fivefold;
+  - the music and victory theme are now at 96 kbit/s.
+
+  All audio went from 15.4 MB to 7.9 MB. See [`assets.md`](assets.md).
+- **Results:** a win plays the victory theme as before. A loss now has a gentle falling pair of notes instead of nothing, and a draw a settling chord.
+- **Fog:** sounds never tell a listener what they couldn't see ([`fog-rules.md`](fog-rules.md) §4). With two players, every move is the same tap and nothing else sounds. This also fixes a Stage 6 leak by ear: the mover's mid-chain jumps and blocked tries used to make a sound the other player could hear.
+
+**Your Path.**
+- Each game has its own panel. The device owner's games against the Spirit (wins, draws, losses, games, and a table per difficulty) are shown apart from **two-player games on this device**, which never count as the owner's wins.
+- Acorns & Leaves shows Classic and Fog of War side by side.
+- Shells & Feathers games from v1, which didn't record mode or difficulty, are listed on their own line: "8 games … 5 wins, which may include two-player wins".
+- The v1-style totals are still mirrored to `spiritOfTheWoodsStats` for rollback safety.
+
+**Achievements.**
+
+| Game | Achievements |
+|---|---|
+| Shells & Feathers (7) | First Game, **First Win**, Gentle Win, Balanced Win, Steady Hand, Shared Board, Ten Games |
+| Acorns & Leaves (6) | **First Win**, **Crowned** (first king), **Double Jump** (first multi-jump), **Through the Fog** (first Fog win), Wise Victory, Shared Board |
+
+- **Kept in the save:** each is unlocked once and kept with the time it was unlocked (§5.1). It is never announced twice: not after a reload, not when earned again.
+- **Where they show:**
+  - those a result unlocks are listed in the result dialog ("New achievement: First Win");
+  - Crowned and Double Jump appear as they happen in a notice at the top of the screen, which taps pass through and screen readers read out;
+  - Your Path shows the date of each.
+- **Whose achievements:** wins and moments count only in games against the Spirit. Two-player games give only Shared Board.
+- **Older saves:** they get what their records already earned, once, marked "Unlocked earlier".
+
+**Deleting data, explicitly.**
+- "Clear Shells & Feathers progress" and "Clear Acorns & Leaves progress" (Your Path), and "Delete all saved data" (Settings), each open a dialog listing exactly what is deleted, with counts, and what is kept.
+- Cancel is focused first, and Escape cancels.
+- Delete all removes the game's four storage keys (the v1 record included) and nothing else, then reloads with defaults.
+- If storage is blocked or full, Settings and Your Path say that nothing is being saved, and Delete all says it couldn't delete.
+
+**Checks.**
+
+| | Result |
+|---|---|
+| Unit tests | 195 (was 165) |
+| Browser tests | 85 (was 76) |
+| Contrast audit (Stage 7 script, with the new screens and the delete dialog) | 0 of 1,750 text runs below AA |
+
+- **Deliberate bugs:** ten were put in one at a time and each was caught by a named test:
+  - an achievement unlocking twice;
+  - backfilling a cleared save;
+  - clearing that keeps achievements;
+  - Delete all keeping the v1 key;
+  - two-player moments unlocking;
+  - no save-failure flag;
+  - effects before a gesture;
+  - unvalidated volumes;
+  - v1 games not migrated;
+  - volume outside 0–1.
+- **Audio and Fog safeguards:** three more deliberate bugs (the stale-refusal guard, and the two Fog sound rules) were also caught.
+
+### 0.2 Stage 7: one Spirit of the Woods look
 
 The hub and both games now share one look, polished as one collection. The palette (browns, sand, cream, turquoise and sunset orange on the brown-to-sky gradient), the Uncial Antiqua and Cinzel type, and the Shells & Feathers pieces and wording are kept. Nothing about play, rules, routes or saves changed. Assets and their sources are listed in [`assets.md`](assets.md).
 
@@ -105,7 +187,7 @@ How contrast was measured: each text run was compared with the pixels actually r
 
 No ceremonial or cultural imagery was added.
 
-### 0.2 Stage 6: Fog of War for Acorns & Leaves
+### 0.3 Stage 6: Fog of War for Acorns & Leaves
 
 Fog of War is a separate Acorns & Leaves mode, chosen with "Rules: Classic / Fog of War" on the setup screen. It has its own routes (`#/acorns-leaves/fog/single`, `…/fog/two`) and its own records. **Classic is unchanged:** same rules, full visibility, and its tests pass as before. The exact rules are in [`fog-rules.md`](fog-rules.md), written before the code.
 
@@ -162,7 +244,7 @@ Each game was recorded once in the Fog records. The match fitted the screen, the
 - the board after a handoff;
 - the result, and the revealed final board.
 
-### 0.3 Stage 5: Acorns & Leaves is playable
+### 0.4 Stage 5: Acorns & Leaves is playable
 
 The checkers engine from Stage 4 now drives a real game in the hub. The hub card says "Ready to play" and leads to a setup screen (side and Spirit difficulty), then a match for two players on one device or against the Spirit, then a result dialog with Rematch, Change Mode, All Games and View Board. Records appear in Your Path. Shells & Feathers is unchanged, and there is no Fog of War.
 
@@ -260,7 +342,7 @@ Each game was recorded exactly once, in the right bucket. No page errors in any 
 
 The 320 px draw run found guidance and result text wrapping to three lines and pushing the controls off screen, and side names being cut short. Fixed: shorter wording, a tighter header, "You"/"Spirit" names with the side spoken, and a fit check with the longest guidance.
 
-### 0.4 Stage 4: the Acorns & Leaves rules engine
+### 0.5 Stage 4: the Acorns & Leaves rules engine
 
 `src/games/acorns-leaves/engine.js` is a pure Classic Checkers engine (American checkers / English draughts), separate from any user interface. The full rules and every rule choice are in [`docs/acorns-leaves-rules.md`](acorns-leaves-rules.md).
 
@@ -286,7 +368,7 @@ The 320 px draw run found guidance and result text wrapping to three lines and p
 
 **Still a preview (until Stage 5).** The hub card, preview notice and rules page said the rules were ready but the board wasn't, and stated the forward-only captures, the free choice between captures, crowning ending the move and the draw rule. Shells & Feathers was unchanged. Fog of War was not part of this stage.
 
-### 0.5 Stage 3: Shells & Feathers inside the hub
+### 0.6 Stage 3: Shells & Feathers inside the hub
 
 The game keeps everything it had:
 - Shell 🐚 and Feather 🪶 pieces;
@@ -325,7 +407,7 @@ On all three: no errors, no sideways scrolling, and exactly two games recorded. 
 
 **Known limit (unchanged).** Two tabs playing at once each keep their own copy of the records, and the last one saved wins. Nothing is double-counted, but one tab's games can be overwritten.
 
-### 0.6 Stage 2: the game hub
+### 0.7 Stage 2: the game hub
 
 The opening screen is now a hub for Spirit of the Woods games.
 
@@ -369,7 +451,7 @@ Settings (sound, music) and Your Path (totals, records per difficulty and two-pl
 | P3 (CSS) | **Fixed.** The unused celebration styles are removed. The unused PNGs remain. |
 | ST1 | **Fixed.** Your Path shows the per-mode breakdown next to the v1-style totals. |
 
-### 0.7 Stage 1: modules, lifecycle, save migration
+### 0.8 Stage 1: modules, lifecycle, save migration
 
 **Done in Stage 1.**
 - `index.js` is split into ES modules under `src/` (§4), with explicit lifecycles for screens, matches, timers and music fades.
@@ -675,7 +757,7 @@ Key: `spiritOfTheWoods:v2`
 ```json
 {
   "version": 2,
-  "settings": { "sfx": true, "music": true },
+  "settings": { "sfx": true, "music": true, "sfxVolume": 50, "musicVolume": 30, "motion": "system" },
   "shellsFeathers": {
     "settings": { "difficulty": "easy", "player1Symbol": "shell" },
     "stats": {
@@ -686,7 +768,8 @@ Key: `spiritOfTheWoods:v2`
       },
       "twoPlayer": { "player1Wins": 0, "player2Wins": 0, "draws": 0 },
       "legacy": { "wins": 0, "losses": 0, "draws": 0, "totalGames": 0 }
-    }
+    },
+    "achievements": { "first-win": { "at": 1793050000000 } }
   },
   "acornsLeaves": {
     "settings": { "difficulty": "easy", "side": "acorn", "variant": "classic" },
@@ -698,7 +781,8 @@ Key: `spiritOfTheWoods:v2`
       },
       "twoPlayer": { "acornWins": 0, "leafWins": 0, "draws": 0 },
       "fog": { "single": { "…": "same shape as above" }, "twoPlayer": { "…": "same shape as above" } }
-    }
+    },
+    "achievements": {}
   },
   "migratedFrom": null
 }
@@ -706,9 +790,16 @@ Key: `spiritOfTheWoods:v2`
 
 - App-wide settings (sound, music) sit at the top level. Each game's settings and records sit under its own key: `shellsFeathers`, and since Stage 5 `acornsLeaves` (the side the player takes against the Spirit, the Spirit's difficulty, and results from the player's side).
 - Stage 6 added `settings.variant` (the rules last chosen) and `stats.fog` (Fog of War records, same shape as Classic), also without a version bump.
+- Stage 8 added, again without a version bump:
+  - `settings.sfxVolume` and `settings.musicVolume`: whole numbers 0–100; anything else falls back to 50 and 30.
+  - `settings.motion`: `system`, `reduce` or `full`.
+  - `<game>.achievements`: each unlocked achievement keyed by id, `{ "at": <ms since 1970> }`, or `{ "at": null }` for one found in the records of an older save.
+  - **Backfill:** a save with no `achievements` field gets them worked out from its records, once. Afterwards the field exists, even when empty after a clear, so nothing comes back. A v1 player gets First Game, and Ten Games with ten or more games, the same way.
+  - **Repair:** malformed entries are dropped. Ids from a newer build are kept but not shown.
+- **Unlock once:** an id already present is never unlocked or announced again. Only "Clear … progress" for its game removes it. The definitions are in `src/shared/achievements.js`.
 - `acornsLeaves` was added without a version bump: a v2 save without it gets the defaults when loaded, field by field, like any other missing field. Stage 4 builds keep the section as an unknown field.
 - `legacy` holds the v1 numbers as they were: v1 can't be split by mode or difficulty. `migratedFrom` is `1` when the save came from v1.
-- "Your Path" shows `summarizeStats()`: legacy plus every new bucket, in v1 terms (Victories include two-player wins). Existing players see the same numbers after the upgrade.
+- "Your Path" (since Stage 8) shows each game's own games against the Spirit apart from two-player games, and the v1 games on their own line. They can't be split, and v1 counted two-player wins as victories. `summarizeStats()` still gives the v1-style totals: they are mirrored to the v1 key, and they count toward First Game and Ten Games.
 - Unknown fields are kept when the save is repaired and written, so data from a newer build survives a round trip through this one.
 
 ### 5.2 Loading (`profile.js` `loadSave`, never throws)
@@ -726,13 +817,16 @@ Key: `spiritOfTheWoods:v2`
 3. If v2 is unreadable, copy it to `spiritOfTheWoods:v2:corrupt`.
 4. Build a new v2: migrated from v1 if usable (`migratedFrom: 1`), otherwise defaults. Write it.
 
-`storage.js` guards every call. If storage is blocked, reads return nothing and writes report failure; the game keeps its records in memory for the session and logs one console warning.
+`storage.js` guards every call. If storage is blocked, reads return nothing and writes report failure. The game keeps its records and settings in memory for the session and logs one console warning. Since Stage 8, Settings and Your Path also show a note that nothing is being saved.
 
 ### 5.3 Writes
 
 - **When:** settings changes and every finished game write the v2 save.
 - **Dual-write:** finished games and Clear Path also write the v1-shaped totals to `spiritOfTheWoodsStats`. An older build, after a rollback, then shows the player's current totals. On the next load of this build the totals match and nothing is double-counted.
-- **Clear Path:** an explicit player action. It is the only thing that lowers the numbers.
+- **Clearing:** explicit player actions only, each behind a dialog that lists exactly what goes and what stays (Cancel is focused, and Escape cancels):
+  - **"Clear Shells & Feathers progress"** (Your Path) deletes that game's records, including the v1 games, and its achievements. The v1 mirror goes to zero to match. Settings and the other game are kept.
+  - **"Clear Acorns & Leaves progress"** does the same for Acorns & Leaves (Classic and Fog).
+  - **"Delete all saved data"** (Settings) removes every key the game writes: the v2 save, the v1 record `spiritOfTheWoodsStats`, and both `:corrupt` copies. It then reloads with defaults. Nothing else in the browser's storage is touched. If storage refuses, the page says what couldn't be deleted.
 
 ### 5.4 Checks
 
@@ -740,11 +834,22 @@ Key: `spiritOfTheWoods:v2`
 - the table from the audit plan: nothing stored, valid v1, odd v1 values, unreadable v1, valid v2 with unknown fields, corrupt v2 plus v1, bad v2 fields;
 - the rollback fold-in (without double counting);
 - the dual-write;
-- Clear Path;
-- settings validation;
-- storage that throws on every call, a storage getter that throws, and write-only failure (quota).
+- clearing each game;
+- settings validation, including volumes and motion.
 
-`tests/browser/storage.test.mjs` repeats the important cases in the real page.
+`tests/unit/hub-content.test.mjs` covers achievements:
+- unlocked once, across reloads;
+- backfill;
+- repair of malformed entries;
+- clearing one game;
+- delete all;
+- blocked storage.
+
+Storage failure is covered in both files: storage that throws on every call, a storage getter that throws, and write-only failure (quota).
+
+In the real page:
+- `tests/browser/storage.test.mjs` repeats the important migration cases;
+- `tests/browser/settings-progress.test.mjs` covers settings, achievements, deleting data and blocked storage.
 
 ---
 
@@ -764,7 +869,7 @@ npm test                          # = npm run test:unit && npm run test:browser
 |---|---|
 | `session.test.mjs` | **Scoring once:** a round is recorded once whatever follows its last move (taps, Play Again, Restart), including when the Spirit ends it; rounds restarted or left before the end are never recorded. **Board states:** ready → waiting → ready → over; two players never wait. Each move names who made it. **Reset and stale callbacks.** Restart cancels the pending Spirit move, and the new match gets its full 800 ms. Leaving during the Spirit's turn records nothing and plays nothing. The result dialog never opens after Restart, Play Again or leave, and opens exactly once if the player stays. Play Again stops the victory sound and restarts music after 300 ms; that restart is cancelled by a restart. The Spirit moves exactly once and the player can't move during its turn. Session score resets per mode and survives restarts. Results land in the right buckets. Settings apply from the next match. Match info and the result line reach the view. |
 | `migration.test.mjs` | Save format, migration and malformed storage (§5.4), and the Acorns & Leaves section: added to older v2 saves, repaired field by field (including the rules choice), recorded and cleared apart from Shells & Feathers and the v1 totals, with Fog records apart from Classic ones. |
-| `timers-audio.test.mjs` | Timer scopes (dispose cancels and ignores later calls; scopes are independent). Music fades: draw → Play Again and music off→on keep music playing; no dip when already playing; fade-out pauses; toggles respected. |
+| `timers-audio.test.mjs` | **Timer scopes:** dispose cancels and ignores later calls; scopes are independent. **Audio (Stage 8):** nothing plays (or fades) before the first gesture, and music asked for earlier starts then. A refused `play()` locks sound again and the next gesture retries; an AbortError is ignored; a late refusal can't undo a newer request; `play()` that throws or returns nothing is handled. One fade at a time through rapid start/stop/mute/volume changes, ending where the last call says. Volume never leaves 0–1 (the fake element throws, like a real one). The music volume applies at once, retargets a fade-in, pauses at 0 and fades back in. Effects follow their switch and volume, and stop when turned off. A hidden page pauses the music, and showing it again resumes it only if music is still wanted. Draw → Play Again and music off→on keep music playing. |
 | `rules-ai.test.mjs` | Lines, draws, illegal moves, outcomes. A line completed on the ninth move is a win, not a draw. Completing two lines at once is one win. Feather as Player 1 moves first. No move after a draw or win. **Wise never loses**: all 569 human lines give 183 draws and 386 AI wins, as v1 measured, and it also never loses when the player picks Feather. The Spirit only picks empty squares, at every difficulty, from every reachable position. Win-before-block. Gentle and Balanced with a fixed random source. |
 | `announcements.test.mjs` | Square and line names; move, turn and result announcements (keeping the game's result titles). |
 | `navigation.test.mjs` | Hash parsing. Unknown routes go to the hub (and are rewritten); each game has a play route per mode. go/up/back against a fake history (up() steps back instead of adding entries; back() falls back to the hub on a fresh visit). Typed URLs and Back/Forward. Arrow-key movement on both boards: on the checkers board, between dark squares only, every one reachable, with the board turned round too. Checkers square names ("d4: empty, move here"). |
@@ -775,7 +880,8 @@ npm test                          # = npm run test:unit && npm run test:browser
 | `acorns-leaves-fog.test.mjs` | **Fog of War rules** (docs/fog-rules.md): visibility from both sides; tries, blocks and chains; random-game properties (every real capture looks possible, every move legal, blocks only on hidden pieces); boards that look the same give the same lists. |
 | `acorns-leaves-fog-ai.test.mjs` | **The Spirit in Fog:** imagined boards fit its view; only offered steps; not omniscient (the same view gives the same step); bounds; sensible play; Wise beats Gentle. |
 | `acorns-leaves-fog-session.test.mjs` | **Fog session:** every drawn model leak-free; the Spirit handed only its view, deciding at once and moving unseen after a fixed pause; blocked tries; the fog lifting; Fog records; the two-player handoff; restarts; Classic unchanged; whole game against the real Spirit. |
-| `hub-content.test.mjs` | Achievements: all locked at first; each unlocks from its record; pre-v2 games count toward totals only. Your Path receives a copy of the records. |
+| `sounds-achievements.test.mjs` | **Sounds and achievements in play (Stage 8):**<ul><li>**Results:** a win plays the victory theme (the music pauses); a loss and a draw have gentle sounds of their own and the music continues.</li><li>**Achievements:** the result dialog lists the new ones once; your double jump and crowning are reported at once, and once; nothing from two-player moments.</li><li>**Fog:** in a whole two-player game every move makes the same tap and nothing else; the Spirit's crowning is heard in Classic, never in Fog; in a whole game against the Spirit its turns never sound a crowning or reveal.</li><li>**Achievement notice:** queues, one chime per batch, then clears.</li></ul> |
+| `hub-content.test.mjs` | **Achievements (Stage 8), both games:**<ul><li>all locked at first;</li><li>each record achievement from its record;</li><li>two-player wins never count as yours;</li><li>v1 games count toward First Game and Ten Games only;</li><li>each unlocks once, across reloads, keeping its time;</li><li>moments only in games against the Spirit;</li><li>older saves backfilled once, and cleared ones never;</li><li>malformed entries repaired, a newer build's ids kept;</li><li>clearing one game leaves the other and the settings;</li><li>Delete all removes exactly the game's keys, the v1 one included;</li><li>blocked storage works for the session and is reported once.</li></ul> |
 
 **Browser tests** (`tests/browser`, Playwright + Chromium against a built-in static server). Every off-site request is blocked, which proves the game is self-contained. Each test also asserts no page errors and no missing files.
 
@@ -785,17 +891,18 @@ npm test                          # = npm run test:unit && npm run test:browser
 | `full-games.test.mjs` | Single player played to a result against Gentle, Balanced and Wise; Wise reproduces v1's exact audited game. Two players: Player 2 win then draw, session score and stats. Feather as Player 1. |
 | `lifecycle.test.mjs` | Audit bugs A1, A2, A3, M1 and M2 reproduced in the real UI and shown fixed. Leaving the match by Change Mode, the browser Back button or a typed URL. |
 | `storage.test.mjs` | v1 player upgrades and keeps records (including after more games and a reload; v1 key untouched by the migration, then mirrored). Malformed, `null` and `{}` v1 values. Corrupt v2 rebuilt from v1. Storage that throws. Settings, pieces and difficulty surviving a reload. |
+| `settings-progress.test.mjs` | **Settings and progress (Stage 8):**<ul><li>**Sound start:** no `play()`, and no music download, before the first gesture, even on a deep link into a match; a refused play is retried by the next gesture, with no page error.</li><li>**Saved settings:** volumes, switches and motion apply at once and survive a reload.</li><li>**Motion:** Reduce stops animations where the device allows them; Full keeps them where it asks for less.</li><li>**Pausing:** leaving a match stops its victory theme, switches silence at once, and the music pauses while the page is hidden.</li><li>**Achievements:** listed in the result dialog once, even after a reload, and dated in Your Path.</li><li>**v1 player:** their games shown on their own; the v1 record untouched.</li><li>**Delete all:** the dialog lists what goes, Cancel keeps it, and Delete removes only the game's keys.</li><li>**Blocked storage:** reported, and Delete all says it could not.</li></ul> |
 | `match-flows.test.mjs` | **First move and the Spirit's turn:** the board is busy, taps are ignored, and both moves are announced. **Win and draw:** the board locks, winning squares are named and edged, the result and line are announced, and a draw adds to neither score. **Scoring once:** the winning square is clicked twice in one task and pressed with Enter three times; then View Board, taps after the end, Restart, Back/Forward and reload. Exactly one game is recorded. **Cancelling the Spirit's move:** Restart, switching to an Acorns & Leaves match, and going home during its turn; nothing scored, no stale move. **Keyboard:** arrows, Home/End, Enter/Space, taken squares refuse, and a dark focus ring on empty, taken and winning squares. **Phone (320×568, touch):** pinch zoom allowed; a touch drag scrolls the setup screen; no `touchmove` is blocked anywhere; no page-wide overscroll setting; only the board uses `touch-action: manipulation`; squares are 60 px or more; a swipe across the board is not a move; a touch game plays to a result. |
 | `acorns-leaves.test.mjs` | **Board and pieces:** the engine's starting position as drawn, 32 dark-square buttons, separate acorn and leaf drawings (rim and emblem), kings with a crown. **Picking and moving:** selection, destinations, square names, announcements, refusals. **Capture sequence:** compulsory capture with both capturing pieces ringed, a double jump square by square (piece moves on, jumped leaf marked, route tinted, other picks and Escape refused), captured counts, the recapture. **Whole games:** two players to a result with every move checked against the engine, the result panel (the winner's piece, or both for a draw, and the captured counts), the board locked after the end, Restart, one record, Your Path; against the Spirit (Playwright's clock) to a result, with stray clicks and Escape ignored during its turn and every one of its moves matched to a legal move, then Rematch. **Cancelling:** Restart, Change Mode, Back, going home and switching to Shells & Feathers during the Spirit's turn. **Turned board:** playing the Leaves puts h8 bottom-left, the Spirit opens, keys follow the screen. **Keyboard only:** Tab to the game, arrows, Enter/Space, Escape, focus ring above neighbours. **Layout:** at 320×568 (touch), 360×560 (Android, touch), 390×844, 640×360 (Android landscape, touch), 750×340 and 1280×800 the whole match fits with the longest guidance, squares are at least 36 px, and the capture line plays. **Phone gestures:** a swipe is not a move, nothing blocks touch. **Your Path:** records shown and cleared apart from Shells & Feathers; saved side and difficulty preselected. |
 | `acorns-leaves-fog.test.mjs` | **Fog of War in the page:** the rules choice and its routes; a whole two-player game checked square by square against each player's view (pieces, drawn pieces, fog, names), with every handoff covering the screen, holding no piece or mark, and resetting the keyboard stop; a whole game against the Spirit with leak checks every turn; a blocked try revealing exactly one square; Restart during the Spirit's turn; Classic still showing everything; phone and landscape layout. |
 | `polish.test.mjs` | **The shared look (Stage 7).** Shells & Feathers chips: "To move" follows the turn, "Winner" marks the winner and clears on the next round, nothing after a draw; the scores and labels are unchanged. **Result panel:** the winning piece, both pieces for a draw, and the session score, read with the result. **Motion:** every animation seen on the hub, the match, a piece placed, the winning line, the result panel and a capture to make is finite and done within 2 s; the test fails if any loops. **Reduced motion:** nothing animates and buttons change state at once, while the winning line still shows gold and edged. |
-| `hub.test.mjs` | **Hub:** both cards are ready to play, with Play and How to Play; the checkers card shows the starting position with the game's pieces; both How to Play pages (the checkers one covers every rule choice and the board marks). **Full trip:** hub → setup → match → result → Play Again → Change Mode → other mode → All Games → Settings → Your Path achievements. **History:** Back/Forward (fresh match on Forward; "Change Mode" adds no history entry), reload, deep links, unknown links. **Keyboard only:** Tab to the game, arrow keys and Enter/Space to win, the dialog takes and keeps focus, Escape shows the board. **Devices:** narrow phone 320×568 with touch, and desktop 1280×800, each playing both modes to a result with the match fitting on screen. **Reachability:** at 320×568, 360×560 (a short Android screen), 360×640, 640×360, 750×340 and 1280×800, every link, button and input on every screen (and in both result dialogs) can be scrolled into view, is not covered, and is at least 44×44 px (checkers squares at least 36×36), including the Fog handoff screen and the Fog match; no sideways scrolling. |
+| `hub.test.mjs` | **Hub:** both cards are ready to play, with Play and How to Play; the checkers card shows the starting position with the game's pieces; both How to Play pages (the checkers one covers every rule choice and the board marks). **Full trip:** hub → setup → match → result → Play Again → Change Mode → other mode → All Games → Settings → Your Path achievements. **History:** Back/Forward (fresh match on Forward; "Change Mode" adds no history entry), reload, deep links, unknown links. **Keyboard only:** Tab to the game, arrow keys and Enter/Space to win, the dialog takes and keeps focus, Escape shows the board. **Devices:** narrow phone 320×568 with touch, and desktop 1280×800, each playing both modes to a result with the match fitting on screen. **Reachability:** at 320×568, 360×560 (a short Android screen), 360×640, 640×360, 750×340 and 1280×800, every link, button and input on every screen (and in both result dialogs) can be scrolled into view, is not covered, and is at least 44×44 px (checkers squares at least 36×36), including the Fog handoff screen, the Fog match and the delete-all dialog; no sideways scrolling. |
 
 ### 6.2 How each stage was verified beyond the suite
 
 **Stage 1.**
 - **AI:** v1's `index.js` (from `main`) was loaded in a Node VM and compared with `src/games/shells-feathers/ai.js` on every AI-to-move position, for both symbol assignments, every difficulty and five seeded random sources. 62,910 comparisons, 0 differences.
-- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.7.
+- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.8.
 - **Mutation check:** key safeguards were removed one at a time (timer disposal on teardown, fade cancellation, the storage guards, the v1 migration). The suite failed each time.
 
 **Stage 2.**
@@ -810,7 +917,7 @@ npm test                          # = npm run test:unit && npm run test:browser
   - saving the difficulty choice.
 
 **Stage 3.**
-- **Match-flow audit** in Chromium before and after the fixes (§0.5), and the **phone smoke test** on three emulated phones (§0.5).
+- **Match-flow audit** in Chromium before and after the fixes (§0.6), and the **phone smoke test** on three emulated phones (§0.6).
 - **Mutation check:** each of these was removed one at a time, and the suite failed each time:
   - the waiting and locked board states;
   - turn announcements;
@@ -825,10 +932,10 @@ npm test                          # = npm run test:unit && npm run test:browser
 
   Removing one or two layers changes nothing observable. With all three removed, the score-once test fails.
 
-**Stage 4.** Nine rule bugs were put into the engine one at a time; the engine tests failed for each (§0.4).
+**Stage 4.** Nine rule bugs were put into the engine one at a time; the engine tests failed for each (§0.5).
 
 **Stage 5.**
-- **Scripted playtests** on emulated desktop and phones, with long-task measurement and screenshots (§0.3).
+- **Scripted playtests** on emulated desktop and phones, with long-task measurement and screenshots (§0.4).
 - **Mutation check:** each of these was introduced one at a time, and the suite failed each time:
   - the board taking picks while the Spirit acts;
   - a teardown that keeps the old timers;
@@ -852,7 +959,7 @@ npm test                          # = npm run test:unit && npm run test:browser
 - **Redundant layer:** removing only the "score once" guard is not observable. As in Shells & Feathers, the rules already refuse moves after the end, and the session ignores picks once there is a result.
 
 **Stage 6.**
-- **Scripted Fog playtests** on emulated desktop and phones. The scripted player saw only the page; screenshots and long tasks were reviewed (§0.2).
+- **Scripted Fog playtests** on emulated desktop and phones. The scripted player saw only the page; screenshots and long tasks were reviewed (§0.3).
 - **Leak and rule check:** each of these was introduced one at a time, and the suite failed every time (16 of 16):
   - drawing the real board on the player's turn, or during the Spirit's turn;
   - handing the Spirit the real board;
@@ -870,8 +977,14 @@ npm test                          # = npm run test:unit && npm run test:browser
 
 **Stage 7.**
 - **Before and after screenshots** of the same 14 screens and overlays at four sizes, made with the same script on Stage 6 (`69852ea`) and on this commit, and reviewed side by side: hub, both setups, both matches, both result panels, a capture chain, the final board, Fog, the handoff, How to Play, Settings and Your Path.
-- **Audit script:** contrast against the rendered pixels, touch-target size, focus rings and clipped text, on every screen and overlay (§0.1).
+- **Audit script:** contrast against the rendered pixels, touch-target size, focus rings and clipped text, on every screen and overlay (§0.2).
 - **Mutation check:** an endless pulse was put back on the turn line, and `polish.test.mjs` failed.
+
+**Stage 8.**
+- **Mutation check:** ten safeguards were removed one at a time (§0.1), with the unit suite passing first. Each was caught by a named test.
+- **Sound timing:** every effect was measured. Each now starts within about 10 ms of being played (before, the select sounds started 0.32–0.51 s late), and `tools/make-sounds.py` gives byte-identical files on every run.
+- **Screenshots** of Settings, Your Path, both delete dialogs, a result with a new achievement, and the in-play notice, at 360×640, 360×560 and 1280×800, reviewed by eye.
+- **Stage 7 audit** re-run with the new screens: contrast clean, touch sizes clean, no clipped text. Focus rings were checked on the volume sliders directly, because the audit's sibling probe for inputs doesn't fit range inputs.
 
 ### 6.3 Remaining automated checks to add
 

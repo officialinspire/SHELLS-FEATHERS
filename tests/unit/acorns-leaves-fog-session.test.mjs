@@ -127,7 +127,7 @@ test('a blocked try shows the player only the blocker; with nothing left to try,
   assert.match(view.said, /^Acorn on c3 picked up\. It may be able to jump to a5\.$/);
   tap(sq(3, 0));
   assert.equal(view.said, 'Blocked: a hidden leaf is on a5. No capture is left to try, so any move is open.');
-  assert.equal(audio.calls.at(-1), 'sfx:button-select');
+  assert.equal(audio.calls.at(-1), 'sfx:reveal-sound', 'a revealed piece has its own sound (against the Spirit)');
   assert.deepEqual(view.model.found, [sq(3, 0)]);
   assert.deepEqual(view.model.board[sq(3, 0)], { side: 'leaf', king: false }, 'the blocker is now drawn');
   assert.ok(!view.model.fog.includes(sq(3, 0)));

@@ -84,11 +84,11 @@ test('two players: pick a piece, see its squares, move; the turn passes and the 
   assert.equal(view.model.selected, null);
   assert.deepEqual(view.model.board[sq(4, 3)], { side: 'acorn', king: false });
   assert.equal(view.said, "Acorns moved from c3 to d4. Leaves' turn.");
-  assert.equal(audio.calls.at(-1), 'sfx:player-select');
+  assert.equal(audio.calls.at(-1), 'sfx:piece-move');
 
   tap(sq(2, 3), sq(3, 4));
   assert.equal(view.model.turn, 'acorn');
-  assert.equal(audio.calls.at(-1), 'sfx:opponent-select', 'the second side has its own sound');
+  assert.equal(audio.calls.at(-1), 'sfx:piece-move-other', 'the second side has its own sound');
 });
 
 test('picks that do nothing say why, and Escape puts a piece back', () => {
@@ -130,7 +130,7 @@ test('a chain of jumps: the piece moves on, jumped pieces are marked, it must ke
   assert.deepEqual(view.model.movable, [], 'no other piece can be picked mid-chain');
   assert.match(view.model.hint, /^Keep jumping/);
   assert.match(view.said, /^Jumped to d4\. Keep jumping: (b6 or f6|f6 or b6)\.$/);
-  assert.equal(audio.calls.at(-1), 'sfx:player-select');
+  assert.equal(audio.calls.at(-1), 'sfx:capture-sound', 'each jump of a chain sounds as a capture');
   assert.equal(view.model.turn, 'acorn', 'still the same turn');
 
   tap(sq(7, 4));
@@ -277,6 +277,7 @@ test('the Spirit winning is a loss for the player, with no victory fanfare', () 
   assert.equal(view.model.turnLabel, 'Wisdom Gained');
   assert.match(view.said, /^The Spirit jumped from c5 to e3, capturing 1 acorn\. Wisdom Gained The Spirit captured every acorn\.$/);
   assert.ok(!audio.calls.includes('sfx:victory-sound'));
+  assert.equal(audio.calls.at(-1), 'sfx:loss-sound', 'a gentle loss sound instead');
   clock.tick(DELAYS.resultModal);
   assert.equal(view.result.outcome, 'loss');
   assert.deepEqual(records().single.hard, { wins: 0, losses: 1, draws: 0 });

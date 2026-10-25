@@ -111,13 +111,18 @@ test('game hub', { timeout: 300_000 }, async (t) => {
 
     await game.press('Your Path');
     await game.waitForScreen('path-screen');
-    assert.equal(await page.locator('#total-games').textContent(), '2');
-    const achievement = (title) => page.locator('.achievement', { hasText: title });
+    // Your game against the Spirit, and the two-player game kept apart.
+    assert.equal(await page.locator('#sf-games').textContent(), '1');
+    assert.equal(await page.locator('#two-player-record').textContent(), 'Player 1 wins: 1 · Player 2 wins: 0 · Draws: 0');
+    const achievement = (title) => page.locator('#sf-path .achievement', { hasText: title });
     for (const title of ['First Game', 'Shared Board']) assert.match(await achievement(title).getAttribute('class'), /is-unlocked/, title);
     for (const title of ['Steady Hand', 'Ten Games']) assert.match(await achievement(title).getAttribute('class'), /is-locked/, title);
     const gentleWon = first.title === 'Victory!';
-    assert.match(await achievement('Gentle Win').getAttribute('class'), gentleWon ? /is-unlocked/ : /is-locked/);
-    assert.equal(await page.locator('#achievement-count').textContent(), `(${gentleWon ? 3 : 2} of 6)`);
+    for (const title of ['First Win', 'Gentle Win']) {
+      assert.match(await achievement(title).getAttribute('class'), gentleWon ? /is-unlocked/ : /is-locked/, title);
+    }
+    assert.equal(await page.locator('#achievement-count').textContent(), `(${gentleWon ? 4 : 2} of 7)`);
+    assert.equal(await page.locator('#al-achievement-count').textContent(), '(0 of 6)', 'Acorns & Leaves untouched');
     await game.press('Back');
     await game.waitForScreen('hub-screen');
     assert.deepEqual(game.pageErrors, []);
@@ -338,6 +343,12 @@ test('game hub', { timeout: 300_000 }, async (t) => {
       await game.press("Show the Acorns' board");
       await game.settle();
       assert.deepEqual(await unreachable('.screen.active'), [], `${width}×${height} Fog match`);
+      // The dialog that confirms deleting saved data (the longest one).
+      await game.goTo('#/settings', 'settings-screen');
+      await game.press('Delete all saved data');
+      await game.settle();
+      assert.deepEqual(await unreachable('#confirm-dialog'), [], `${width}×${height} delete-all dialog`);
+      await game.press('Cancel');
       // The page itself never scrolls sideways.
       assert.equal(await game.page.evaluate(() => { window.scrollTo(5000, 0); return scrollX; }), 0);
       await game.page.context().close();

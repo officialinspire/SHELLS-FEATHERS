@@ -9,7 +9,12 @@
 // match can never fire.
 //
 // Scoring: a round is recorded once, when its last move is played. A round
-// that is restarted or left before it ends is not recorded.
+// that is restarted or left before it ends is not recorded. Achievements the
+// result unlocks are shown in the result dialog.
+//
+// Sounds: each placement; at the end the victory theme for a win (yours, or
+// either player's with two players; the music pauses for it), a gentle
+// falling pair of notes for a loss and a settling chord for a draw.
 import { createMatch } from './match.js';
 import { chooseMove } from './ai.js';
 import { createTimerScope } from '../../shared/timers.js';
@@ -114,17 +119,23 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
     const { winner, line } = match.result;
     const outcome = match.outcome;
     view.setBoardState('over');
-    profile.recordResult({ mode, difficulty: match.difficulty, outcome });
+    const unlocked = profile.recordResult({ mode, difficulty: match.difficulty, outcome }) ?? [];
     if (winner !== null) {
       if (winner === match.player1Symbol) scores.player1++;
       else scores.player2++;
       view.highlight(line);
+    }
+    if (outcome === 'loss') {
+      audio.playSfx('loss-sound');
+    } else if (outcome === 'draw') {
+      audio.playSfx('draw-sound');
+    } else {
       audio.stopMusic();
       audio.playSfx('victory-sound');
     }
     view.showScores(mode, scores);
     view.showFinalTurn(outcome, winner, line);
-    timers.after(delays.resultModal, () => view.showResult(outcome, winner));
+    timers.after(delays.resultModal, () => view.showResult(outcome, winner, unlocked));
   }
 
   function showTurn() {

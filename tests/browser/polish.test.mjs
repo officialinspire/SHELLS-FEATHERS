@@ -65,7 +65,7 @@ test('Spirit of the Woods polish', { timeout: 300_000 }, async (t) => {
     for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
     await game.waitForResult();
     assert.deepEqual(await panel(game, 'game-modal'), { emblem: ['🐚'], summary: 'Score · Player 1 1 · Player 2 0' });
-    assert.equal(await game.page.locator('#game-modal').getAttribute('aria-describedby'), 'modal-message modal-summary');
+    assert.equal(await game.page.locator('#game-modal').getAttribute('aria-describedby'), 'modal-message modal-summary modal-achievements');
 
     await game.press('Play Again');
     await game.waitForTurn("Player 1's Turn");

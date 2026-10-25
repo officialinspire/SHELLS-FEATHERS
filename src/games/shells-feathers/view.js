@@ -15,8 +15,8 @@
 // to move is marked "To move", and after a win the winner's is marked
 // "Winner", so the turn never depends on color alone.
 //
-// Result dialog: the winning piece (both pieces for a draw), the result, and
-// the session score. It takes focus and makes the board inert while open;
+// Result dialog: the winning piece (both pieces for a draw), the result, the
+// session score and any achievements the result unlocked. It takes focus and makes the board inert while open;
 // "View Board" (or Escape) closes it to show the final board.
 import { DIFFICULTY_NAMES } from './ai.js';
 
@@ -32,6 +32,11 @@ const RESULTS = {
   player2: { title: 'Player 2 Wins!' },
 };
 const OTHER = { shell: 'feather', feather: 'shell' };
+
+// "New achievement: First Win" (or several, joined), or '' for none.
+export const achievementLine = (achievements) => (achievements.length
+  ? `New achievement${achievements.length > 1 ? 's' : ''}: ${achievements.map((a) => a.title).join(' · ')}`
+  : '');
 const ACTORS = { you: 'You', spirit: 'The Spirit', player1: 'Player 1', player2: 'Player 2' };
 const ROWS = ['top', 'middle', 'bottom'];
 const COLUMNS = ['left', 'middle', 'right'];
@@ -232,11 +237,12 @@ export function createShellsFeathersView(doc) {
         ? `Score · You ${scores.player1} · Spirit ${scores.player2}`
         : `Score · Player 1 ${scores.player1} · Player 2 ${scores.player2}`;
     },
-    showResult(outcome, winner) {
+    showResult(outcome, winner, achievements = []) {
       const { title, message = `The ${winner} spirit prevails` } = RESULTS[outcome];
       byId('modal-title').textContent = title;
       byId('modal-message').textContent = message;
       byId('modal-summary').textContent = scoreLine;
+      byId('modal-achievements').textContent = achievementLine(achievements);
       const emblem = byId('modal-emblem');
       const pieces = outcome === 'draw' ? [player1Symbol, OTHER[player1Symbol]] : [winner];
       emblem.replaceChildren(...pieces.map((symbol) => {

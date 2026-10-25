@@ -5,13 +5,19 @@
 // (with a history entry, so Back/Forward work); `data-up` and `data-back`
 // links step back through history when that leads to the same screen.
 // Buttons that act on the current screen declare `data-action`.
+//
+// Sound starts only after the player's first tap, click or key press (any
+// later one unlocks it again if the browser refused a sound), and the music
+// pauses while the page is hidden.
 import { openStorage } from '../shared/storage.js';
 import { createProfile } from '../shared/profile.js';
 import { createAudio } from '../shared/audio.js';
 import { createNavigator } from './navigation.js';
 import { createRouter, documentTitle } from './router.js';
-import { initSettingsScreen } from './settings-screen.js';
+import { initSettingsScreen, applyMotion } from './settings-screen.js';
 import { createPathScreen } from './path-screen.js';
+import { createConfirmDialog } from './confirm-dialog.js';
+import { createToast } from './toast.js';
 import { createShellsFeathersView } from '../games/shells-feathers/view.js';
 import { createSession } from '../games/shells-feathers/session.js';
 import { initShellsFeathersSetup } from '../games/shells-feathers/setup.js';
@@ -23,13 +29,27 @@ import { initAcornsLeavesSetup } from '../games/acorns-leaves/setup.js';
 
 export function createApp({ doc, win }) {
   const profile = createProfile(openStorage(() => win.localStorage));
-  const { sfx, music } = profile.settings();
-  const audio = createAudio({ doc, clock: win, musicId: 'gameplay-music', sfxEnabled: sfx, musicEnabled: music });
+  const settings = profile.settings();
+  applyMotion(doc, settings.motion);
+  const audio = createAudio({
+    doc,
+    clock: win,
+    musicId: 'gameplay-music',
+    sfxEnabled: settings.sfx,
+    musicEnabled: settings.music,
+    sfxVolume: settings.sfxVolume,
+    musicVolume: settings.musicVolume,
+  });
+  const toast = createToast({ doc, clock: win, audio });
+  const confirmDialog = createConfirmDialog(doc);
   const view = createShellsFeathersView(doc);
   const session = createSession({ view, audio, profile, clock: win });
   const checkersView = createAcornsLeavesView(doc);
-  const checkers = createAcornsLeavesSession({ view: checkersView, audio, profile, clock: win });
-  const path = createPathScreen({ doc, profile, audio, confirm: (message) => win.confirm(message) });
+  const checkers = createAcornsLeavesSession({
+    view: checkersView, audio, profile, clock: win, notify: (achievements) => toast.achievements(achievements),
+  });
+  const path = createPathScreen({ doc, profile, audio, confirmDialog });
+  let settingsScreen = null;
   let firstRoute = true;
 
   const nav = createNavigator(doc, {
@@ -37,6 +57,7 @@ export function createApp({ doc, win }) {
     // first page load waits for a click, since browsers block autoplay.
     'hub-screen': { enter: () => { if (!firstRoute) audio.startMusic(); } },
     'path-screen': { enter: () => path.render() },
+    'settings-screen': { enter: () => settingsScreen?.show() },
     'game-screen': {
       enter: (mode) => session.enter(mode),
       leave: () => session.leave(),
@@ -74,7 +95,18 @@ export function createApp({ doc, win }) {
     'al-view-board': () => checkersView.dismissResult(),
     'al-take-control': () => checkers.takeControl(),
     'reset-al-stats': () => path.resetAcornsLeaves(),
+    'delete-all-data': () => settingsScreen.deleteAll(),
   };
+
+  // After "Delete all saved data": start again from a fresh page, or say
+  // what couldn't be deleted.
+  function deletedAll(ok) {
+    if (ok) {
+      win.location.reload();
+      return;
+    }
+    doc.getElementById('delete-all-status').textContent = 'Some saved data could not be deleted: this browser is blocking storage. Nothing more is saved until the page is closed.';
+  }
 
   function onClick(event) {
     const button = event.target.closest('[data-action]');
@@ -99,11 +131,17 @@ export function createApp({ doc, win }) {
     checkersView.bind({ onSelect: (square) => checkers.selectSquare(square), onCancel: () => checkers.cancelSelection() });
     initShellsFeathersSetup({ doc, profile, audio });
     initAcornsLeavesSetup({ doc, profile, audio });
-    initSettingsScreen({ doc, profile, audio });
+    settingsScreen = initSettingsScreen({ doc, win, profile, audio, confirmDialog, onDeletedAll: deletedAll });
     for (const board of doc.querySelectorAll('[data-checkers-board]')) renderMiniBoard(board, createInitialState().board);
     path.render();
-    // Browsers only allow audio after a user gesture.
-    doc.addEventListener('click', () => audio.startMusic(), { once: true });
+    // Browsers only allow audio after a user gesture; music waits for it.
+    const unlock = () => audio.unlock();
+    for (const type of ['pointerdown', 'keydown', 'touchend']) doc.addEventListener(type, unlock, { capture: true, passive: true });
+    doc.addEventListener('visibilitychange', () => {
+      if (doc.hidden) audio.suspend();
+      else audio.resume();
+    });
+    audio.startMusic();
     router.start();
     for (const note of profile.notes) console.info(`Spirit of the Woods: ${note}`);
   }

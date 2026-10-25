@@ -176,19 +176,26 @@ export class GamePage {
     ]);
   }
 
-  // Lifetime totals as "Your Path" shows them. Opens Your Path by URL and
+  // Shells & Feathers records as "Your Path" shows them: your games against
+  // the Spirit (wins, draws, losses, games), the two-player line, and the
+  // note about earlier (v1) games ('' when hidden). Opens Your Path by URL and
   // leaves the page on the hub.
-  async lifetimeStats() {
+  async pathRecords() {
     await this.goTo('#/your-path', 'path-screen');
-    const read = (id) => this.page.locator(`#${id}`).textContent();
-    const stats = {
-      victories: await read('wins-count'),
-      draws: await read('draws-count'),
-      losses: await read('losses-count'),
-      total: await read('total-games'),
-    };
+    const records = await this.page.evaluate(() => {
+      const read = (id) => document.getElementById(id).textContent;
+      const note = document.getElementById('legacy-note');
+      return {
+        wins: read('sf-wins'),
+        draws: read('sf-draws'),
+        losses: read('sf-losses'),
+        games: read('sf-games'),
+        twoPlayer: read('two-player-record'),
+        earlier: note.hidden ? '' : note.textContent,
+      };
+    });
     await this.goHome();
-    return stats;
+    return records;
   }
 
   // Taps the first empty square each turn until a single-player game ends.
@@ -311,13 +318,13 @@ export class GamePage {
     }, id);
   }
 
-  // Waits for the music to be playing at full volume (fades run on timers, so
-  // allow for a slow machine).
-  waitForMusicPlaying(timeout = 10_000) {
-    return this.page.waitForFunction(() => {
+  // Waits for the music to be playing at its full volume, 0.3 unless the
+  // settings say otherwise (fades run on timers, so allow for a slow machine).
+  waitForMusicPlaying(level = 0.3, timeout = 10_000) {
+    return this.page.waitForFunction((target) => {
       const el = document.getElementById('gameplay-music');
-      return !el.paused && Math.abs(el.volume - 0.3) < 1e-6;
-    }, null, { timeout });
+      return !el.paused && Math.abs(el.volume - target) < 1e-6;
+    }, level, { timeout });
   }
 
   wait(ms) {

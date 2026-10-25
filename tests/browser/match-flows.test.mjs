@@ -118,7 +118,7 @@ test('Shells & Feathers match flows', { timeout: 300_000 }, async (t) => {
     await game.waitForScreen('game-screen');
 
     assert.equal(await totalGames(game), 1);
-    assert.deepEqual(await game.lifetimeStats(), { victories: '1', draws: '0', losses: '0', total: '1' });
+    assert.deepEqual(await game.pathRecords(), { wins: '0', draws: '0', losses: '0', games: '0', twoPlayer: 'Player 1 wins: 1 · Player 2 wins: 0 · Draws: 0', earlier: '' });
   });
 
   for (const [how, act, screen] of [

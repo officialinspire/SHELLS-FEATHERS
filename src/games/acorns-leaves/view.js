@@ -25,12 +25,13 @@
 // a blocked jump (model.found) are marked. In a two-player game the handoff
 // screen covers everything, and the board behind it holds no pieces.
 //
-// Result dialog: the winning side's piece (both for a draw), the result, and
-// the pieces each side captured.
+// Result dialog: the winning side's piece (both for a draw), the result, the
+// pieces each side captured, and any achievements the result unlocked.
 import { SIZE, rowOf, colOf, isDarkSquare } from './engine.js';
 import { DIFFICULTY_NAMES } from './ai.js';
 import { squareName, pieceName, SIDE_NAMES } from './text.js';
 import { createPieceIcon } from './pieces.js';
+import { achievementLine } from '../shells-feathers/view.js';
 
 const LAST = SIZE * SIZE - 1;
 // Screen position of a square (index = row * 8 + col on screen). Turning the
@@ -306,7 +307,7 @@ export function createAcornsLeavesView(doc) {
     },
     render,
     announce,
-    showResult({ title, message, outcome }) {
+    showResult({ title, message, outcome }, achievements = []) {
       byId('al-modal-title').textContent = title;
       byId('al-modal-message').textContent = message;
       const winner = shown?.winner;
@@ -315,6 +316,7 @@ export function createAcornsLeavesView(doc) {
       byId('al-modal-summary').textContent = shown
         ? `Captured · Acorns ${shown.captured.acorn} · Leaves ${shown.captured.leaf}`
         : '';
+      byId('al-modal-achievements').textContent = achievementLine(achievements);
       modal.dataset.outcome = outcome ?? '';
       modal.classList.add('active');
       screen.inert = true;

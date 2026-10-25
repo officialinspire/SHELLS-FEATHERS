@@ -386,80 +386,143 @@
       <a class="btn btn-primary" href="#/acorns-leaves">Play Acorns &amp; Leaves</a>
     </section>
 
-    <!-- Settings -->
+    <!-- Settings: what every game shares (each game's own options are on
+         its setup screen) -->
     <section id="settings-screen" class="screen" aria-labelledby="settings-title">
       <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
       <header class="screen-header">
         <h2 id="settings-title" tabindex="-1">Settings</h2>
+        <p class="screen-subtitle">Sound and motion for every game</p>
       </header>
+      <p class="storage-note" id="settings-storage-note" role="status" hidden>This browser isn’t saving anything right now (storage is blocked or full). Changes last until you close the page.</p>
+
       <div class="panel settings-container">
-        <label class="setting-row" for="audio-toggle">
-          <span class="setting-label">Sound effects</span>
-          <span class="switch"><input type="checkbox" id="audio-toggle" role="switch" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
-        </label>
+        <h3 class="panel-title">Sound</h3>
         <label class="setting-row" for="music-toggle">
           <span class="setting-label">Music</span>
           <span class="switch"><input type="checkbox" id="music-toggle" role="switch" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
         </label>
-        <p class="hint">Each game's pieces and difficulty are chosen on its own screen before you play.</p>
+        <div class="volume-row">
+          <label class="volume-label" for="music-volume">Music volume</label>
+          <input type="range" class="volume-slider" id="music-volume" min="0" max="100" step="5" value="30" />
+          <output class="volume-value" id="music-volume-value" for="music-volume">30%</output>
+        </div>
+        <label class="setting-row" for="audio-toggle">
+          <span class="setting-label">Sound effects</span>
+          <span class="switch"><input type="checkbox" id="audio-toggle" role="switch" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
+        </label>
+        <div class="volume-row">
+          <label class="volume-label" for="sfx-volume">Effects volume</label>
+          <input type="range" class="volume-slider" id="sfx-volume" min="0" max="100" step="5" value="50" />
+          <output class="volume-value" id="sfx-volume-value" for="sfx-volume">50%</output>
+        </div>
+        <p class="hint">Sound starts after your first tap, click or key press, and pauses while the page is hidden.</p>
+      </div>
+
+      <div class="panel">
+        <fieldset class="option-group">
+          <legend>Motion</legend>
+          <div class="segmented segmented-stack">
+            <label class="segment"><input type="radio" name="motion" value="system" aria-describedby="motion-hint" /><span>Match device</span></label>
+            <label class="segment"><input type="radio" name="motion" value="reduce" aria-describedby="motion-hint" /><span>Reduce</span></label>
+            <label class="segment"><input type="radio" name="motion" value="full" aria-describedby="motion-hint" /><span>Full</span></label>
+          </div>
+          <p class="hint" id="motion-hint"></p>
+        </fieldset>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel-title">Game options</h3>
+        <p class="hint settings-games-hint">Pieces, sides, rules and the Spirit’s difficulty belong to each game, on its own screen.</p>
+        <div class="settings-links">
+          <a class="btn btn-secondary" href="#/shells-feathers">Shells &amp; Feathers options</a>
+          <a class="btn btn-secondary" href="#/acorns-leaves">Acorns &amp; Leaves options</a>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel-title">Saved data</h3>
+        <p class="hint">Settings, records and achievements are kept in this browser only. To clear just one game’s progress, use the button at the end of that game in Your Path.</p>
+        <button type="button" class="btn btn-danger danger-wide" data-action="delete-all-data">Delete all saved data…</button>
+        <p class="hint" id="delete-all-status" role="status"></p>
       </div>
     </section>
 
-    <!-- Your Path: records and achievements -->
+    <!-- Your Path: each game's records and achievements -->
     <section id="path-screen" class="screen" aria-labelledby="path-title">
       <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
       <header class="screen-header">
         <h2 id="path-title" tabindex="-1">Your Path</h2>
-        <p class="screen-subtitle">Records and achievements</p>
+        <p class="screen-subtitle">Records and achievements, game by game</p>
       </header>
+      <p class="storage-note" id="path-storage-note" role="status" hidden>This browser isn’t saving anything right now (storage is blocked or full). New results last until you close the page.</p>
 
-      <div class="panel path-panel">
+      <div class="panel path-panel" id="sf-path">
         <h3 class="panel-title"><span aria-hidden="true">🐚</span> Shells &amp; Feathers</h3>
+        <h4>You against the Spirit</h4>
         <div class="stats-container">
-          <div class="stat-card"><div class="stat-value" id="wins-count">0</div><div class="stat-label">Victories</div></div>
-          <div class="stat-card"><div class="stat-value" id="draws-count">0</div><div class="stat-label">Draws</div></div>
-          <div class="stat-card"><div class="stat-value" id="losses-count">0</div><div class="stat-label">Losses</div></div>
-          <div class="stat-card"><div class="stat-value" id="total-games">0</div><div class="stat-label">Games played</div></div>
+          <div class="stat-card"><div class="stat-value" id="sf-wins">0</div><div class="stat-label">Wins</div></div>
+          <div class="stat-card"><div class="stat-value" id="sf-draws">0</div><div class="stat-label">Draws</div></div>
+          <div class="stat-card"><div class="stat-value" id="sf-losses">0</div><div class="stat-label">Losses</div></div>
+          <div class="stat-card"><div class="stat-value" id="sf-games">0</div><div class="stat-label">Games</div></div>
         </div>
-        <p class="hint">Totals include two-player games.</p>
-
-        <h4>Against the Spirit</h4>
         <table class="record-table">
+          <caption class="visually-hidden">Shells &amp; Feathers against the Spirit, by difficulty</caption>
           <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
           <tbody id="spirit-records"></tbody>
         </table>
 
-        <h4>Two players</h4>
+        <h4>Two players on this device</h4>
         <p id="two-player-record"></p>
+        <p class="hint">Shared games are kept apart: a two-player win is never counted as one of your wins.</p>
         <p class="hint" id="legacy-note" hidden></p>
 
         <h4>Achievements <span class="achievement-count" id="achievement-count"></span></h4>
         <ul class="achievements" id="achievement-list"></ul>
 
-        <button type="button" class="btn btn-danger" data-action="reset-stats">Clear Shells &amp; Feathers records</button>
+        <button type="button" class="btn btn-danger danger-wide" data-action="reset-stats">Clear Shells &amp; Feathers progress…</button>
       </div>
 
-      <div class="panel path-panel">
+      <div class="panel path-panel" id="al-path">
         <h3 class="panel-title"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> Acorns &amp; Leaves</h3>
-        <h4>Against the Spirit</h4>
-        <table class="record-table">
-          <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
-          <tbody id="al-spirit-records"></tbody>
-        </table>
+        <h4>You against the Spirit</h4>
+        <div class="stats-container">
+          <div class="stat-card"><div class="stat-value" id="al-wins">0</div><div class="stat-label">Wins</div></div>
+          <div class="stat-card"><div class="stat-value" id="al-draws">0</div><div class="stat-label">Draws</div></div>
+          <div class="stat-card"><div class="stat-value" id="al-losses">0</div><div class="stat-label">Losses</div></div>
+          <div class="stat-card"><div class="stat-value" id="al-games">0</div><div class="stat-label">Games</div></div>
+        </div>
+        <p class="hint">Classic and Fog of War together; each is below.</p>
+        <div class="record-pair">
+          <div>
+            <h5>Classic</h5>
+            <table class="record-table">
+              <caption class="visually-hidden">Acorns &amp; Leaves Classic against the Spirit, by difficulty</caption>
+              <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
+              <tbody id="al-spirit-records"></tbody>
+            </table>
+          </div>
+          <div>
+            <h5>Fog of War</h5>
+            <table class="record-table">
+              <caption class="visually-hidden">Acorns &amp; Leaves Fog of War against the Spirit, by difficulty</caption>
+              <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
+              <tbody id="al-fog-spirit-records"></tbody>
+            </table>
+          </div>
+        </div>
 
-        <h4>Two players</h4>
+        <h4>Two players on this device</h4>
+        <h5>Classic</h5>
         <p id="al-two-player-record"></p>
-
-        <h4>Fog of War against the Spirit</h4>
-        <table class="record-table">
-          <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
-          <tbody id="al-fog-spirit-records"></tbody>
-        </table>
-
-        <h4>Fog of War, two players</h4>
+        <h5>Fog of War</h5>
         <p id="al-fog-two-player-record"></p>
+        <p class="hint">Shared games are kept apart: a two-player win is never counted as one of your wins.</p>
 
-        <button type="button" class="btn btn-danger" data-action="reset-al-stats">Clear Acorns &amp; Leaves records</button>
+        <h4>Achievements <span class="achievement-count" id="al-achievement-count"></span></h4>
+        <ul class="achievements" id="al-achievement-list"></ul>
+
+        <button type="button" class="btn btn-danger danger-wide" data-action="reset-al-stats">Clear Acorns &amp; Leaves progress…</button>
       </div>
     </section>
 
@@ -469,12 +532,13 @@
     <p id="al-status" class="visually-hidden" role="status" aria-live="polite"></p>
 
     <!-- Shells & Feathers result -->
-    <div id="game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message modal-summary">
+    <div id="game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message modal-summary modal-achievements">
       <div class="modal-content">
         <div class="modal-emblem" id="modal-emblem" aria-hidden="true"></div>
         <h3 id="modal-title" class="modal-title">Victory!</h3>
         <p id="modal-message" class="modal-message">The spirits smile upon you</p>
         <p id="modal-summary" class="modal-summary"></p>
+        <p id="modal-achievements" class="modal-achievements"></p>
         <div class="modal-buttons">
           <button type="button" class="btn btn-primary modal-btn" data-action="play-again">Play Again</button>
           <a class="btn modal-btn" href="#/shells-feathers" data-up>Change Mode</a>
@@ -485,12 +549,13 @@
     </div>
 
     <!-- Acorns & Leaves result -->
-    <div id="al-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="al-modal-title" aria-describedby="al-modal-message al-modal-summary">
+    <div id="al-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="al-modal-title" aria-describedby="al-modal-message al-modal-summary al-modal-achievements">
       <div class="modal-content">
         <div class="modal-emblem" id="al-modal-emblem" aria-hidden="true"></div>
         <h3 id="al-modal-title" class="modal-title">Victory!</h3>
         <p id="al-modal-message" class="modal-message"></p>
         <p id="al-modal-summary" class="modal-summary"></p>
+        <p id="al-modal-achievements" class="modal-achievements"></p>
         <div class="modal-buttons">
           <button type="button" class="btn btn-primary modal-btn" data-action="al-rematch">Rematch</button>
           <a class="btn modal-btn" href="#/acorns-leaves" data-up>Change Mode</a>
@@ -511,27 +576,49 @@
         <a class="text-link" href="#/acorns-leaves" data-up>Leave this game</a>
       </div>
     </div>
+    <!-- Deleting saved data: says exactly what goes and what stays -->
+    <div id="confirm-dialog" class="modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-body">
+      <div class="modal-content confirm-content">
+        <h3 id="confirm-title" class="confirm-title"></h3>
+        <div id="confirm-body" class="confirm-body">
+          <p class="confirm-lead">This deletes:</p>
+          <ul id="confirm-deletes" class="confirm-list confirm-deletes"></ul>
+          <p class="confirm-lead" id="confirm-keeps-lead">This keeps:</p>
+          <ul id="confirm-keeps" class="confirm-list"></ul>
+          <p class="confirm-warning">This can’t be undone.</p>
+        </div>
+        <div class="modal-buttons confirm-buttons">
+          <button type="button" class="btn" id="confirm-cancel">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirm-accept">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Achievement notices during play (taps pass through) -->
+    <div id="toast-region" class="toast-region" role="status" aria-live="polite" data-state="idle">
+      <p id="toast" class="toast" hidden><span class="toast-mark" aria-hidden="true">✓</span><span id="toast-text"></span></p>
+    </div>
   </main>
 
-  <!-- Audio -->
-  <audio id="gameplay-music" loop preload="auto">
+  <!-- Audio. Nothing plays before the player's first tap, click or key
+       press (src/shared/audio.js). The music loads only when it starts.
+       Sources: docs/assets.md. -->
+  <audio id="gameplay-music" loop preload="none">
     <source src="gameplay.mp3" type="audio/mpeg" />
   </audio>
-  <audio id="button-select" preload="auto">
-    <source src="button_select.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="player-select" preload="auto">
-    <source src="player_select.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="opponent-select" preload="auto">
-    <source src="opponent_select.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="newgame-sound" preload="auto">
-    <source src="newgame.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="victory-sound" preload="auto">
-    <source src="victory.mp3" type="audio/mpeg" />
-  </audio>
+  <audio id="button-select" preload="auto"><source src="button_select.mp3" type="audio/mpeg" /></audio>
+  <audio id="player-select" preload="auto"><source src="player_select.mp3" type="audio/mpeg" /></audio>
+  <audio id="opponent-select" preload="auto"><source src="opponent_select.mp3" type="audio/mpeg" /></audio>
+  <audio id="newgame-sound" preload="auto"><source src="newgame.mp3" type="audio/mpeg" /></audio>
+  <audio id="victory-sound" preload="auto"><source src="victory.mp3" type="audio/mpeg" /></audio>
+  <audio id="piece-move" preload="auto"><source src="sounds/piece-move.wav" type="audio/wav" /></audio>
+  <audio id="piece-move-other" preload="auto"><source src="sounds/piece-move-other.wav" type="audio/wav" /></audio>
+  <audio id="capture-sound" preload="auto"><source src="sounds/capture.wav" type="audio/wav" /></audio>
+  <audio id="crown-sound" preload="auto"><source src="sounds/crown.wav" type="audio/wav" /></audio>
+  <audio id="reveal-sound" preload="auto"><source src="sounds/reveal.wav" type="audio/wav" /></audio>
+  <audio id="draw-sound" preload="auto"><source src="sounds/result-draw.wav" type="audio/wav" /></audio>
+  <audio id="loss-sound" preload="auto"><source src="sounds/result-loss.wav" type="audio/wav" /></audio>
+  <audio id="achievement-sound" preload="auto"><source src="sounds/achievement.wav" type="audio/wav" /></audio>
 
   <script type="module" src="src/main.js"></script>
 </body>

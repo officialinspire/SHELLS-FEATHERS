@@ -174,7 +174,7 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
     assert.deepEqual(panel.emblem, result.winner ? [`#al-${result.winner}`] : ['#al-acorn', '#al-leaf']);
     const captured = (await game.checkersView()).captured;
     assert.equal(panel.summary, `Captured · Acorns ${captured.acorn} · Leaves ${captured.leaf}`);
-    assert.equal(panel.describedBy, 'al-modal-message al-modal-summary');
+    assert.equal(panel.describedBy, 'al-modal-message al-modal-summary al-modal-achievements');
     assert.equal((await game.checkersView()).turn, shown.title, 'the turn line shows the result');
     assert.equal((await game.checkersView()).state, 'over');
 
@@ -200,7 +200,7 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
       await game.page.locator('#al-two-player-record').textContent(),
       `Acorns wins: ${expected.acornWins} · Leaves wins: ${expected.leafWins} · Draws: ${expected.draws}`,
     );
-    assert.equal(await game.page.locator('#total-games').textContent(), '0', 'Shells & Feathers totals untouched');
+    assert.equal(await game.page.locator('#sf-games').textContent(), '0', 'Shells & Feathers totals untouched');
     assert.deepEqual(game.pageErrors, []);
   });
 
@@ -460,10 +460,38 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
     assert.equal(await page.getByRole('radio', { name: 'Wise', exact: true }).isChecked(), true);
 
     await game.goTo('#/your-path', 'path-screen');
-    page.once('dialog', (dialog) => dialog.accept());
-    await game.press('Clear Acorns & Leaves records');
+    // Your games (Classic and Fog together) apart from two-player ones.
+    assert.deepEqual(await page.locator('#al-path .stat-value').allTextContents(), ['1', '2', '3', '6']);
+    // Achievements already earned by these records, from before achievements were kept.
+    assert.equal(await page.locator('#al-achievement-count').textContent(), '(3 of 6)');
+    // Clearing asks first, listing exactly what goes and what stays; Cancel keeps everything.
+    await game.press('Clear Acorns & Leaves progress');
+    const dialog = page.locator('#confirm-dialog');
+    assert.equal(await page.locator('#confirm-title').textContent(), 'Clear Acorns & Leaves progress?');
+    assert.deepEqual(await dialog.locator('#confirm-deletes li').allTextContents(), [
+      'Classic results: 6 games against the Spirit, 10 two-player games.',
+      'Fog of War results: 0 games against the Spirit, 0 two-player games.',
+      'Acorns & Leaves achievements: 3 unlocked, which lock again.',
+    ]);
+    assert.deepEqual(await dialog.locator('#confirm-keeps li').allTextContents(), [
+      'Your side, rules and Spirit difficulty for Acorns & Leaves.',
+      'All Shells & Feathers records and achievements.',
+      'Sound and motion settings.',
+    ]);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'confirm-cancel', 'Cancel is focused first');
+    await game.press('Cancel');
+    assert.equal(await page.locator('#al-two-player-record').textContent(), 'Acorns wins: 4 · Leaves wins: 5 · Draws: 1', 'nothing deleted');
+    assert.equal(await page.evaluate(() => document.activeElement.dataset.action), 'reset-al-stats', 'focus back on the button');
+    await game.press('Clear Acorns & Leaves progress');
+    await page.keyboard.press('Escape');
+    assert.equal(await game.modalOpen(), false);
+    assert.equal(await page.locator('#al-achievement-count').textContent(), '(3 of 6)', 'Escape keeps everything too');
+
+    await game.press('Clear Acorns & Leaves progress');
+    await game.press('Clear Acorns & Leaves progress');
     assert.equal(await page.locator('#al-two-player-record').textContent(), 'Acorns wins: 0 · Leaves wins: 0 · Draws: 0');
-    assert.equal(await page.locator('#total-games').textContent(), '2', 'Shells & Feathers records kept');
+    assert.equal(await page.locator('#al-achievement-count').textContent(), '(0 of 6)');
+    assert.equal(await page.locator('#sf-games').textContent(), '2', 'Shells & Feathers records kept');
     const stored = JSON.parse(await game.storageItem('spiritOfTheWoods:v2'));
     assert.deepEqual(stored.acornsLeaves.stats.twoPlayer, { acornWins: 0, leafWins: 0, draws: 0 });
     assert.equal(stored.shellsFeathers.stats.single.easy.wins, 2);

@@ -52,12 +52,12 @@ test('v1 core loop: two-player win, saved stats, restart, single-player AI reply
   assert.equal(await page.locator('.cell.winner').count(), 0);
   assert.deepEqual(await game.scores(), ['1', '0']);
 
-  // --- Lifetime stats survive a reload. ---
+  // --- Records survive a reload (a two-player win, kept apart from yours). ---
   await game.press('Change Mode');
   await game.waitForScreen('sf-setup-screen');
   await page.reload();
   assert.equal(await game.activeScreen(), 'sf-setup-screen', 'reload keeps the screen');
-  assert.deepEqual(await game.lifetimeStats(), { victories: '1', draws: '0', losses: '0', total: '1' });
+  assert.deepEqual(await game.pathRecords(), { wins: '0', draws: '0', losses: '0', games: '0', twoPlayer: 'Player 1 wins: 1 · Player 2 wins: 0 · Draws: 0', earlier: '' });
 
   // --- Single player (default "Gentle" spirit): the AI answers the player's move. ---
   await game.openShellsFeathers();

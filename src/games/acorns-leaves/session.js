@@ -27,7 +27,17 @@
 // move is left in the page for the next player.
 //
 // Scoring: a game is recorded once, when its last move is played. A game
-// that is restarted or left before it ends is not recorded.
+// that is restarted or left before it ends is not recorded. Achievements:
+// the result's are shown in the result dialog; a crowning or a capture of
+// two or more pieces by the player against the Spirit is reported through
+// `notify` as it happens. Two-player games unlock only "Shared Board".
+//
+// Sounds: a wooden tap for each move (a lower one for the other side), a
+// capture, a crowning, a revealed hidden piece, and the result. In Fog they
+// never tell anyone what they couldn't see (docs/fog-rules.md §4): with two
+// players in the room every move makes the same tap and nothing else sounds;
+// against the Spirit its move is a tap, or a capture when it took one of
+// your pieces, and its crowning is silent.
 import { createInitialState, applyMove, analyze, isDarkSquare, SIDES } from './engine.js';
 import { chooseMove as spiritChoice } from './ai.js';
 import { chooseFogStep as fogSpiritChoice } from './fog-ai.js';
@@ -54,7 +64,7 @@ const FOG_RULES = {
 };
 
 export function createSession({
-  view, audio, profile,
+  view, audio, profile, notify = () => {},
   clock = globalThis, rng = Math.random, delays = DELAYS,
   chooseMove = spiritChoice, chooseFogStep = fogSpiritChoice, initialState = createInitialState,
 }) {
@@ -186,7 +196,7 @@ export function createSession({
       const text = bumpText({
         square: found, piece: match.state.board[found], ends: Boolean(move), opened: fog.mayCapture(before) && !fog.mayCapture(turn),
       });
-      audio.playSfx('button-select');
+      if (!sharedFog()) audio.playSfx('reveal-sound');
       if (move) {
         play(move, text);
         return;
@@ -200,7 +210,7 @@ export function createSession({
       play(move);
       return;
     }
-    if (outcome === 'jump') audio.playSfx('player-select');
+    if (outcome === 'jump' && !sharedFog()) audio.playSfx('capture-sound');
     render();
     const next = rules.destinations(turn);
     if (outcome === 'select') {
@@ -280,7 +290,14 @@ export function createSession({
     match.captured[piece.side] += move.captures.length;
     match.lastMove = { by: piece.side, path: move.path, captures: move.captures, taken };
     const byPlayer = mode === 'two' ? piece.side === 'acorn' : piece.side === match.humanSide;
-    audio.playSfx(byPlayer ? 'player-select' : 'opponent-select');
+    for (const id of moveSounds({ byPlayer, move })) audio.playSfx(id);
+    if (mode === 'single' && piece.side === match.humanSide) {
+      const unlocked = [
+        ...(move.captures.length >= 2 ? profile.recordMoment({ game: 'acornsLeaves', moment: 'multi-jump', mode }) : []),
+        ...(move.crowned ? profile.recordMoment({ game: 'acornsLeaves', moment: 'crowned', mode }) : []),
+      ];
+      if (unlocked.length) notify(unlocked);
+    }
     const said = `${prefix} ${moveText({ mode, humanSide: match.humanSide, move, piece })}`.trim();
     const { result } = analyze(match.state);
     if (result) {
@@ -300,6 +317,17 @@ export function createSession({
     beginTurn(piece.side === match.humanSide ? said : opponentMoveText(match.humanSide));
   }
 
+  // Two players sharing the device in Fog: sounds must not tell either of
+  // them anything about the other's move.
+  const sharedFog = () => fogged() && mode === 'two';
+
+  function moveSounds({ byPlayer, move }) {
+    if (sharedFog()) return ['piece-move'];
+    const sounds = [move.captures.length ? 'capture-sound' : byPlayer ? 'piece-move' : 'piece-move-other'];
+    if (move.crowned && (byPlayer || !fogged())) sounds.push('crown-sound');
+    return sounds;
+  }
+
   function finish(result, said) {
     if (scoredMatch === match) return; // never score a game twice
     scoredMatch = match;
@@ -309,15 +337,19 @@ export function createSession({
     spiritActing = false;
     const text = resultText({ mode, result, humanSide: match.humanSide });
     match.resultText = text;
-    profile.recordAcornsLeavesResult({ mode, difficulty: match.difficulty, outcome: text.outcome, variant });
-    if (text.outcome === 'win' || text.outcome === 'acorn' || text.outcome === 'leaf') {
+    const unlocked = profile.recordAcornsLeavesResult({ mode, difficulty: match.difficulty, outcome: text.outcome, variant }) ?? [];
+    if (text.outcome === 'loss') {
+      audio.playSfx('loss-sound');
+    } else if (text.outcome === 'draw') {
+      audio.playSfx('draw-sound');
+    } else {
       audio.stopMusic();
       audio.playSfx('victory-sound');
     }
     render();
     // The game is over, so the fog lifts and the last move can be told in full.
     view.announce(`${said} ${fogged() ? 'The fog lifts. ' : ''}${text.title} ${text.message}`);
-    timers.after(delays.resultModal, () => view.showResult(text));
+    timers.after(delays.resultModal, () => view.showResult(text, unlocked));
   }
 
   function render() {

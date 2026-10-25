@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { startHarness, openGame } from '../helpers/game-page.mjs';
 
 const SINGLE_RESULTS = {
-  'Victory!': { message: 'The spirits smile upon you', stat: 'victories' },
+  'Victory!': { message: 'The spirits smile upon you', stat: 'wins' },
   'Wisdom Gained': { message: 'The journey continues', stat: 'losses' },
   'Balance Achieved': { message: 'The spirits are in harmony', stat: 'draws' },
 };
@@ -31,9 +31,10 @@ test('complete games', { timeout: 180_000 }, async (t) => {
 
       await game.press('All Games');
       await game.waitForScreen('hub-screen');
-      const stats = await game.lifetimeStats();
-      assert.equal(stats.total, '1');
-      assert.equal(stats[SINGLE_RESULTS[title].stat], '1');
+      const records = await game.pathRecords();
+      assert.equal(records.games, '1');
+      assert.equal(records[SINGLE_RESULTS[title].stat], '1');
+      assert.equal(records.twoPlayer, 'Player 1 wins: 0 · Player 2 wins: 0 · Draws: 0');
       assert.deepEqual(game.pageErrors, []);
     });
   }
@@ -52,7 +53,8 @@ test('complete games', { timeout: 180_000 }, async (t) => {
 
     await game.press('All Games');
     await game.waitForScreen('hub-screen');
-    assert.deepEqual(await game.lifetimeStats(), { victories: '1', draws: '1', losses: '0', total: '2' });
+    // Two-player games are kept apart from yours against the Spirit.
+    assert.deepEqual(await game.pathRecords(), { wins: '0', draws: '0', losses: '0', games: '0', twoPlayer: 'Player 1 wins: 0 · Player 2 wins: 1 · Draws: 1', earlier: '' });
   });
 
   await t.test('two players with Feather as Player 1', async () => {

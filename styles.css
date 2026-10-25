@@ -1164,6 +1164,124 @@ h2[tabindex="-1"]:focus {
     display: none;
 }
 
+/* Achievements a result unlocked. */
+.modal-achievements {
+    margin: -8px 0 18px;
+    font-weight: 600;
+    color: var(--gold-soft);
+}
+
+.modal-achievements:empty {
+    display: none;
+}
+
+/* Deleting saved data: what goes, what stays. */
+.confirm-content {
+    max-width: 480px;
+    text-align: left;
+}
+
+.confirm-title {
+    margin-bottom: 12px;
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 5.5vw, 1.8rem);
+    line-height: 1.2;
+    text-align: center;
+}
+
+.confirm-body {
+    font-family: var(--font-body);
+    line-height: 1.45;
+}
+
+.confirm-lead {
+    margin: 10px 0 4px;
+    font-family: var(--font-label);
+    font-weight: 600;
+    color: var(--sand);
+}
+
+.confirm-list {
+    padding-left: 1.2em;
+}
+
+.confirm-list li + li {
+    margin-top: 4px;
+}
+
+.confirm-deletes li::marker {
+    color: var(--sunset-orange);
+}
+
+.confirm-warning {
+    margin: 12px 0 18px;
+    font-weight: bold;
+    color: #FFD9C9;
+}
+
+.confirm-buttons .btn {
+    flex: 1 1 160px;
+}
+
+.confirm-buttons .btn-danger {
+    background: #8E2F12;
+    border-color: var(--sunset-orange);
+    color: var(--feather-white);
+}
+
+@media (hover: hover) {
+    .confirm-buttons .btn-danger:where(:not(:disabled)):hover {
+        background: #A3381A;
+    }
+}
+
+/* Achievement notice: top of the screen, never in the way of a tap. */
+.toast-region {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    left: 50%;
+    z-index: 1200;
+    width: min(420px, calc(100vw - 32px));
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(43, 27, 14, 0.94);
+    border: 2px solid var(--gold-soft);
+    border-radius: 14px;
+    box-shadow: 0 6px 16px var(--shadow);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    line-height: 1.35;
+    animation: toastIn var(--gentle) var(--ease-out);
+}
+
+.toast-mark {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    background: var(--gold-soft);
+    border-radius: 50%;
+    color: var(--ink);
+    font-weight: bold;
+}
+
+.toast[hidden] {
+    display: none;
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .modal-buttons {
     display: flex;
     flex-wrap: wrap;
@@ -1931,8 +2049,9 @@ h2[tabindex="-1"]:focus {
 
 .achievement {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
+    gap: 4px 12px;
     padding: 10px 12px;
     border: 1.5px solid rgba(245, 222, 179, 0.3);
     border-radius: 12px;
@@ -1951,9 +2070,10 @@ h2[tabindex="-1"]:focus {
 
 .achievement-text {
     display: flex;
-    flex: 1;
+    flex: 1 1 12em;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
 }
 
 .achievement-text strong {
@@ -1961,6 +2081,7 @@ h2[tabindex="-1"]:focus {
 }
 
 .achievement-state {
+    margin-left: auto;
     font-size: 0.8rem;
     color: var(--text-muted);
 }
@@ -1983,9 +2104,92 @@ h2[tabindex="-1"]:focus {
     border: 2px dashed var(--sand);
 }
 
-.path-panel .btn-danger {
+.danger-wide {
     width: 100%;
     margin-top: 20px;
+}
+
+.path-panel h5 {
+    margin: 10px 0 4px;
+    font-family: var(--font-label);
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+/* Classic and Fog of War tables side by side when there is room. */
+.record-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px 18px;
+}
+
+@media (min-width: 600px) {
+    .record-pair {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Volume sliders: a full-width track with a 44px-tall touch area. */
+.volume-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "label value" "slider slider";
+    align-items: center;
+    column-gap: 12px;
+    margin: -4px 0 8px;
+}
+
+.volume-label {
+    grid-area: label;
+    font-family: var(--font-body);
+    color: var(--text-muted);
+}
+
+.volume-value {
+    grid-area: value;
+    min-width: 3.5em;
+    font-weight: 600;
+    text-align: right;
+}
+
+.volume-slider {
+    grid-area: slider;
+    width: 100%;
+    height: 44px;
+    margin: 0;
+    accent-color: var(--turquoise);
+    cursor: pointer;
+    touch-action: pan-y;
+}
+
+.volume-slider:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 7px var(--focus-halo);
+    border-radius: 8px;
+}
+
+.settings-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.settings-links .btn {
+    flex: 1 1 200px;
+}
+
+/* Storage is blocked or full: progress isn't being kept. */
+.storage-note {
+    width: 100%;
+    max-width: 560px;
+    padding: 10px 14px;
+    background: rgba(43, 27, 14, 0.9);
+    border: 2px dashed var(--sunset-orange);
+    border-radius: 14px;
+    font-family: var(--font-body);
+    line-height: 1.4;
 }
 
 /* Narrow phones */
@@ -2037,16 +2241,26 @@ h2[tabindex="-1"]:focus {
     }
 }
 
-/* Respect a request for less motion: no fades, slides, glows or eased state
-   changes. Every state still shows at once (no animation keeps its end state;
-   the end state is the element's own style). "none" rather than a tiny
-   duration, which would give every property a one-frame transition. */
+/* Less motion: no fades, slides, glows or eased state changes. Every state
+   still shows at once (no animation keeps its end state; the end state is
+   the element's own style). "none" rather than a tiny duration, which would
+   give every property a one-frame transition.
+   Settings > Motion sets <html data-motion>: "system" follows the device's
+   prefers-reduced-motion, "reduce" always applies this, "full" never does. */
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    :root:not([data-motion="full"]) *,
+    :root:not([data-motion="full"]) *::before,
+    :root:not([data-motion="full"]) *::after {
         animation: none !important;
         transition: none !important;
         scroll-behavior: auto !important;
     }
+}
+
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
 }

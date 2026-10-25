@@ -39,7 +39,7 @@ test('match lifecycle', { timeout: 180_000 }, async (t) => {
       assert.equal(await game.activeScreen(), 'sf-setup-screen');
       assert.equal(await game.modalOpen(), false);
       assert.equal((await game.audioState('victory-sound')).paused, true);
-      assert.deepEqual(await game.lifetimeStats(), { victories: '0', draws: '0', losses: '0', total: '0' });
+      assert.deepEqual(await game.pathRecords(), { wins: '0', draws: '0', losses: '0', games: '0', twoPlayer: 'Player 1 wins: 0 · Player 2 wins: 0 · Draws: 0', earlier: '' });
 
       // The next match starts clean.
       await game.newMatch('single');
@@ -76,7 +76,7 @@ test('match lifecycle', { timeout: 180_000 }, async (t) => {
       assert.equal(await game.activeScreen(), screen);
       assert.equal(await game.modalOpen(), false);
       // The finished game still counts.
-      assert.deepEqual(await game.lifetimeStats(), { victories: '1', draws: '0', losses: '0', total: '1' });
+      assert.deepEqual(await game.pathRecords(), { wins: '0', draws: '0', losses: '0', games: '0', twoPlayer: 'Player 1 wins: 1 · Player 2 wins: 0 · Draws: 0', earlier: '' });
     });
   }
 
