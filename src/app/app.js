@@ -129,8 +129,13 @@ export function createApp({ doc, win }) {
   function init() {
     doc.addEventListener('click', onClick);
     installDialogFocus(doc);
-    view.bindCells((index) => session.selectCell(index));
-    checkersView.bind({ onSelect: (square) => checkers.selectSquare(square), onCancel: () => checkers.cancelSelection() });
+    view.bindCells((index) => session.selectCell(index), { onPause: () => session.pause(), onResume: () => session.resume() });
+    checkersView.bind({
+      onSelect: (square) => checkers.selectSquare(square),
+      onCancel: () => checkers.cancelSelection(),
+      onPause: () => checkers.pause(),
+      onResume: () => checkers.resume(),
+    });
     initShellsFeathersSetup({ doc, profile, audio });
     initAcornsLeavesSetup({ doc, profile, audio });
     settingsScreen = initSettingsScreen({ doc, win, profile, audio, confirmDialog, onDeletedAll: deletedAll });

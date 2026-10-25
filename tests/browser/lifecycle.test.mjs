@@ -27,7 +27,7 @@ test('match lifecycle', { timeout: 180_000 }, async (t) => {
   const harness = await startHarness(t);
 
   for (const [how, leave] of [
-    ['"Change Mode"', (game) => game.press('Change Mode')],
+    ['"Change Mode"', (game) => game.fromMenu('Change Mode')],
     ['the browser Back button', (game) => game.page.goBack()],
   ]) {
     await t.test(`A1: leaving with ${how} while the Spirit is about to win shows no result and records nothing`, async () => {
@@ -52,7 +52,7 @@ test('match lifecycle', { timeout: 180_000 }, async (t) => {
     const game = await openGame(harness);
     await game.newMatch('two');
     for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
-    await game.press('Restart'); // before the 800ms result delay
+    await game.fromMenu('Restart'); // before the 800ms result delay
 
     await game.wait(RESULT_DELAY + 600);
     assert.equal(await game.modalOpen(), false);
@@ -63,7 +63,7 @@ test('match lifecycle', { timeout: 180_000 }, async (t) => {
   });
 
   for (const [how, leave, screen] of [
-    ['"Change Mode"', (game) => game.press('Change Mode'), 'sf-setup-screen'],
+    ['"Change Mode"', (game) => game.fromMenu('Change Mode'), 'sf-setup-screen'],
     ['the browser Back button', (game) => game.page.goBack(), 'sf-setup-screen'],
     ['a typed URL (hub)', (game) => game.goTo('#/'), 'hub-screen'],
   ]) {
@@ -85,7 +85,7 @@ test('match lifecycle', { timeout: 180_000 }, async (t) => {
     await game.newMatch('single');
     await game.tap(0);
     await game.wait(100);
-    await game.press('Restart');
+    await game.fromMenu('Restart');
     await game.wait(100);
     const replyMs = await game.page.evaluate(() => new Promise((resolve) => {
       const start = performance.now();

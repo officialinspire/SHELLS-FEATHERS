@@ -4,9 +4,15 @@
 //
 // Board: the nine squares are buttons with one tab stop between them; the
 // arrow keys (and Home/End) move between squares and Enter/Space places a
-// piece. Each square's name says what is on it. The board has three states:
-// "ready" (the player may move), "waiting" (the Spirit is thinking) and "over"
-// (the round has ended); outside "ready", empty squares are aria-disabled.
+// piece. A tap places a piece too; scrolls, slides and stray double taps
+// don't (board-taps.js). Each square's name says what is on it. The board
+// has three states: "ready" (the player may move), "waiting" (the Spirit is
+// thinking) and "over" (the round has ended); outside "ready", empty squares
+// are aria-disabled.
+//
+// Menu: Restart, Change Mode and All Games sit in the match menu
+// (match-menu.js), which pauses the match while it is open. Once the round
+// is over, Play Again shows under the board as well.
 //
 // Announcements: a polite status region says what just happened ("The Spirit
 // placed a feather on row 2, column 2. Your turn.") and how a round ended.
@@ -20,6 +26,8 @@
 // "View Board" (or Escape) closes it to show the final board.
 import { DIFFICULTY_NAMES } from './ai.js';
 import { svgIcon } from '../../shared/icons.js';
+import { createBoardTaps } from '../../shared/board-taps.js';
+import { createMatchMenu } from '../../shared/match-menu.js';
 
 // The pieces are drawn from the SVG sprite (#sf-shell, #sf-feather).
 const piece = (doc, symbol, className) => svgIcon(doc, `#sf-${symbol}`, className);
@@ -93,7 +101,10 @@ export function createShellsFeathersView(doc) {
   const screen = byId('game-screen');
   const modal = byId('game-modal');
   const status = byId('sf-status');
-  const restartButton = screen.querySelector('[data-action="restart-match"]');
+  const controls = screen.querySelector('.game-controls');
+  const playAgainButton = controls.querySelector('[data-action="play-again"]');
+  let taps = null;
+  let menu = null;
   let focusIndex = 0;
   let lastMove = '';
   let player1Symbol = 'shell';
@@ -141,16 +152,26 @@ export function createShellsFeathersView(doc) {
   // Closes the dialog but keeps the finished board on screen.
   function dismissResult() {
     hideResult();
-    restartButton.focus();
+    playAgainButton.focus();
   }
 
   return {
-    bindCells(onSelect) {
-      cells.forEach((cell, index) => {
-        cell.addEventListener('click', () => {
+    // onPause/onResume: the match menu opened/closed.
+    bindCells(onSelect, { onPause = () => {}, onResume = () => {} } = {}) {
+      taps = createBoardTaps({
+        board,
+        selector: '.cell',
+        clock: doc.defaultView,
+        onActivate(cell) {
+          const index = Number(cell.dataset.index);
           setFocusIndex(index);
           onSelect(index);
-        });
+        },
+      });
+      menu = createMatchMenu({
+        doc, menu: byId('sf-menu'), opener: byId('sf-menu-button'), screen, onOpen: onPause, onClose: onResume,
+      });
+      cells.forEach((cell, index) => {
         cell.addEventListener('keydown', (event) => {
           const next = nextCellIndex(index, event.key);
           if (next === null) return;
@@ -181,6 +202,8 @@ export function createShellsFeathersView(doc) {
     // 'ready' | 'waiting' | 'over'
     setBoardState(state) {
       board.dataset.state = state;
+      controls.hidden = state !== 'over';
+      byId('sf-menu-note').hidden = state === 'over';
       board.setAttribute('aria-busy', String(state === 'waiting'));
       for (const cell of cells) {
         if (state === 'ready' && !cell.dataset.symbol) cell.removeAttribute('aria-disabled');
@@ -195,6 +218,7 @@ export function createShellsFeathersView(doc) {
       cell.classList.add('occupied');
       cell.setAttribute('aria-disabled', 'true');
       describeCell(index);
+      taps?.moved();
       lastMove = moveStatus({ actor, symbol, index });
     },
     highlight(line) {
@@ -207,9 +231,11 @@ export function createShellsFeathersView(doc) {
       player1Symbol = symbol;
       byId('player1-glyph').replaceChildren(piece(doc, symbol, 'chip-piece'));
       byId('player2-glyph').replaceChildren(piece(doc, OTHER[symbol], 'chip-piece'));
-      byId('match-info').textContent = mode === 'single'
+      const info = mode === 'single'
         ? `Against the Spirit · ${DIFFICULTY_NAMES[difficulty]} · You play ${NAMES[symbol]}`
         : `Two players · Player 1 plays ${NAMES[symbol]}`;
+      byId('match-info').textContent = info;
+      byId('sf-menu-info').textContent = info;
     },
     showTurn(mode, isPlayer1, symbol) {
       const el = byId('turn-indicator');
@@ -259,5 +285,8 @@ export function createShellsFeathersView(doc) {
     },
     hideResult,
     dismissResult,
+    hideMenu() {
+      menu?.close();
+    },
   };
 }

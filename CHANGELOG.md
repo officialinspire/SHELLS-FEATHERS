@@ -28,7 +28,12 @@ The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two 
   - the session score;
   - gentle, brief motion that respects reduced-motion settings.
 - **Keyboard and screen readers:** both games are fully playable with the keyboard. Every square, move and result is announced.
-- **Phone layouts:** checked down to 320 × 568 and 360 × 560, and in landscape.
+- **Phone play:**
+  - **Board first:** the board takes all the room the header and guidance leave, at any phone size, toolbar state and orientation. Short screens scroll instead of clipping, and landscape puts the board beside the header.
+  - **Menu:** Restart, Change Mode and All Games moved into a **Menu** that pauses the game, and the Spirit waits behind it. Play Again or Rematch shows under the board once a game is over.
+  - **Taps:** tap a checker, then where it goes, or tap it again to put it back. Scrolls, pinches, slides, finger bounces and a stray tap right after a move no longer count as moves.
+  - **Selection:** the picked-up checker gets a bright ring.
+  - **Checked** from 320 × 460 to 932 × 430, in portrait and landscape, including rotation mid-game.
 - **Saves:** a versioned save (`spiritOfTheWoods:v2`) that migrates the original `spiritOfTheWoodsStats` record and keeps it up to date for rollback safety. Damaged data is set aside, never lost.
 - **Audio:**
   - nothing plays before the first tap or key press;

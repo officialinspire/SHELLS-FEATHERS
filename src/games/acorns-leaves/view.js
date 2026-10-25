@@ -6,10 +6,18 @@
 // Board: 64 squares; the 32 dark ones are buttons with one tab stop between
 // them. The arrow keys move between dark squares (Left/Right along a row,
 // Up/Down to the next row), Home/End go to the ends of a row, Enter or Space
-// picks a piece or a square, and Escape puts a picked-up piece back. Each
-// square's name says where it is, what is on it and what it is for
-// ("d4: empty, move here"). Board states: "ready" (the player picks),
-// "waiting" (the Spirit is moving; every square is aria-disabled) and "over".
+// picks a piece or a square, and Escape puts a picked-up piece back. On a
+// touch screen: tap a piece to pick it up, tap it again to put it back (or
+// tap another of yours), and tap a marked square to move; nothing needs
+// dragging, and scrolls, slides and stray double taps are not taken as picks
+// (board-taps.js). Each square's name says where it is, what is on it and
+// what it is for ("d4: empty, move here"). Board states: "ready" (the player
+// picks), "waiting" (the Spirit is moving; every square is aria-disabled) and
+// "over".
+//
+// Menu: Restart, Change Mode and All Games sit in the match menu
+// (match-menu.js), which pauses the match while it is open. Once the game is
+// over, Rematch shows under the board as well.
 //
 // Marks, each drawn as a shape as well as a color: a dot on a square the
 // picked-up piece can move to (a ring for a jump), an orange ring around a
@@ -32,6 +40,8 @@ import { DIFFICULTY_NAMES } from './ai.js';
 import { squareName, pieceName, SIDE_NAMES } from './text.js';
 import { createPieceIcon } from './pieces.js';
 import { achievementLine } from '../shells-feathers/view.js';
+import { createBoardTaps } from '../../shared/board-taps.js';
+import { createMatchMenu } from '../../shared/match-menu.js';
 
 const LAST = SIZE * SIZE - 1;
 // Screen position of a square (index = row * 8 + col on screen). Turning the
@@ -89,7 +99,11 @@ export function createAcornsLeavesView(doc) {
   const modal = byId('al-modal');
   const handoff = byId('al-handoff');
   const status = byId('al-status');
-  const restartButton = screen.querySelector('[data-action="al-restart"]');
+  const controls = screen.querySelector('.game-controls');
+  const rematchButton = controls.querySelector('[data-action="al-rematch"]');
+  let taps = null;
+  let menu = null;
+  let played = 0;
   const squares = [];
   let orientation = 'acorn';
   let focusSquare = null;
@@ -155,6 +169,12 @@ export function createAcornsLeavesView(doc) {
   function render(model) {
     shown = model;
     board.dataset.state = model.phase;
+    controls.hidden = model.phase !== 'over';
+    byId('al-menu-note').hidden = model.phase === 'over';
+    // A move has just been played: stray taps right after it are ignored
+    // (board-taps.js). `played` starts again at 0 in a new match.
+    if (model.played > played) taps?.moved();
+    played = model.played ?? 0;
     board.setAttribute('aria-busy', String(model.phase === 'waiting'));
     const destinations = new Set(model.destinations);
     const mustJump = new Set(model.mustJump);
@@ -242,17 +262,26 @@ export function createAcornsLeavesView(doc) {
   // Closes the dialog but keeps the finished board on screen.
   function dismissResult() {
     hideResult();
-    restartButton.focus();
+    rematchButton.focus();
   }
 
   return {
-    bind({ onSelect, onCancel }) {
-      board.addEventListener('click', (event) => {
-        const el = event.target.closest('button[data-square]');
-        if (!el) return;
-        const square = Number(el.dataset.square);
-        setFocusSquare(square);
-        onSelect(square);
+    // onPause/onResume: the match menu opened/closed.
+    bind({
+      onSelect, onCancel, onPause = () => {}, onResume = () => {},
+    }) {
+      taps = createBoardTaps({
+        board,
+        selector: 'button[data-square]',
+        clock: doc.defaultView,
+        onActivate(el) {
+          const square = Number(el.dataset.square);
+          setFocusSquare(square);
+          onSelect(square);
+        },
+      });
+      menu = createMatchMenu({
+        doc, menu: byId('al-menu'), opener: byId('al-menu-button'), screen, onOpen: onPause, onClose: onResume,
       });
       board.addEventListener('keydown', (event) => {
         const el = event.target.closest('button[data-square]');
@@ -285,6 +314,7 @@ export function createAcornsLeavesView(doc) {
       else if (fogged) info = `Fog of War · ${DIFFICULTY_NAMES[difficulty]} Spirit · You: ${SIDE_NAMES[humanSide]}`;
       else info = `Against the Spirit · ${DIFFICULTY_NAMES[difficulty]} · You: ${SIDE_NAMES[humanSide]}`;
       byId('al-match-info').textContent = info;
+      byId('al-menu-info').textContent = info;
       screen.dataset.variant = variant;
     },
     // Two players in Fog: covers the screen until the next player is ready.
@@ -324,5 +354,8 @@ export function createAcornsLeavesView(doc) {
     },
     hideResult,
     dismissResult,
+    hideMenu() {
+      menu?.close();
+    },
   };
 }

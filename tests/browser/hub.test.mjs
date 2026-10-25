@@ -98,7 +98,7 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     await game.waitForTurn('Your Turn');
     assert.deepEqual(await game.cells(), Array(9).fill(''));
 
-    await game.press('Change Mode');
+    await game.fromMenu('Change Mode');
     await game.waitForScreen('sf-setup-screen');
     await game.startMatch('two');
     for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
@@ -154,7 +154,7 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     await game.openShellsFeathers();
     await game.startMatch('two');
     const historyLength = await page.evaluate(() => history.length);
-    await game.press('Change Mode');
+    await game.fromMenu('Change Mode');
     await game.waitForScreen('sf-setup-screen');
     assert.equal(await page.evaluate(() => history.length), historyLength);
     await page.goForward();
@@ -237,10 +237,19 @@ test('game hub', { timeout: 300_000 }, async (t) => {
 
     await page.keyboard.press('Escape');
     assert.equal(await game.modalOpen(), false);
-    assert.equal((await active()).label, 'Restart');
+    assert.equal((await active()).label, 'Play Again', 'View Board leaves focus on Play Again, under the board');
     assert.deepEqual(await game.cells(), ['🐚', '🐚', '🐚', '🪶', '🪶', '', '', '', '']);
     assert.match(await page.locator('.cell[data-index="0"]').getAttribute('aria-label'), /Row 1, column 1: shell, winning line/);
 
+    // Back past the board to the Menu button; Change Mode is in the menu.
+    await page.keyboard.press('Shift+Tab');
+    assert.equal((await active()).index, '2', 'the board keeps one tab stop');
+    await page.keyboard.press('Shift+Tab');
+    assert.equal((await active()).label, 'Menu');
+    await page.keyboard.press('Enter');
+    assert.equal((await active()).label, 'Resume', 'the menu takes focus');
+    await page.keyboard.press('Tab');
+    assert.equal((await active()).label, 'Restart');
     await page.keyboard.press('Tab');
     assert.equal((await active()).label, 'Change Mode');
     await page.keyboard.press('Enter');
@@ -264,7 +273,7 @@ test('game hub', { timeout: 300_000 }, async (t) => {
 
       await game.press('Play Again');
       await game.waitForTurn('Your Turn');
-      await game.press('Change Mode');
+      await game.fromMenu('Change Mode');
       await game.waitForScreen('sf-setup-screen');
       await game.startMatch('two');
       for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
@@ -272,7 +281,7 @@ test('game hub', { timeout: 300_000 }, async (t) => {
       await game.press('View Board');
       assert.equal(await game.modalOpen(), false);
       assert.equal(await game.turnText(), 'Player 1 Wins!');
-      await game.press('Change Mode');
+      await game.fromMenu('Change Mode');
       await game.waitForScreen('sf-setup-screen');
       await game.press('All games');
       await game.waitForScreen('hub-screen');
@@ -297,6 +306,7 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     const unreachable = (scope) => game.page.evaluate((selector) => {
       const problems = [];
       for (const el of document.querySelectorAll(`${selector} :is(a, button, input)`)) {
+        if (el.closest('[hidden]')) continue; // e.g. Play Again before the game is over
         el.scrollIntoView({ block: 'center', inline: 'center' });
         const r = el.getBoundingClientRect();
         const onScreen = r.width > 0 && r.left >= -1 && r.right <= innerWidth + 1 && r.top >= -1 && r.bottom <= innerHeight + 1;
@@ -326,12 +336,22 @@ test('game hub', { timeout: 300_000 }, async (t) => {
         await game.settle();
         assert.deepEqual(await unreachable('.screen.active'), [], `${width}×${height} ${hash}`);
       }
+      // The match menus.
+      for (const [hash, screen, menu] of [['#/shells-feathers/play/two', 'game-screen', '#sf-menu'], ['#/acorns-leaves/play/two', 'al-game-screen', '#al-menu']]) {
+        await game.goTo(hash, screen);
+        await game.press('Menu', { exact: true });
+        await game.settle();
+        assert.deepEqual(await unreachable(menu), [], `${width}×${height} ${menu}`);
+        await game.press('Resume');
+      }
       // The result dialog, on the match screen.
       await game.goTo('#/shells-feathers/play/two', 'game-screen');
       for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
       await game.waitForResult();
       await game.settle();
       assert.deepEqual(await unreachable('#game-modal'), [], `${width}×${height} result dialog`);
+      await game.press('View Board');
+      assert.deepEqual(await unreachable('.screen.active'), [], `${width}×${height} finished match with Play Again`);
       // The Acorns & Leaves dialog has the same layout; shown directly here, as
       // reaching it takes a whole game (tests/browser/acorns-leaves.test.mjs).
       await game.goTo('#/acorns-leaves/play/two', 'al-game-screen');

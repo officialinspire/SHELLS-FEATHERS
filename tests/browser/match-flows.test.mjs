@@ -109,7 +109,7 @@ test('Shells & Feathers match flows', { timeout: 300_000 }, async (t) => {
     await game.waitForResult();
     await game.press('View Board');
     for (const i of [5, 6, 7, 8]) await page.locator(`.cell[data-index="${i}"]`).dispatchEvent('click');
-    await game.press('Restart');
+    await game.fromMenu('Restart');
     await page.goBack();
     await game.waitForScreen('sf-setup-screen');
     await page.goForward();
@@ -122,7 +122,7 @@ test('Shells & Feathers match flows', { timeout: 300_000 }, async (t) => {
   });
 
   for (const [how, act, screen] of [
-    ['Restart', (game) => game.press('Restart'), 'game-screen'],
+    ['Restart', (game) => game.fromMenu('Restart'), 'game-screen'],
     ['switching to Acorns & Leaves', (game) => game.goTo('#/acorns-leaves/play/two'), 'al-game-screen'],
     ['going home', (game) => game.goTo('#/'), 'hub-screen'],
   ]) {

@@ -3,7 +3,9 @@
 // through `view` (see view.js).
 //
 // Lifecycle: enter(mode) when the match screen opens, restart() for
-// "Restart", playAgain() for "Play Again", leave() when the screen closes.
+// "Restart", playAgain() for "Play Again", leave() when the screen closes,
+// and pause()/resume() while the match menu is open (the Spirit's move and
+// the result dialog wait).
 // Each match owns a timer scope; starting another match or leaving disposes
 // it, so a pending Spirit move, result dialog or music restart from an old
 // match can never fire.
@@ -72,11 +74,12 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
     match = null;
     spiritThinking = false;
     view.hideResult();
+    view.hideMenu();
     audio.stopSfx('victory-sound');
   }
 
   function selectCell(index) {
-    if (!match || match.result || spiritThinking) return;
+    if (!match || match.result || spiritThinking || timers.paused) return;
     if (mode === 'single' && match.turn !== match.player1Symbol) return;
     place(index);
   }
@@ -142,5 +145,8 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
     view.showTurn(mode, match.turn === match.player1Symbol, match.turn);
   }
 
-  return { enter, leave, restart, playAgain, selectCell };
+  const pause = () => timers?.pause();
+  const resume = () => timers?.resume();
+
+  return { enter, leave, restart, playAgain, selectCell, pause, resume };
 }

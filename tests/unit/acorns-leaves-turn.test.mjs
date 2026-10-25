@@ -197,6 +197,7 @@ test('turn lines, guidance and feedback', () => {
   assert.match(guidance({ stage: 'choose-piece', mustCapture: true }), /must capture/);
   assert.equal(guidance({ stage: 'choose-piece', mustCapture: false }), 'Choose a piece to move.');
   assert.match(guidance({ stage: 'keep-jumping' }), /^Keep jumping/);
+  assert.equal(guidance({ stage: 'choose-square', mustCapture: false }), 'Choose a dot to move to, or the piece to put it back.', 'says how to put a piece back');
   for (const key of ['must-capture', 'blocked', 'must-continue', 'not-a-destination']) assert.ok(FEEDBACK[key], key);
 });
 

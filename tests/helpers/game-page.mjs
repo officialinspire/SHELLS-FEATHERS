@@ -78,6 +78,14 @@ export class GamePage {
     else await target.click();
   }
 
+  // On a match screen: opens the match menu and presses one of its items
+  // (Restart, Change Mode, All Games, Resume).
+  async fromMenu(name) {
+    await this.press('Menu', { exact: true });
+    await this.page.locator('.match-menu.active').waitFor();
+    await this.press(name, { exact: true });
+  }
+
   activeScreen() {
     return this.page.locator('.screen.active').getAttribute('id');
   }
@@ -140,9 +148,18 @@ export class GamePage {
     return this.page.locator('.cell').evaluateAll((els) => els.map((el) => ({ shell: '🐚', feather: '🪶' })[el.dataset.symbol] ?? ''));
   }
 
-  tap(index) {
+  // A finger tap right after a move is taken as a stray double tap and
+  // ignored (src/shared/board-taps.js), so a touch test, like a player, waits
+  // for the board to settle first.
+  async waitForSettled(board) {
+    await this.page.waitForFunction((id) => !('settling' in document.getElementById(id).dataset), board, { timeout: 10_000 });
+  }
+
+  async tap(index) {
     const cell = this.page.locator(`.cell[data-index="${index}"]`);
-    return this.touch ? cell.tap() : cell.click();
+    if (!this.touch) return cell.click();
+    await this.waitForSettled('board-overlay');
+    return cell.tap();
   }
 
   waitForTurn(prefix, timeout = 10_000) {
@@ -250,8 +267,10 @@ export class GamePage {
     return this.page.locator(`#al-board button[data-square="${index}"]`);
   }
 
-  tapSquare(index) {
-    return this.touch ? this.square(index).tap() : this.square(index).click();
+  async tapSquare(index) {
+    if (!this.touch) return this.square(index).click();
+    await this.waitForSettled('al-board');
+    return this.square(index).tap();
   }
 
   // Taps each square of a move's path in turn.

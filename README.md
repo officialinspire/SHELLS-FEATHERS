@@ -54,11 +54,14 @@ A separate mode with the same rules on the real board, but you see only part of 
 |---|---|---|
 | Menus and buttons | Tap or click | Tab / Shift+Tab, then Enter or Space |
 | Place a shell or feather | Tap a square | Arrow keys (Home/End along a row), then Enter or Space |
-| Move a checker | Tap a piece, then a marked square: a dot is a move, a ring is a jump. In a chain, tap each landing square. | Arrow keys move between dark squares; Enter or Space picks up the piece, then chooses the square; Escape puts it back. |
+| Move a checker | Tap a piece, then a marked square: a dot is a move, a ring is a jump. In a chain, tap each landing square. Tap the piece again to put it back. No dragging. | Arrow keys move between dark squares; Enter or Space picks up the piece, then chooses the square; Escape puts it back. |
+| Pause, restart, change mode | **Menu**, above the board | Tab to Menu, Enter; Escape closes it |
 | Close a result and see the board | "View Board" | Escape |
 | Go back | The ← button, or the browser's Back | Browser Back (Alt+←) |
 
-Screen readers hear every square's name and contents, each move, and the result. Pieces that must capture are ringed in orange. The piece picked up sits on a gold square.
+Screen readers hear every square's name and contents, each move, and the result. Pieces that must capture are ringed in orange. The piece picked up sits on a gold square with a cream ring.
+
+On a phone the board takes all the room the rest of the screen leaves, in portrait or landscape. A scroll, a pinch or a stray second tap is never taken as a move.
 
 ## Settings, Your Path and saved data
 
@@ -112,7 +115,7 @@ GitHub Pages caches every file for ten minutes and can't be told otherwise. The 
 | `src/main.js`, `src/app/` | The hub: routing, screens, Settings, Your Path, dialogs |
 | `src/games/shells-feathers/` | Tic-tac-toe rules, the Spirit, the match session and view |
 | `src/games/acorns-leaves/` | Checkers engine, the Spirit's search, Fog of War, session and view |
-| `src/shared/` | Save data and migration, achievements, audio, storage, timers |
+| `src/shared/` | Save data and migration, achievements, audio, storage, timers, board taps, the match menu |
 | `tests/unit`, `tests/browser` | `node:test` suites; the browser tests use Playwright |
 | `tools/` | `stamp-assets.mjs` (cache-busting), `make-sounds.py` (original sounds), `prepare-audio.sh` (trims and re-encodes the owner's MP3s) |
 | `sounds/`, `*.mp3` | Audio |

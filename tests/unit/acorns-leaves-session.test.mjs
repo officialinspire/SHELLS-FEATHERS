@@ -339,3 +339,34 @@ test('a whole game against the real Spirit ends, and is recorded once', async ()
   assert.ok(['win', 'loss', 'draw'].includes(view.result.outcome));
   assert.equal(total(), 1);
 });
+
+test('the match menu pauses the game: the Spirit and the result wait, picks are ignored, and Resume carries on', () => {
+  const { session, clock, view, tap, spiritMoves } = setup();
+  session.enter('single');
+  tap(sq(5, 2), sq(4, 3));
+  assert.equal(view.model.phase, 'waiting');
+  session.pause();
+  clock.tick(10_000);
+  assert.equal(spiritMoves.length, 0, 'the Spirit has not even chosen');
+  assert.equal(view.model.phase, 'waiting');
+  session.resume();
+  clock.tick(SPIRIT_THINK + 10 * SPIRIT_STEP);
+  assert.equal(spiritMoves.length, 1);
+  assert.equal(view.model.phase, 'ready');
+  const played = view.model.played;
+  assert.equal(played, 2, 'the view is told how many moves have been played');
+
+  // Picks while paused do nothing.
+  session.pause();
+  tap(sq(5, 0));
+  assert.equal(view.model.selected, null);
+  session.cancelSelection();
+  session.resume();
+  tap(sq(5, 0));
+  assert.equal(view.model.selected, sq(5, 0));
+  assert.equal(view.model.played, played, 'a pick is not a move');
+
+  // A new match counts from 0 again.
+  session.restart();
+  assert.equal(view.model.played, 0);
+});

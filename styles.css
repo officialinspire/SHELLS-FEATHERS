@@ -860,32 +860,142 @@ h2[tabindex="-1"]:focus {
     color: var(--shell-pearl);
 }
 
-/* Shells & Feathers match */
-.match-screen.active {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "header" "board" "controls";
-    justify-items: center;
-    align-content: center;
-    gap: 18px;
+/* Match screens, both games: header (match line, Menu, sides, turn), the
+   board, guidance, and Play Again once the game is over. The board gets all
+   the room the rest leaves: it sits in a "well", a size container whose
+   square is min(100cqw, 100cqh), so it fits whatever height the browser's
+   toolbars, the safe areas and the orientation leave, with no guessed
+   reserve. The screen is exactly the dynamic viewport height (100dvh) and
+   grows to fit its content when even the smallest board doesn't fit, so a
+   short screen scrolls instead of clipping. Empty 1fr rows above and below
+   center the group (they shrink to nothing first). */
+.match-screen {
+    --match-gap: 10px;
+    --board-gutter: 10px;
+    /* The board's smallest and largest size (its frame included). */
+    --board-min: min(100vw - 2 * var(--board-gutter), 240px);
+    --board-max: min(100vw - 2 * var(--board-gutter), 450px);
 }
 
-.match-screen .game-header { grid-area: header; }
-.match-screen .game-board { grid-area: board; }
-.match-screen .game-controls { grid-area: controls; }
+.match-screen.active {
+    display: grid;
+    height: 100vh;
+    height: 100dvh;
+    min-height: fit-content;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto minmax(var(--board-min), var(--board-max)) auto auto minmax(0, 1fr);
+    grid-template-areas: "." "header" "board" "hint" "controls" ".";
+    justify-items: center;
+    align-items: start;
+    gap: 0;
+    padding:
+        max(8px, env(safe-area-inset-top))
+        max(var(--board-gutter), env(safe-area-inset-right))
+        max(12px, env(safe-area-inset-bottom))
+        max(var(--board-gutter), env(safe-area-inset-left));
+}
+
+.match-screen .game-header {
+    grid-area: header;
+    margin-bottom: var(--match-gap);
+}
+
+.match-screen .game-controls {
+    grid-area: controls;
+    margin-top: var(--match-gap);
+}
+
+.board-well {
+    grid-area: board;
+    align-self: stretch;
+    justify-self: stretch;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: 0;
+    container-type: size;
+}
+
+.board-well > * {
+    --board-size: min(100cqw, 100cqh, var(--board-max));
+}
 
 .game-header {
     width: 100%;
     max-width: 500px;
-    padding: var(--space-3) var(--space-5);
+    padding: 6px 10px 8px;
     text-align: center;
 }
 
+/* The header is a container, so its chips follow the room they actually
+   have (a 320px phone, the side column of a landscape phone). */
+.match-screen .game-header {
+    container: match-header / inline-size;
+}
+
+@container match-header (max-width: 330px) {
+    .side-chip {
+        gap: 6px;
+        padding: 6px 6px 3px;
+    }
+
+    .side-chip-glyph,
+    .al-side-piece {
+        width: 28px;
+        height: 28px;
+    }
+
+    .side-chip-text {
+        font-size: 0.95rem;
+    }
+}
+
+/* Match line and the Menu button. */
+.match-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* Room for the "To move" tag above the chips. */
+    margin-bottom: 12px;
+}
+
 .match-info {
-    margin-bottom: 6px;
+    flex: 1;
+    min-width: 0;
     font-family: var(--font-body);
-    font-size: 0.9rem;
+    font-size: 0.86rem;
+    line-height: 1.3;
+    text-align: left;
     color: var(--text-muted);
+}
+
+.menu-btn {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 14px 0 12px;
+    background: linear-gradient(145deg, var(--wood-500), var(--wood-600));
+    border: var(--border-subtle);
+    border-radius: 999px;
+    color: var(--feather-white);
+    font: 600 0.95rem var(--font-label);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--quick) ease, transform var(--quick) ease;
+}
+
+.menu-btn:active {
+    transform: translateY(1px);
+    background: linear-gradient(145deg, var(--wood-600), var(--wood-700));
+}
+
+@media (hover: hover) {
+    .menu-btn:hover {
+        background: linear-gradient(145deg, #9A6634, #7A4E28);
+    }
 }
 
 .score-display {
@@ -993,10 +1103,8 @@ h2[tabindex="-1"]:focus {
 }
 
 /* Game board: a solid wooden tray with lighter wooden squares, so pale
-   shells and brown feathers both stand out. Sized to fit the screen's height
-   too. */
+   shells and brown feathers both stand out. Sized by its well (above). */
 .game-board {
-    --board-size: min(90vw, 450px, max(220px, calc(100vh - 300px)));
     position: relative;
     width: var(--board-size);
     height: var(--board-size);
@@ -1008,12 +1116,6 @@ h2[tabindex="-1"]:focus {
         inset 0 2px 4px rgba(255, 248, 220, 0.2),
         inset 0 -3px 6px rgba(43, 27, 14, 0.35);
     border: var(--border-board);
-}
-
-@supports (height: 100dvh) {
-    .game-board {
-        --board-size: min(90vw, 450px, max(220px, calc(100dvh - 300px)));
-    }
 }
 
 .board-overlay {
@@ -1133,27 +1235,59 @@ h2[tabindex="-1"]:focus {
     gap: 12px;
 }
 
-.control-btn {
-    min-width: 140px;
+.game-controls[hidden] {
+    display: none;
 }
 
-/* Short landscape screens (phones on their side): board beside the controls. */
+.control-btn {
+    min-width: 160px;
+}
+
+/* Short landscape screens (phones on their side): the board takes the full
+   height on the left; header, guidance and Play Again stack beside it. Empty
+   columns on either side center the pair. */
 @media (orientation: landscape) and (max-height: 540px) {
     .screen {
         padding-top: max(12px, env(safe-area-inset-top));
         padding-bottom: max(12px, env(safe-area-inset-bottom));
     }
 
-    .match-screen.active {
-        grid-template-columns: auto minmax(220px, 340px);
-        grid-template-areas: "board header" "board controls";
-        align-items: center;
-        column-gap: 24px;
-        row-gap: 12px;
+    /* The board has first claim on the width: its smallest size is as big
+       as it can be while the side column keeps its minimum. */
+    .match-screen {
+        --board-max: min(100vh - 16px, 450px);
+        --side-min: 220px;
+        --board-side: minmax(var(--side-min), 330px);
+        --board-min: max(200px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--side-min) - 16px));
     }
 
-    .match-screen .game-header { align-self: end; }
-    .match-screen .game-controls { align-self: start; }
+    @supports (height: 100dvh) {
+        .match-screen {
+            --board-max: min(100dvh - 16px, 450px);
+        }
+    }
+
+    .match-screen.active {
+        grid-template-columns: minmax(0, 1fr) minmax(var(--board-min), var(--board-max)) var(--board-side) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+        grid-template-areas:
+            ". board . ."
+            ". board header ."
+            ". board hint ."
+            ". board controls ."
+            ". board . .";
+        padding-top: max(8px, env(safe-area-inset-top));
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+
+    .match-screen :is(.game-header, .al-hint, .game-controls) {
+        margin-left: 16px;
+    }
+
+    .match-screen .game-header {
+        width: auto;
+        justify-self: stretch;
+    }
 
     .side-chip {
         gap: 6px;
@@ -1170,23 +1304,26 @@ h2[tabindex="-1"]:focus {
         font-size: 16px;
     }
 
-    /* Shells & Feathers has room for one chip per row here, so "Player 1: 0"
-       stays on one line. */
-    #game-screen .side-chips {
+    /* The side column has the height for one chip per row, so names and
+       counts stay on one line. */
+    .match-screen .side-chips {
         grid-template-columns: minmax(0, 1fr);
         row-gap: 12px;
     }
+}
 
-    .game-board {
-        --board-size: min(calc(100vh - 32px), 52vw, 450px);
+/* Browsers without container queries (before Safari 16, Chrome 105): the
+   board's size is worked out from the viewport instead. */
+@supports not (container-type: size) {
+    .board-well > * {
+        --board-size: min(var(--board-max), max(var(--board-min), 100vh - 300px));
     }
 
-    @supports (height: 100dvh) {
-        .game-board {
-            --board-size: min(calc(100dvh - 32px), 52vw, 450px);
+    @media (orientation: landscape) and (max-height: 540px) {
+        .board-well > * {
+            --board-size: var(--board-max);
         }
     }
-
 }
 
 /* Result panel, the same in both games: the winning piece in a wooden
@@ -1537,21 +1674,37 @@ h2[tabindex="-1"]:focus {
     }
 }
 
-/* Acorns & Leaves match: header (sides, turn), board, guidance, controls. */
-.al-match-screen.active {
-    grid-template-areas: "header" "board" "hint" "controls";
-    gap: 8px;
-    padding-top: max(12px, env(safe-area-inset-top));
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+/* The match menu: the result panel's look, without the medallion. */
+.menu-content {
+    padding-top: var(--space-5);
+}
+
+.menu-info {
+    margin-bottom: var(--space-4);
+}
+
+.menu-note {
+    margin-top: var(--space-4);
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+}
+
+.menu-note[hidden] {
+    display: none;
+}
+
+/* Acorns & Leaves match: the shared match layout (above) with guidance
+   under the board. The smallest board keeps squares at 36px. */
+.al-match-screen {
+    --match-gap: 8px;
+    --board-min: min(100vw - 2 * var(--board-gutter), 304px);
+    --board-max: min(100vw - 2 * var(--board-gutter), 578px);
 }
 
 .al-match-screen .game-header {
     max-width: 580px;
-    padding: 6px 12px 8px;
-}
-
-.al-match-screen .match-info {
-    margin-bottom: 8px;
 }
 
 /* The two sides use the shared chips (.side-chip, above). */
@@ -1595,11 +1748,13 @@ h2[tabindex="-1"]:focus {
 .al-turn[data-side="leaf"] { color: #BDE8A8; }
 .al-turn[data-side="draw"] { color: var(--turquoise); }
 
-/* The board fits the width and leaves room for the header and controls. */
+/* The frame takes the size its well gives it (the shared match layout);
+   the board is what is left inside the frame (6px + 3px a side). */
 .al-board-frame {
-    /* The width left after the screen's padding and this frame (6px + 3px a side). */
-    --al-board: min(calc(100vw - 50px), 560px, max(256px, calc(100vh - 292px)));
-    grid-area: board;
+    --al-frame: 9px;
+    --al-board: calc(var(--board-size) - 2 * var(--al-frame));
+    width: var(--board-size);
+    height: var(--board-size);
     padding: 6px;
     background: var(--grain), var(--surface-board-frame);
     border: var(--border-board);
@@ -1607,18 +1762,12 @@ h2[tabindex="-1"]:focus {
     box-shadow: var(--shadow-board), inset 0 1px 0 rgba(255, 236, 200, 0.25);
 }
 
-@supports (height: 100dvh) {
-    .al-board-frame {
-        --al-board: min(calc(100vw - 50px), 560px, max(256px, calc(100dvh - 292px)));
-    }
-}
-
 .al-board {
     display: grid;
     grid-template-columns: repeat(8, minmax(0, 1fr));
     grid-template-rows: repeat(8, minmax(0, 1fr));
-    width: var(--al-board);
-    height: var(--al-board);
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     border-radius: 6px;
     /* No double-tap zoom on the board; scrolling and pinch zoom still work. */
@@ -1707,6 +1856,20 @@ h2[tabindex="-1"]:focus {
 .al-square.is-selected .al-piece {
     transform: translateY(-6%) scale(1.06);
     filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.55));
+}
+
+/* The picked-up piece also gets a bright cream ring with a dark edge, in
+   place of any orange "must capture" ring, so the pick reads at a glance on a
+   phone and differs in shape and color from every other mark. */
+.al-square.dark.is-selected::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    width: 96%;
+    height: 96%;
+    border: 4px solid var(--feather-cream);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--ink), 0 0 12px rgba(255, 236, 170, 0.85);
 }
 
 /* Where it can go: a dot for a move, a ring for a jump. */
@@ -1873,6 +2036,7 @@ h2[tabindex="-1"]:focus {
 /* Guidance under the board ("Choose a piece to move."). */
 .al-hint {
     grid-area: hint;
+    margin-top: var(--match-gap);
     width: 100%;
     max-width: 580px;
     min-height: 2.3em;
@@ -1891,47 +2055,42 @@ h2[tabindex="-1"]:focus {
     border-style: dashed;
 }
 
-/* Short landscape screens: the board beside the header, guidance and controls. */
+/* Short landscape screens: the shared match layout puts the board on the
+   left; here the board's largest size follows the height alone. */
 @media (orientation: landscape) and (max-height: 540px) {
-    .al-match-screen.active {
-        grid-template-columns: auto minmax(240px, 340px);
-        grid-template-areas: "board header" "board hint" "board controls";
-        align-items: center;
-        column-gap: 20px;
-        row-gap: 8px;
-    }
-
-    .al-match-screen .game-header { align-self: end; }
-    .al-match-screen .game-controls { align-self: start; }
-
-    .al-board-frame {
-        --al-board: min(calc(100vh - 46px), 52vw, 560px);
+    .al-match-screen {
+        --board-max: min(100vh - 16px, 578px);
+        --side-min: 224px;
+        --board-side: minmax(var(--side-min), 340px);
+        --board-min: max(200px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--side-min) - 16px));
     }
 
     @supports (height: 100dvh) {
-        .al-board-frame {
-            --al-board: min(calc(100dvh - 46px), 52vw, 560px);
+        .al-match-screen {
+            --board-max: min(100dvh - 16px, 578px);
         }
     }
 }
 
-/* Narrow phones: the board takes the full width. */
-@media (max-width: 400px) {
-    .al-match-screen.active {
-        padding-left: max(8px, env(safe-area-inset-left));
-        padding-right: max(8px, env(safe-area-inset-right));
-    }
-
+/* The lowest landscape screens: the slimmer frame too, so squares stay 36px. */
+@media (orientation: landscape) and (max-height: 360px) {
     .al-board-frame {
-        --al-board: min(calc(100vw - 26px), max(256px, calc(100vh - 272px)));
+        --al-frame: 5px;
         padding: 3px;
         border-width: 2px;
     }
+}
 
-    @supports (height: 100dvh) {
-        .al-board-frame {
-            --al-board: min(calc(100vw - 26px), max(256px, calc(100dvh - 272px)));
-        }
+/* Narrow phones: a slimmer frame, smaller labels. */
+@media (max-width: 400px) {
+    .al-match-screen {
+        --board-gutter: 6px;
+    }
+
+    .al-board-frame {
+        --al-frame: 5px;
+        padding: 3px;
+        border-width: 2px;
     }
 
     .al-side-piece {

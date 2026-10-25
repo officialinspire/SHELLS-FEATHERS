@@ -74,7 +74,8 @@ export function turnLabel({ mode, turn, humanSide }) {
 // stage: 'choose-piece' | 'choose-square' | 'keep-jumping'
 export function guidance({ stage, mustCapture }) {
   if (stage === 'keep-jumping') return 'Keep jumping: choose the next ring.';
-  if (stage === 'choose-square') return mustCapture ? 'Choose a ring to jump to.' : 'Choose a dot to move to.';
+  // A picked-up piece can always be put back by choosing it again.
+  if (stage === 'choose-square') return mustCapture ? 'Choose a ring to jump to, or the piece to put it back.' : 'Choose a dot to move to, or the piece to put it back.';
   return mustCapture ? 'You must capture: choose a ringed piece.' : 'Choose a piece to move.';
 }
 
@@ -126,7 +127,7 @@ const listNames = (names) => (names.length > 1 ? `${names.slice(0, -1).join(', '
 // Guidance and refusals in Fog: a capture "may" be possible, never "must".
 export function fogGuidance({ stage, mayCapture }) {
   if (stage === 'keep-jumping') return 'Keep jumping: try the next ring.';
-  if (stage === 'choose-square') return mayCapture ? 'Try a ring to jump to.' : 'Choose a dot to move to.';
+  if (stage === 'choose-square') return mayCapture ? 'Try a ring to jump to, or the piece to put it back.' : 'Choose a dot to move to, or the piece to put it back.';
   return mayCapture ? 'A capture may be possible: try a ringed piece first.' : 'Choose a piece to move.';
 }
 

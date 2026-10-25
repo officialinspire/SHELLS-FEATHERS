@@ -188,7 +188,7 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
     }
     assert.deepEqual(await game.checkersRows(), finalRows);
     assert.deepEqual((await game.checkersView()).selected, []);
-    await game.press('Restart');
+    await game.fromMenu('Restart');
     assert.deepEqual(await game.checkersRows(), START);
 
     const expected = { acornWins: 0, leafWins: 0, draws: 0 };
@@ -262,8 +262,8 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
   });
 
   for (const [how, act, screen] of [
-    ['Restart', (game) => game.press('Restart'), 'al-game-screen'],
-    ['Change Mode', (game) => game.press('Change Mode'), 'al-setup-screen'],
+    ['Restart', (game) => game.fromMenu('Restart'), 'al-game-screen'],
+    ['Change Mode', (game) => game.fromMenu('Change Mode'), 'al-setup-screen'],
     ['the browser Back button', (game) => game.page.goBack(), 'al-setup-screen'],
     ['going home', (game) => game.goTo('#/'), 'hub-screen'],
     ['switching to Shells & Feathers', (game) => game.goTo('#/shells-feathers/play/two'), 'game-screen'],

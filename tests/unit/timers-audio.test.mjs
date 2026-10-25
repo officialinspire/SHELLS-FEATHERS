@@ -34,6 +34,34 @@ test('disposing one scope leaves another untouched', () => {
   assert.deepEqual(fired, ['new']);
 });
 
+test('pause() holds pending callbacks with the time they had left; resume() runs them on from there', () => {
+  const clock = createFakeClock();
+  const scope = createTimerScope(clock);
+  const fired = [];
+  scope.after(500, () => fired.push('spirit'));
+  clock.tick(300);
+  scope.pause();
+  scope.after(100, () => fired.push('added while paused'));
+  clock.tick(5_000);
+  assert.deepEqual(fired, [], 'nothing fires while paused');
+  assert.equal(scope.pendingCount, 2);
+  assert.equal(clock.pending, 0, 'no timers run while paused');
+  scope.resume();
+  clock.tick(99);
+  assert.deepEqual(fired, []);
+  clock.tick(1);
+  assert.deepEqual(fired, ['added while paused']);
+  clock.tick(100);
+  assert.deepEqual(fired, ['added while paused', 'spirit'], 'the 200ms the Spirit had left');
+
+  scope.pause();
+  scope.after(10, () => fired.push('late'));
+  scope.dispose();
+  scope.resume();
+  clock.tick(1_000);
+  assert.equal(fired.length, 2, 'dispose() drops held callbacks too');
+});
+
 // Settles pending promise callbacks (play() refusals are asynchronous).
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#654321" />
   <meta name="description" content="Spirit of the Woods: peaceful forest games. Play Shells &amp; Feathers (tic-tac-toe) and Acorns &amp; Leaves (checkers) against the forest Spirit or a friend." />
   <title>Spirit of the Woods</title>
-  <link rel="stylesheet" href="styles.css?v=5bd1c9cf82" />
+  <link rel="stylesheet" href="styles.css?v=b4d02615b7" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
@@ -142,6 +142,9 @@
     <symbol id="icon-mist" viewBox="0 0 24 24">
       <path d="M3 8C5 6.5 7 6.5 9 8S13 9.5 15 8 19 6.5 21 8M3 13C5 11.5 7 11.5 9 13S13 14.5 15 13 19 11.5 21 13M5 18C7 16.5 9 16.5 11 18S15 19.5 17 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
     </symbol>
+    <symbol id="icon-menu" viewBox="0 0 24 24">
+      <path d="M4 6.5H20M4 12H20M4 17.5H20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+    </symbol>
     <symbol id="icon-check" viewBox="0 0 24 24">
       <path d="M5 12.5L10 17.5L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
     </symbol>
@@ -248,7 +251,10 @@
     <section id="game-screen" class="screen match-screen" aria-labelledby="match-title">
       <h2 id="match-title" class="visually-hidden" tabindex="-1">Shells &amp; Feathers match</h2>
       <div class="game-header">
-        <p class="match-info" id="match-info"></p>
+        <div class="match-bar">
+          <p class="match-info" id="match-info"></p>
+          <button type="button" class="menu-btn" id="sf-menu-button" aria-haspopup="dialog" aria-controls="sf-menu" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-menu" /></svg><span>Menu</span></button>
+        </div>
         <div class="score-display side-chips">
           <div class="side-chip" id="sf-side-1" data-player="1">
             <span class="side-chip-glyph" id="player1-glyph" aria-hidden="true"><svg class="chip-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg></span>
@@ -264,25 +270,27 @@
         <div class="turn-indicator" id="turn-indicator">Your Turn</div>
       </div>
 
-      <div id="game-board" class="game-board">
-        <div id="board-overlay" class="board-overlay" role="group" aria-label="Board" aria-describedby="board-help" data-state="ready">
-          <button type="button" class="cell" data-index="0"></button>
-          <button type="button" class="cell" data-index="1"></button>
-          <button type="button" class="cell" data-index="2"></button>
-          <button type="button" class="cell" data-index="3"></button>
-          <button type="button" class="cell" data-index="4"></button>
-          <button type="button" class="cell" data-index="5"></button>
-          <button type="button" class="cell" data-index="6"></button>
-          <button type="button" class="cell" data-index="7"></button>
-          <button type="button" class="cell" data-index="8"></button>
+      <div class="board-well">
+        <div id="game-board" class="game-board">
+          <div id="board-overlay" class="board-overlay" role="group" aria-label="Board" aria-describedby="board-help" data-state="ready">
+            <button type="button" class="cell" data-index="0"></button>
+            <button type="button" class="cell" data-index="1"></button>
+            <button type="button" class="cell" data-index="2"></button>
+            <button type="button" class="cell" data-index="3"></button>
+            <button type="button" class="cell" data-index="4"></button>
+            <button type="button" class="cell" data-index="5"></button>
+            <button type="button" class="cell" data-index="6"></button>
+            <button type="button" class="cell" data-index="7"></button>
+            <button type="button" class="cell" data-index="8"></button>
+          </div>
         </div>
       </div>
 
       <p id="board-help" class="visually-hidden">Use the arrow keys to move between squares, and Enter or Space to place a piece.</p>
 
-      <div class="game-controls">
-        <button type="button" class="btn control-btn" data-action="restart-match">Restart</button>
-        <a class="btn control-btn" href="#/shells-feathers" data-up>Change Mode</a>
+      <!-- Shown once the round is over (the rest is in the menu) -->
+      <div class="game-controls" hidden>
+        <button type="button" class="btn btn-primary control-btn" data-action="play-again">Play Again</button>
       </div>
     </section>
 
@@ -310,6 +318,8 @@
         </ul>
         <h3>Two players</h3>
         <p>Share one device and take turns. The turn line above the board shows whose move it is.</p>
+        <h3>Menu</h3>
+        <p><strong>Menu</strong>, above the board, pauses the game and holds Restart, Change Mode and All Games.</p>
         <h3>Keyboard</h3>
         <p>Tab to the board, move between squares with the arrow keys, and press Enter or Space to place a piece.</p>
       </div>
@@ -372,7 +382,10 @@
     <section id="al-game-screen" class="screen match-screen al-match-screen" aria-labelledby="al-match-title">
       <h2 id="al-match-title" class="visually-hidden" tabindex="-1">Acorns &amp; Leaves match</h2>
       <div class="game-header al-header">
-        <p class="match-info" id="al-match-info"></p>
+        <div class="match-bar">
+          <p class="match-info" id="al-match-info"></p>
+          <button type="button" class="menu-btn" id="al-menu-button" aria-haspopup="dialog" aria-controls="al-menu" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-menu" /></svg><span>Menu</span></button>
+        </div>
         <div class="al-sides side-chips">
           <div class="al-side side-chip" id="al-side-acorn">
             <svg class="al-side-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg>
@@ -388,15 +401,17 @@
         <p class="turn-indicator al-turn" id="al-turn"></p>
       </div>
 
-      <div class="al-board-frame">
-        <div id="al-board" class="al-board" role="group" aria-label="Checkers board" aria-describedby="al-board-help" data-state="ready"></div>
+      <div class="board-well">
+        <div class="al-board-frame">
+          <div id="al-board" class="al-board" role="group" aria-label="Checkers board" aria-describedby="al-board-help" data-state="ready"></div>
+        </div>
       </div>
       <p class="al-hint" id="al-hint"></p>
       <p id="al-board-help" class="visually-hidden">Use the arrow keys to move between the dark squares. Press Enter or Space on a piece to pick it up, then on the square it should move to. Escape puts the piece back.</p>
 
-      <div class="game-controls">
-        <button type="button" class="btn control-btn" data-action="al-restart">Restart</button>
-        <a class="btn control-btn" href="#/acorns-leaves" data-up>Change Mode</a>
+      <!-- Shown once the game is over (the rest is in the menu) -->
+      <div class="game-controls" hidden>
+        <button type="button" class="btn btn-primary control-btn" data-action="al-rematch">Rematch</button>
       </div>
     </section>
 
@@ -434,8 +449,10 @@
         <p>40 moves each with no capture and no ordinary piece moved.</p>
         <h3>On the board</h3>
         <ul>
-          <li>Tap a piece, then a marked square: a dot is a move, a ring is a jump. In a chain, tap each landing square.</li>
+          <li>Tap a piece, then a marked square: a dot is a move, a ring is a jump. In a chain, tap each landing square. No dragging needed.</li>
+          <li>Tap the piece again (or another of yours) to put it back before it moves.</li>
           <li>An orange ring marks pieces that must capture.</li>
+          <li><strong>Menu</strong> pauses the game and holds Restart, Change Mode and All Games.</li>
           <li>Keyboard: arrow keys move between dark squares, Enter or Space picks, Escape puts the piece back.</li>
         </ul>
         <h3>Against the Spirit</h3>
@@ -612,6 +629,21 @@
       </div>
     </div>
 
+    <!-- Shells & Feathers: the match menu (Menu button in the match header) -->
+    <div id="sf-menu" class="modal match-menu" role="dialog" aria-modal="true" aria-labelledby="sf-menu-title" aria-describedby="sf-menu-info sf-menu-note">
+      <div class="modal-content menu-content">
+        <h3 id="sf-menu-title" class="modal-title">Paused</h3>
+        <p id="sf-menu-info" class="modal-message menu-info"></p>
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-primary modal-btn" data-menu-close>Resume</button>
+          <button type="button" class="btn modal-btn" data-action="restart-match">Restart</button>
+          <a class="btn modal-btn" href="#/shells-feathers" data-up>Change Mode</a>
+          <a class="btn modal-btn" href="#/" data-up>All Games</a>
+        </div>
+        <p id="sf-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
+      </div>
+    </div>
+
     <!-- Acorns & Leaves result -->
     <div id="al-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="al-modal-title" aria-describedby="al-modal-message al-modal-summary al-modal-achievements">
       <div class="modal-content">
@@ -626,6 +658,21 @@
           <a class="btn modal-btn" href="#/" data-up>All Games</a>
         </div>
         <button type="button" class="view-board-btn" data-action="al-view-board" aria-keyshortcuts="Escape">View Board</button>
+      </div>
+    </div>
+
+    <!-- Acorns & Leaves: the match menu (Menu button in the match header) -->
+    <div id="al-menu" class="modal match-menu" role="dialog" aria-modal="true" aria-labelledby="al-menu-title" aria-describedby="al-menu-info al-menu-note">
+      <div class="modal-content menu-content">
+        <h3 id="al-menu-title" class="modal-title">Paused</h3>
+        <p id="al-menu-info" class="modal-message menu-info"></p>
+        <div class="modal-buttons">
+          <button type="button" class="btn btn-primary modal-btn" data-menu-close>Resume</button>
+          <button type="button" class="btn modal-btn" data-action="al-restart">Restart</button>
+          <a class="btn modal-btn" href="#/acorns-leaves" data-up>Change Mode</a>
+          <a class="btn modal-btn" href="#/" data-up>All Games</a>
+        </div>
+        <p id="al-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
       </div>
     </div>
 
@@ -688,7 +735,7 @@
   <script type="importmap">
   {
     "imports": {
-      "./src/app/app.js": "./src/app/app.js?v=04b04123ee",
+      "./src/app/app.js": "./src/app/app.js?v=26cc4e5aa7",
       "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
       "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
       "./src/app/navigation.js": "./src/app/navigation.js?v=df1ca271ed",
@@ -701,25 +748,27 @@
       "./src/games/acorns-leaves/fog-ai.js": "./src/games/acorns-leaves/fog-ai.js?v=6d7e5fc1ab",
       "./src/games/acorns-leaves/fog.js": "./src/games/acorns-leaves/fog.js?v=c6a4aaa2c2",
       "./src/games/acorns-leaves/pieces.js": "./src/games/acorns-leaves/pieces.js?v=778ba9533a",
-      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=17d01dd096",
+      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=5411f26c46",
       "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=bc2760e7a3",
-      "./src/games/acorns-leaves/text.js": "./src/games/acorns-leaves/text.js?v=5d5c8090df",
+      "./src/games/acorns-leaves/text.js": "./src/games/acorns-leaves/text.js?v=749bf91783",
       "./src/games/acorns-leaves/turn.js": "./src/games/acorns-leaves/turn.js?v=4c32d00fbb",
-      "./src/games/acorns-leaves/view.js": "./src/games/acorns-leaves/view.js?v=d57fe22f87",
+      "./src/games/acorns-leaves/view.js": "./src/games/acorns-leaves/view.js?v=414ca95277",
       "./src/games/shells-feathers/ai.js": "./src/games/shells-feathers/ai.js?v=06e0515b61",
       "./src/games/shells-feathers/match.js": "./src/games/shells-feathers/match.js?v=dd264e8ee4",
       "./src/games/shells-feathers/rules.js": "./src/games/shells-feathers/rules.js?v=6f838579f5",
-      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=258f90a383",
+      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=fe6fce9a9c",
       "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=94021cc0b1",
-      "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=4f0505ed00",
+      "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=084b20f135",
       "./src/main.js": "./src/main.js?v=b0d0ca161a",
       "./src/shared/achievements.js": "./src/shared/achievements.js?v=8ea8ab6102",
       "./src/shared/audio.js": "./src/shared/audio.js?v=7d60edf7a0",
+      "./src/shared/board-taps.js": "./src/shared/board-taps.js?v=0d80361510",
       "./src/shared/icons.js": "./src/shared/icons.js?v=6688127809",
+      "./src/shared/match-menu.js": "./src/shared/match-menu.js?v=a37d756308",
       "./src/shared/profile.js": "./src/shared/profile.js?v=74e5693fb0",
       "./src/shared/save-data.js": "./src/shared/save-data.js?v=3c16c6a91b",
       "./src/shared/storage.js": "./src/shared/storage.js?v=40ebff7603",
-      "./src/shared/timers.js": "./src/shared/timers.js?v=e293fcedd2"
+      "./src/shared/timers.js": "./src/shared/timers.js?v=22efd36a1d"
     }
   }
   </script>

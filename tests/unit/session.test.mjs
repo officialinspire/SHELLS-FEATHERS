@@ -265,3 +265,33 @@ test('each move says who made it', () => {
   session.selectCell(1);
   assert.deepEqual(view.moves, [[0, 'shell', 'player1'], [1, 'feather', 'player2']]);
 });
+
+test('the match menu pauses the round: the Spirit\'s move and the result dialog wait for Resume', () => {
+  const { session, clock, view } = setup({ difficulty: 'hard' });
+  session.enter('single');
+  session.selectCell(4);
+  clock.tick(DELAYS.spiritMove / 2);
+  session.pause();
+  clock.tick(10_000);
+  assert.equal(view.pieces, 1, 'no Spirit move while paused');
+  session.selectCell(0);
+  assert.equal(view.pieces, 1, 'and no pick');
+  session.resume();
+  clock.tick(DELAYS.spiritMove / 2 - 1);
+  assert.equal(view.pieces, 1, 'the rest of its delay, not a fresh one');
+  clock.tick(1);
+  assert.equal(view.pieces, 2);
+
+  // The Spirit's winning reply, then a pause before the result dialog.
+  const { session: s2, clock: c2, view: v2 } = setup({ difficulty: 'hard' });
+  s2.enter('single');
+  reachSpiritWinningReply({ session: s2, clock: c2 });
+  c2.tick(DELAYS.spiritMove);
+  assert.equal(v2.result, null);
+  s2.pause();
+  c2.tick(10_000);
+  assert.equal(v2.result, null, 'no result dialog behind the menu');
+  s2.resume();
+  c2.tick(DELAYS.resultModal);
+  assert.notEqual(v2.result, null);
+});

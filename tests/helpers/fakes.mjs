@@ -19,6 +19,8 @@ export function createFakeClock() {
     setInterval: (fn, ms) => schedule(fn, ms, Math.max(1, ms)),
     clearInterval: (id) => { timers.delete(id); },
     get now() { return now; },
+    // The page clock (window.performance.now) on the same fake time.
+    performance: { now: () => now },
     get pending() { return timers.size; },
     tick(ms) {
       const end = now + ms;
@@ -88,6 +90,7 @@ export function createFakeView() {
       view.resultAchievements = achievements;
     },
     hideResult() { view.result = null; },
+    hideMenu() {},
     get pieces() { return view.board.filter(Boolean).length; },
   };
   return view;
@@ -114,6 +117,7 @@ export function createFakeCheckersView() {
       view.resultAchievements = achievements;
     },
     hideResult() { view.result = null; },
+    hideMenu() {},
     handoff: null, // { title, text, button } while the handoff screen is up
     handoffs: [],
     showHandoff(text) { view.handoff = text; view.handoffs.push(text.title); },

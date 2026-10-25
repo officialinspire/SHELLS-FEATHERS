@@ -53,7 +53,7 @@ test('v1 core loop: two-player win, saved stats, restart, single-player AI reply
   assert.deepEqual(await game.scores(), ['1', '0']);
 
   // --- Records survive a reload (a two-player win, kept apart from yours). ---
-  await game.press('Change Mode');
+  await game.fromMenu('Change Mode');
   await game.waitForScreen('sf-setup-screen');
   await page.reload();
   assert.equal(await game.activeScreen(), 'sf-setup-screen', 'reload keeps the screen');

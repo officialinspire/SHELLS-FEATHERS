@@ -263,7 +263,7 @@ test('Acorns & Leaves: Fog of War', { timeout: 900_000 }, async (t) => {
     await game.goTo('#/acorns-leaves/fog/single', 'al-game-screen');
     await game.playPath([sq(5, 2), sq(4, 3)]);
     await game.waitForBoardState('waiting');
-    await game.press('Restart');
+    await game.fromMenu('Restart');
     await game.page.clock.runFor(10_000);
     await assertShows(game, observe(createInitialState().board, 'acorn'), 'after Restart');
     assert.equal((await game.checkersView()).state, 'ready');

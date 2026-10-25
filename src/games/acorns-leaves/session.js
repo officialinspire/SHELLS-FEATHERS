@@ -9,10 +9,11 @@
 // (fog-ai.js).
 //
 // Lifecycle: enter(mode, variant) when the match screen opens, restart() for
-// "Restart", playAgain() for "Rematch", leave() when the screen closes. Each
-// match owns a timer scope; starting another match or leaving disposes it,
-// so a pending Spirit move, result dialog or music restart from an old match
-// can never fire.
+// "Restart", playAgain() for "Rematch", leave() when the screen closes, and
+// pause()/resume() while the match menu is open (the Spirit's move, its
+// steps and the result dialog wait). Each match owns a timer scope; starting
+// another match or leaving disposes it, so a pending Spirit move, result
+// dialog or music restart from an old match can never fire.
 //
 // The Spirit: after a short pause it picks its move (ai.js, bounded, legal
 // moves only) and, in Classic, shows it a square at a time so a chain of
@@ -108,6 +109,7 @@ export function createSession({
     const { difficulty, side } = profile.acornsLeavesSettings();
     match = {
       state: initialState(),
+      played: 0, // moves played this match
       turn: null,
       humanSide: mode === 'single' ? side : null,
       difficulty,
@@ -137,6 +139,7 @@ export function createSession({
     match = null;
     spiritActing = false;
     view.hideResult();
+    view.hideMenu();
     view.hideHandoff();
     audio.stopSfx('victory-sound');
   }
@@ -187,7 +190,7 @@ export function createSession({
 
   // A square picked by the player (click, tap or Enter/Space).
   function selectSquare(square) {
-    if (!match || match.result || match.handoff || spiritActing || isSpiritTurn()) return;
+    if (!match || match.result || match.handoff || spiritActing || isSpiritTurn() || timers.paused) return;
     const before = match.turn;
     const { turn, outcome, move, found } = rules.choose(before, square);
     match.turn = turn;
@@ -227,7 +230,7 @@ export function createSession({
 
   // Escape: puts a picked-up piece back (not once it has jumped).
   function cancelSelection() {
-    if (!match || match.result || match.handoff || spiritActing) return;
+    if (!match || match.result || match.handoff || spiritActing || timers.paused) return;
     if (!match.turn.path.length || rules.inChain(match.turn)) return;
     match.turn = rules.cancel(match.turn);
     match.feedback = null;
@@ -287,6 +290,7 @@ export function createSession({
     const piece = match.state.board[move.from];
     const taken = move.captures.map((square) => ({ square, piece: match.state.board[square] }));
     match.state = applyMove(match.state, move);
+    match.played += 1;
     match.captured[piece.side] += move.captures.length;
     match.lastMove = { by: piece.side, path: move.path, captures: move.captures, taken };
     const byPlayer = mode === 'two' ? piece.side === 'acorn' : piece.side === match.humanSide;
@@ -372,6 +376,7 @@ export function createSession({
       variant,
       phase,
       mode,
+      played: match.played,
       humanSide: match.humanSide,
       turn: state.turn,
       board: displayBoard(turn),
@@ -403,6 +408,7 @@ export function createSession({
       variant,
       phase,
       mode,
+      played: match.played,
       humanSide: match.humanSide,
       turn: state.turn,
       board: Array(state.board.length).fill(null),
@@ -458,5 +464,10 @@ export function createSession({
     view.render(model);
   }
 
-  return { enter, leave, restart, playAgain, selectSquare, cancelSelection, takeControl };
+  const pause = () => timers?.pause();
+  const resume = () => timers?.resume();
+
+  return {
+    enter, leave, restart, playAgain, selectSquare, cancelSelection, takeControl, pause, resume,
+  };
 }
