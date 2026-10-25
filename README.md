@@ -17,7 +17,7 @@ It works on phones, tablets and desktop, by touch, mouse or keyboard. There is n
 Tic-tac-toe on a wooden board.
 
 - **Goal:** three of your pieces in a row: across, down or diagonally. A full board with no row of three is a draw.
-- **Turns:** players take turns placing one piece on an empty square. **Player 1 always moves first**; choose whether Player 1 plays 🐚 shells or 🪶 feathers before the game.
+- **Turns:** players take turns placing one piece on an empty square. **Player 1 always moves first**; choose whether Player 1 plays shells or feathers before the game.
 - **Against the Spirit** you are Player 1:
   - **Gentle** picks open squares at random.
   - **Balanced** plays its best move most of the time.
@@ -80,10 +80,9 @@ Screen readers hear every square's name and contents, each move, and the result.
 
 ## Assets and credits
 
-- **Pieces, boards and new sounds:** the acorn and leaf pieces, the boards and the new sound effects are original to this project. The sounds are synthesized by [`tools/make-sounds.py`](tools/make-sounds.py).
+- **Artwork and new sounds:** all artwork is original to this project and drawn as SVG and CSS, with no image files: the shell, feather, acorn and leaf pieces, the kings' crowns, the icons, the boards and the woodland background. The new sound effects are original too, synthesized by [`tools/make-sounds.py`](tools/make-sounds.py).
 - **Music and original effects:** the music and the original sound effects were uploaded by the owner. Their source and license are not recorded yet.
 - **Fonts:** Cinzel (Natanael Gama) and Uncial Antiqua (Astigmatic), SIL Open Font License 1.1, via Google Fonts.
-- **Emoji:** 🐚 and 🪶 are drawn by your device's emoji font.
 
 Every asset, with its source and terms: [`docs/assets.md`](docs/assets.md).
 

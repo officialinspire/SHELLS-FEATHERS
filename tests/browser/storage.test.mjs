@@ -101,7 +101,7 @@ test('save data', { timeout: 120_000 }, async (t) => {
     assert.match(await game.page.locator('#sf-difficulty-hint').textContent(), /^Wise:/);
 
     await game.startMatch('single');
-    assert.match(await game.page.locator('#match-info').textContent(), /Wise · You play 🪶 Feather/);
+    assert.match(await game.page.locator('#match-info').textContent(), /Wise · You play Feather/);
     await game.tap(4);
     assert.equal((await game.cells())[4], '🪶');
     await game.waitForTurn('Your Turn');

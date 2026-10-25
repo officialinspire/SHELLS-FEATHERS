@@ -37,8 +37,8 @@ function modules(dir = 'src') {
 }
 
 // index.html as it should be, given the files on disk.
-export function stampedIndex(root = ROOT) {
-  const html = readFileSync(path.join(root, 'index.html'), 'utf8');
+// `html` defaults to the index.html on disk.
+export function stampedIndex(root = ROOT, html = readFileSync(path.join(root, 'index.html'), 'utf8')) {
   const eol = html.includes('\r\n') ? '\r\n' : '\n';
   const imports = Object.fromEntries(modules().map((file) => [`./${file}`, `./${file}?v=${hash(file)}`]));
   const map = JSON.stringify({ imports }, null, 2).split('\n').map((line) => `  ${line}`).join(eol);
@@ -51,8 +51,11 @@ export function stampedIndex(root = ROOT) {
     `  ${END}`,
   ].join(eol);
   let out = html.replace(/<link rel="stylesheet" href="styles\.css(\?v=\w+)?" \/>/, `<link rel="stylesheet" href="styles.css?v=${hash('styles.css')}" />`);
-  if (out.includes(START)) {
-    out = out.replace(new RegExp(`${START}[\\s\\S]*?${END}`), block);
+  const from = out.indexOf(START);
+  if (from !== -1) {
+    // Plain string slicing: the markers contain characters regexes treat specially.
+    const to = out.indexOf(END, from) + END.length;
+    out = out.slice(0, from) + block + out.slice(to);
   } else {
     out = out.replace(/<script type="module" src="src\/main\.js"><\/script>/, block);
   }

@@ -134,8 +134,10 @@ export class GamePage {
     return this.page.locator('#turn-indicator').textContent();
   }
 
+  // The board as 🐚 / 🪶 / '' per square, read from each square's
+  // data-symbol (the pieces themselves are drawn as SVG).
   cells() {
-    return this.page.locator('.cell').allTextContents();
+    return this.page.locator('.cell').evaluateAll((els) => els.map((el) => ({ shell: '🐚', feather: '🪶' })[el.dataset.symbol] ?? ''));
   }
 
   tap(index) {

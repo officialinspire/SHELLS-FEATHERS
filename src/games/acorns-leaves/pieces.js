@@ -3,24 +3,13 @@
 // in more than color: Acorns are light wooden discs with a dark rim and an
 // acorn on top, Leaves are dark green discs with a cream rim and a leaf. A
 // king keeps its side's disc and adds a gold rim, a second disc underneath
-// and a crown.
+// and a crown rising above the disc, so its outline differs as well.
 import { isDarkSquare } from './engine.js';
-
-const SVG_NS = 'http://www.w3.org/2000/svg';
+import { svgIcon } from '../../shared/icons.js';
 
 export const symbolFor = (piece) => `#al-${piece.side}${piece.king ? '-king' : ''}`;
 
-export function createPieceIcon(doc, piece, className = 'al-piece') {
-  const svg = doc.createElementNS(SVG_NS, 'svg');
-  svg.setAttribute('class', className);
-  svg.setAttribute('viewBox', '0 0 100 100');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('focusable', 'false');
-  const use = doc.createElementNS(SVG_NS, 'use');
-  use.setAttribute('href', symbolFor(piece));
-  svg.append(use);
-  return svg;
-}
+export const createPieceIcon = (doc, piece, className = 'al-piece') => svgIcon(doc, symbolFor(piece), className);
 
 // A small picture of a position (hub card, How to Play). Not interactive.
 export function renderMiniBoard(container, board) {

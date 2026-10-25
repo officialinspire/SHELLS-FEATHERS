@@ -10,6 +10,7 @@
 // dialog that lists exactly what goes and what stays.
 import { DIFFICULTIES, DIFFICULTY_NAMES } from '../games/shells-feathers/ai.js';
 import { DIFFICULTIES as AL_DIFFICULTIES, DIFFICULTY_NAMES as AL_DIFFICULTY_NAMES } from '../games/acorns-leaves/ai.js';
+import { svgIcon } from '../shared/icons.js';
 
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const totals = (single, levels) => {
@@ -49,7 +50,7 @@ export function createPathScreen({ doc, profile, audio, confirmDialog, dateText 
       'li',
       { className: `achievement ${a.unlocked ? 'is-unlocked' : 'is-locked'}` },
       [
-        make('span', { className: 'achievement-mark', textContent: a.unlocked ? '✓' : '○' }, [], { 'aria-hidden': 'true' }),
+        make('span', { className: 'achievement-mark' }, a.unlocked ? [svgIcon(doc, '#icon-check', 'icon', '0 0 24 24')] : [], { 'aria-hidden': 'true' }),
         make('span', { className: 'achievement-text' }, [
           make('strong', { textContent: a.title }),
           make('span', { textContent: a.description }),

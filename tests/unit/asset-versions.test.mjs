@@ -6,6 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stampedIndex } from '../../tools/stamp-assets.mjs';
@@ -23,15 +24,29 @@ function existsExactly(file) {
   return true;
 }
 
-test('index.html carries the current asset versions (run node tools/stamp-assets.mjs after changing src/ or styles.css)', () => {
-  const { current, expected } = stampedIndex(ROOT);
-  assert.ok(current === expected, 'index.html asset versions are stale: run node tools/stamp-assets.mjs');
+const hashOf = (file) => createHash('sha256').update(readFileSync(path.join(ROOT, file))).digest('hex').slice(0, 10);
+const modules = (dir = 'src') => readdirSync(path.join(ROOT, dir), { withFileTypes: true })
+  .flatMap((e) => (e.isDirectory() ? modules(`${dir}/${e.name}`) : e.name.endsWith('.js') ? [`${dir}/${e.name}`] : []));
+
+test('index.html carries the current asset versions (run npm run stamp after changing src/ or styles.css)', () => {
+  // Checked against the files themselves, not through the tool.
   const map = JSON.parse(html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1]);
-  for (const [from, to] of Object.entries(map.imports)) {
-    assert.match(to, /^\.\/src\/.+\.js\?v=[0-9a-f]{10}$/);
-    assert.equal(to.split('?')[0], from);
-    assert.ok(existsExactly(from.slice(2)), from);
+  assert.deepEqual(Object.keys(map.imports).sort(), modules().map((f) => `./${f}`).sort(), 'every module is in the import map');
+  for (const file of modules()) {
+    assert.equal(map.imports[`./${file}`], `./${file}?v=${hashOf(file)}`, `${file} is stale: run npm run stamp`);
   }
+  assert.ok(html.includes(`href="styles.css?v=${hashOf('styles.css')}"`), 'styles.css is stale: run npm run stamp');
+  assert.ok(html.includes(`src="src/main.js?v=${hashOf('src/main.js')}"`), 'src/main.js is stale: run npm run stamp');
+  // And the tool agrees.
+  const { current, expected } = stampedIndex(ROOT);
+  assert.ok(current === expected, 'tools/stamp-assets.mjs would change index.html');
+});
+
+test('the stamp tool replaces an existing stamp (not only the first one)', () => {
+  const stale = html.replace(/\?v=[0-9a-f]{10}/g, '?v=0000000000');
+  assert.notEqual(stale, html);
+  const restamped = stampedIndex(ROOT, stale).expected;
+  assert.equal(restamped, html);
 });
 
 test('every file the page and stylesheet reference exists, under that exact name, at a relative path', () => {

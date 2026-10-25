@@ -13,7 +13,8 @@
 | Stage 6: Acorns & Leaves Fog of War mode | `69852ea` |
 | Stage 7: one Spirit of the Woods look (polish, motion, accessibility, assets) | `9e8fad9` |
 | Stage 8: shared settings, sound, Your Path, achievements, saved data | `a3e49d4` |
-| Stage 9: end-to-end QA, Pages caching, README, changelog | the commit that adds §0.1 |
+| Stage 9: end-to-end QA, Pages caching, README, changelog | `6970194` |
+| Stage 10: visual identity (design tokens, woodland palette, original SVG pieces and icons) | the commit that adds §0.1 |
 | Live site | https://officialinspire.github.io/SHELLS-FEATHERS/ still serves v1 from `main`. Nothing from this branch is merged or deployed. |
 
 The existing Shells & Feathers tic-tac-toe game must stay playable at every step of the upgrade. Each stage ends with every test green and the game deployable as is.
@@ -24,7 +25,46 @@ Sections 1–3 are the audit of v1 and stay as they were written, as a record of
 
 ## 0. Status
 
-### 0.1 Stage 9: end-to-end QA before the playtest
+### 0.1 Stage 10: visual identity
+
+**Direction.** A woodland tabletop:
+- the boards are warm wooden trays and frames on a forest-green page, which fades from canopy to forest floor;
+- panels are dark bark, with a grain too faint to touch text contrast;
+- the pieces are pearl shells, soft feathers, and readable acorns and leaves;
+- turquoise is kept for what you can act on (primary buttons, the selected option's edge, "To move", move markers).
+
+The motifs are natural objects only. No tribal or ceremonial symbols, and no cultural claims, were added.
+
+**Design tokens.** They are at the top of `styles.css`, and components use them rather than raw values:
+- **Palette:** forest, wood, pearl, feather, turquoise, gold, ember.
+- **Text and typography:** text colors, families, a type scale, leading and tracking.
+- **Spacing:** 4px steps.
+- **Shapes and effects:** radii, surfaces (panel, raised, inset, board frame, board squares, grain), borders, shadows (including a board shadow, so the board leads every screen).
+- **Icons and states:** icon sizes, and hover, press, selected, disabled and focus states.
+
+Panel-like boxes share one surface rule. Old variable names remain as aliases; the unused ones are removed.
+
+**Artwork, replacing emoji.** The game no longer uses any emoji. Everything is original SVG in the `index.html` sprite (`docs/assets.md`):
+- **Shells & Feathers pieces:** a pearl spiral seashell and a barred feather, drawn with dark outlines so they read on the wood at every size. They appear on the board, the player chips, the turn line, the result medallion, the setup options and the hub card.
+- **Icons:** Play the Spirit (a tree), Two Players, Settings, Your Path (a trail), the Fog handoff (mist), and the achievement and notice checks.
+- **Kings:** the crown now rises above the disc, so a king's outline differs from an ordinary piece's. It reads even on 36px squares.
+
+**Other changes.**
+- **Selected options:** light, with a turquoise edge and a check, instead of solid turquoise blocks.
+- **Checkers frame:** thicker and wooden. The board's width now allows for the frame, which fixes a 14px overflow on 400–600px-wide screens.
+- **Shells & Feathers text:** the turn line and match info no longer contain emoji ("Player 1's Turn", with the piece drawn beside it). The tests read pieces from `data-symbol`.
+
+**Fixed.**
+- `tools/stamp-assets.mjs` (Stage 9) replaced only the *first* stamp: its marker contains `(`, which the regex read as syntax. `--check` and its test shared the mistake, so both passed.
+- The test now compares every import-map entry with the file's real hash, and restamps a deliberately stale copy.
+- The committed Stage 9 stamp was checked and was correct.
+
+**Verification.**
+- **Screenshots** before and after of 14 screens at 360×640, 360×560, 640×360 and 1280×800, reviewed by eye. The pieces were previewed at 34–130px.
+- **Contrast audit:** 0 of 1,754 text runs below AA, no touch-size problems, no clipped text. The focus rings on the volume sliders were checked directly.
+- **Tests:** unit and browser suites, twice.
+
+### 0.2 Stage 9: end-to-end QA before the playtest
 
 **Scripted play.** The site was served under `/SHELLS-FEATHERS/`, as Pages does, so a root-relative path would fail. Every move was made through the page:
 
@@ -50,7 +90,7 @@ Sections 1–3 are the audit of v1 and stay as they were written, as a record of
 
 **Analytics.** The repository has no analytics or event-tracking code and no INSPIRE convention to follow, so none was added. The PR asks which convention, if any, to adopt.
 
-### 0.2 Stage 8: settings, sound, Your Path and achievements
+### 0.3 Stage 8: settings, sound, Your Path and achievements
 
 **Settings.**
 - Settings holds only what every game shares:
@@ -131,7 +171,7 @@ Sections 1–3 are the audit of v1 and stay as they were written, as a record of
   - volume outside 0–1.
 - **Audio and Fog safeguards:** three more deliberate bugs (the stale-refusal guard, and the two Fog sound rules) were also caught.
 
-### 0.3 Stage 7: one Spirit of the Woods look
+### 0.4 Stage 7: one Spirit of the Woods look
 
 The hub and both games now share one look, polished as one collection. The palette (browns, sand, cream, turquoise and sunset orange on the brown-to-sky gradient), the Uncial Antiqua and Cinzel type, and the Shells & Feathers pieces and wording are kept. Nothing about play, rules, routes or saves changed. Assets and their sources are listed in [`assets.md`](assets.md).
 
@@ -214,7 +254,7 @@ How contrast was measured: each text run was compared with the pixels actually r
 
 No ceremonial or cultural imagery was added.
 
-### 0.4 Stage 6: Fog of War for Acorns & Leaves
+### 0.5 Stage 6: Fog of War for Acorns & Leaves
 
 Fog of War is a separate Acorns & Leaves mode, chosen with "Rules: Classic / Fog of War" on the setup screen. It has its own routes (`#/acorns-leaves/fog/single`, `…/fog/two`) and its own records. **Classic is unchanged:** same rules, full visibility, and its tests pass as before. The exact rules are in [`fog-rules.md`](fog-rules.md), written before the code.
 
@@ -271,7 +311,7 @@ Each game was recorded once in the Fog records. The match fitted the screen, the
 - the board after a handoff;
 - the result, and the revealed final board.
 
-### 0.5 Stage 5: Acorns & Leaves is playable
+### 0.6 Stage 5: Acorns & Leaves is playable
 
 The checkers engine from Stage 4 now drives a real game in the hub. The hub card says "Ready to play" and leads to a setup screen (side and Spirit difficulty), then a match for two players on one device or against the Spirit, then a result dialog with Rematch, Change Mode, All Games and View Board. Records appear in Your Path. Shells & Feathers is unchanged, and there is no Fog of War.
 
@@ -369,7 +409,7 @@ Each game was recorded exactly once, in the right bucket. No page errors in any 
 
 The 320 px draw run found guidance and result text wrapping to three lines and pushing the controls off screen, and side names being cut short. Fixed: shorter wording, a tighter header, "You"/"Spirit" names with the side spoken, and a fit check with the longest guidance.
 
-### 0.6 Stage 4: the Acorns & Leaves rules engine
+### 0.7 Stage 4: the Acorns & Leaves rules engine
 
 `src/games/acorns-leaves/engine.js` is a pure Classic Checkers engine (American checkers / English draughts), separate from any user interface. The full rules and every rule choice are in [`docs/acorns-leaves-rules.md`](acorns-leaves-rules.md).
 
@@ -395,7 +435,7 @@ The 320 px draw run found guidance and result text wrapping to three lines and p
 
 **Still a preview (until Stage 5).** The hub card, preview notice and rules page said the rules were ready but the board wasn't, and stated the forward-only captures, the free choice between captures, crowning ending the move and the draw rule. Shells & Feathers was unchanged. Fog of War was not part of this stage.
 
-### 0.7 Stage 3: Shells & Feathers inside the hub
+### 0.8 Stage 3: Shells & Feathers inside the hub
 
 The game keeps everything it had:
 - Shell 🐚 and Feather 🪶 pieces;
@@ -434,7 +474,7 @@ On all three: no errors, no sideways scrolling, and exactly two games recorded. 
 
 **Known limit (unchanged).** Two tabs playing at once each keep their own copy of the records, and the last one saved wins. Nothing is double-counted, but one tab's games can be overwritten.
 
-### 0.8 Stage 2: the game hub
+### 0.9 Stage 2: the game hub
 
 The opening screen is now a hub for Spirit of the Woods games.
 
@@ -478,7 +518,7 @@ Settings (sound, music) and Your Path (totals, records per difficulty and two-pl
 | P3 (CSS) | **Fixed.** The unused celebration styles are removed. The unused PNGs remain. |
 | ST1 | **Fixed.** Your Path shows the per-mode breakdown next to the v1-style totals. |
 
-### 0.9 Stage 1: modules, lifecycle, save migration
+### 0.10 Stage 1: modules, lifecycle, save migration
 
 **Done in Stage 1.**
 - `index.js` is split into ES modules under `src/` (§4), with explicit lifecycles for screens, matches, timers and music fades.
@@ -930,7 +970,7 @@ npm test                          # = npm run test:unit && npm run test:browser
 
 **Stage 1.**
 - **AI:** v1's `index.js` (from `main`) was loaded in a Node VM and compared with `src/games/shells-feathers/ai.js` on every AI-to-move position, for both symbol assignments, every difficulty and five seeded random sources. 62,910 comparisons, 0 differences.
-- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.9.
+- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.10.
 - **Mutation check:** key safeguards were removed one at a time (timer disposal on teardown, fade cancellation, the storage guards, the v1 migration). The suite failed each time.
 
 **Stage 2.**
@@ -945,7 +985,7 @@ npm test                          # = npm run test:unit && npm run test:browser
   - saving the difficulty choice.
 
 **Stage 3.**
-- **Match-flow audit** in Chromium before and after the fixes (§0.7), and the **phone smoke test** on three emulated phones (§0.7).
+- **Match-flow audit** in Chromium before and after the fixes (§0.8), and the **phone smoke test** on three emulated phones (§0.8).
 - **Mutation check:** each of these was removed one at a time, and the suite failed each time:
   - the waiting and locked board states;
   - turn announcements;
@@ -960,10 +1000,10 @@ npm test                          # = npm run test:unit && npm run test:browser
 
   Removing one or two layers changes nothing observable. With all three removed, the score-once test fails.
 
-**Stage 4.** Nine rule bugs were put into the engine one at a time; the engine tests failed for each (§0.6).
+**Stage 4.** Nine rule bugs were put into the engine one at a time; the engine tests failed for each (§0.7).
 
 **Stage 5.**
-- **Scripted playtests** on emulated desktop and phones, with long-task measurement and screenshots (§0.5).
+- **Scripted playtests** on emulated desktop and phones, with long-task measurement and screenshots (§0.6).
 - **Mutation check:** each of these was introduced one at a time, and the suite failed each time:
   - the board taking picks while the Spirit acts;
   - a teardown that keeps the old timers;
@@ -987,7 +1027,7 @@ npm test                          # = npm run test:unit && npm run test:browser
 - **Redundant layer:** removing only the "score once" guard is not observable. As in Shells & Feathers, the rules already refuse moves after the end, and the session ignores picks once there is a result.
 
 **Stage 6.**
-- **Scripted Fog playtests** on emulated desktop and phones. The scripted player saw only the page; screenshots and long tasks were reviewed (§0.4).
+- **Scripted Fog playtests** on emulated desktop and phones. The scripted player saw only the page; screenshots and long tasks were reviewed (§0.5).
 - **Leak and rule check:** each of these was introduced one at a time, and the suite failed every time (16 of 16):
   - drawing the real board on the player's turn, or during the Spirit's turn;
   - handing the Spirit the real board;
@@ -1005,17 +1045,17 @@ npm test                          # = npm run test:unit && npm run test:browser
 
 **Stage 7.**
 - **Before and after screenshots** of the same 14 screens and overlays at four sizes, made with the same script on Stage 6 (`69852ea`) and on this commit, and reviewed side by side: hub, both setups, both matches, both result panels, a capture chain, the final board, Fog, the handoff, How to Play, Settings and Your Path.
-- **Audit script:** contrast against the rendered pixels, touch-target size, focus rings and clipped text, on every screen and overlay (§0.3).
+- **Audit script:** contrast against the rendered pixels, touch-target size, focus rings and clipped text, on every screen and overlay (§0.4).
 - **Mutation check:** an endless pulse was put back on the turn line, and `polish.test.mjs` failed.
 
 **Stage 8.**
-- **Mutation check:** ten safeguards were removed one at a time (§0.2), with the unit suite passing first. Each was caught by a named test.
+- **Mutation check:** ten safeguards were removed one at a time (§0.3), with the unit suite passing first. Each was caught by a named test.
 - **Sound timing:** every effect was measured. Each now starts within about 10 ms of being played (before, the select sounds started 0.32–0.51 s late), and `tools/make-sounds.py` gives byte-identical files on every run.
 - **Screenshots** of Settings, Your Path, both delete dialogs, a result with a new achievement, and the in-play notice, at 360×640, 360×560 and 1280×800, reviewed by eye.
 - **Stage 7 audit** re-run with the new screens: contrast clean, touch sizes clean, no clipped text. Focus rings were checked on the volume sliders directly, because the audit's sibling probe for inputs doesn't fit range inputs.
 
 **Stage 9.**
-- **Scripted play:** the end-to-end playthroughs in §0.1 (scratch scripts, not part of the suite).
+- **Scripted play:** the end-to-end playthroughs in §0.2 (scratch scripts, not part of the suite).
 - **Dialog focus:** the new dialog-focus test was shown to fail without its fix.
 - **Asset stamp:** the stale-stamp test was shown to fail after a one-character stylesheet change.
 

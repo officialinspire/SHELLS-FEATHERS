@@ -62,7 +62,8 @@ test('complete games', { timeout: 180_000 }, async (t) => {
     await game.openShellsFeathers();
     await game.chooseOptions({ symbol: 'Feather' });
     await game.press('Two Players');
-    await game.waitForTurn("Player 1's Turn 🪶");
+    await game.waitForTurn("Player 1's Turn");
+    assert.equal(await game.page.locator('#turn-indicator use').getAttribute('href'), '#sf-feather', 'the turn line shows Player 1\'s feather');
     for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
     assert.deepEqual(await game.waitForResult(), { title: 'Player 1 Wins!', message: 'The feather spirit prevails' });
   });

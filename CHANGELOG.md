@@ -18,6 +18,10 @@ The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two 
 - **Sounds:** new original sounds for moves, captures, crowning, Fog reveals, draws, losses and achievements.
 
 ### Changed
+- **Visual identity:**
+  - **Look:** one woodland tabletop look across the hub and both games, built on design tokens (type, spacing, surfaces, shadows, borders, icons, states).
+  - **Artwork:** original SVG shell and feather pieces and interface icons replace every emoji.
+  - **Kings:** they wear a crown that rises above the piece.
 - **Shells & Feathers:**
   - redesigned on a wooden board, with player chips ("To move", "Winner");
   - one result panel shared with Acorns & Leaves;
@@ -40,6 +44,7 @@ The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two 
 - **Stale timers:** a result dialog or Spirit move could appear after restarting or leaving a match. Games could also be counted twice. Every timer now belongs to its match and is cancelled with it.
 - **Music:** music could stay paused after a quick off/on or a draw followed by Play Again.
 - **Dialog focus:** in the result and delete dialogs, Tab used to escape to the page behind, and Escape then stopped working. (Found in final QA.)
+- **Asset stamp:** `tools/stamp-assets.mjs` now updates an existing stamp; before, only the first one was written. Its test checks the real file hashes.
 
 ### Known limitations
 - The music and original sound effects have no recorded source or license (see `docs/assets.md`).

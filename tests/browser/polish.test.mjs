@@ -15,7 +15,7 @@ const chips = (game) => game.page.evaluate(() => [1, 2].map((n) => {
   const chip = document.getElementById(`sf-side-${n}`);
   const tag = chip.querySelector('.side-chip-tag');
   return {
-    glyph: chip.querySelector('.side-chip-glyph').textContent,
+    glyph: chip.querySelector('.side-chip-glyph use').getAttribute('href'),
     active: chip.classList.contains('is-active'),
     winner: chip.classList.contains('is-winner'),
     tag: tag.hidden ? '' : tag.textContent,
@@ -23,7 +23,7 @@ const chips = (game) => game.page.evaluate(() => [1, 2].map((n) => {
 }));
 
 const panel = (game, id) => game.page.evaluate((modal) => ({
-  emblem: [...document.querySelectorAll(`#${modal} .emblem-piece`)].map((el) => el.textContent),
+  emblem: [...document.querySelectorAll(`#${modal} .emblem-piece use`)].map((el) => el.getAttribute('href')),
   summary: document.querySelector(`#${modal} .modal-summary`).textContent,
 }), id);
 
@@ -40,8 +40,8 @@ test('Spirit of the Woods polish', { timeout: 300_000 }, async (t) => {
     const game = await openGame(harness, { viewport: { width: 1280, height: 800 } });
     await game.newMatch('two', { symbol: 'Feather' });
     assert.deepEqual(await chips(game), [
-      { glyph: '🪶', active: true, winner: false, tag: 'To move' },
-      { glyph: '🐚', active: false, winner: false, tag: '' },
+      { glyph: '#sf-feather', active: true, winner: false, tag: 'To move' },
+      { glyph: '#sf-shell', active: false, winner: false, tag: '' },
     ]);
     await game.tap(0);
     await game.waitForTurn("Player 2's Turn");
@@ -50,8 +50,8 @@ test('Spirit of the Woods polish', { timeout: 300_000 }, async (t) => {
     await game.tap(2); // Player 1 completes the top row
     assert.equal((await game.waitForResult()).title, 'Player 1 Wins!');
     assert.deepEqual(await chips(game), [
-      { glyph: '🪶', active: false, winner: true, tag: 'Winner' },
-      { glyph: '🐚', active: false, winner: false, tag: '' },
+      { glyph: '#sf-feather', active: false, winner: true, tag: 'Winner' },
+      { glyph: '#sf-shell', active: false, winner: false, tag: '' },
     ]);
     // The scores and labels the header always showed are still there.
     assert.deepEqual(await game.scores(), ['1', '0']);
@@ -64,7 +64,7 @@ test('Spirit of the Woods polish', { timeout: 300_000 }, async (t) => {
     await game.newMatch('two');
     for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
     await game.waitForResult();
-    assert.deepEqual(await panel(game, 'game-modal'), { emblem: ['🐚'], summary: 'Score · Player 1 1 · Player 2 0' });
+    assert.deepEqual(await panel(game, 'game-modal'), { emblem: ['#sf-shell'], summary: 'Score · Player 1 1 · Player 2 0' });
     assert.equal(await game.page.locator('#game-modal').getAttribute('aria-describedby'), 'modal-message modal-summary modal-achievements');
 
     await game.press('Play Again');
@@ -73,7 +73,7 @@ test('Spirit of the Woods polish', { timeout: 300_000 }, async (t) => {
     // A draw: shells 0 2 3 7 8, feathers 1 4 5 6.
     for (const i of [0, 1, 2, 4, 3, 5, 7, 6, 8]) await game.tap(i);
     assert.equal((await game.waitForResult()).title, 'Balance Achieved');
-    assert.deepEqual(await panel(game, 'game-modal'), { emblem: ['🐚', '🪶'], summary: 'Score · Player 1 1 · Player 2 0' });
+    assert.deepEqual(await panel(game, 'game-modal'), { emblem: ['#sf-shell', '#sf-feather'], summary: 'Score · Player 1 1 · Player 2 0' });
     assert.deepEqual((await chips(game)).map((c) => c.tag), ['', ''], 'no winner after a draw');
     assert.deepEqual(game.pageErrors, []);
   });

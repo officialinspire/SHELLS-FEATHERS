@@ -40,7 +40,9 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     assert.equal(await picture.locator('.checkers-square.light use').count(), 0, 'pieces only on dark squares');
 
     const more = page.locator('nav.hub-links').getByRole('link');
-    assert.deepEqual((await names(more)).map((n) => n.replace(/^\S+\s/, '')), ['Settings', 'Your Path']);
+    assert.deepEqual(await names(more), ['Settings', 'Your Path']);
+    // Each has a decorative icon drawn from the sprite (no emoji).
+    assert.deepEqual(await more.locator('svg use').evaluateAll((uses) => uses.map((u) => [u.getAttribute('href'), u.closest('svg').getAttribute('aria-hidden')])), [['#icon-gear', 'true'], ['#icon-trail', 'true']]);
     assert.deepEqual(game.pageErrors, []);
   });
 

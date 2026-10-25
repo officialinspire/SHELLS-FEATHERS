@@ -6,16 +6,19 @@
   <meta name="theme-color" content="#654321" />
   <meta name="description" content="Spirit of the Woods: peaceful forest games. Play Shells &amp; Feathers (tic-tac-toe) and Acorns &amp; Leaves (checkers) against the forest Spirit or a friend." />
   <title>Spirit of the Woods</title>
-  <link rel="stylesheet" href="styles.css?v=5bd436ff8b" />
+  <link rel="stylesheet" href="styles.css?v=5bd1c9cf82" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <!-- Acorns & Leaves pieces, used by the board, cards, rules and result panel.
-       Original artwork (docs/assets.md). Acorns: light wooden disc, dark rim,
-       acorn. Leaves: dark green disc, cream rim, two-tone leaf. Kings add a
-       gold ring, a second disc underneath and a crown. -->
+  <!-- All game artwork and icons, original to this project (docs/assets.md).
+       Acorns & Leaves: Acorns are light wooden discs with a dark rim and an
+       acorn; Leaves dark green discs with a cream rim and a two-tone leaf.
+       Kings add a gold ring, a second disc underneath and a crown that rises
+       above the piece, so their outline differs too. Shells & Feathers: a
+       pearl spiral shell and a barred feather. Icons are drawn in the text
+       color (currentColor). -->
   <svg class="svg-sprite" aria-hidden="true" focusable="false">
     <defs>
       <radialGradient id="al-acorn-face" cx="38%" cy="32%" r="75%">
@@ -48,10 +51,26 @@
         <path d="M50 22V88" fill="none" stroke="#2E6A3E" stroke-width="3" stroke-linecap="round" />
         <path d="M50 38L41 31M50 38L59 31M50 50L38 41M50 50L62 41M50 62L40 54M50 62L60 54" fill="none" stroke="#2E6A3E" stroke-width="2.5" stroke-linecap="round" />
       </g>
+      <!-- The king marker: a crown rising above the piece, so a king's outline
+           differs from an ordinary piece's at any size. -->
       <g id="al-crown">
-        <path d="M33 33L30 15L41 24L50 9L59 24L70 15L67 33Z" fill="url(#al-gold)" stroke="#3B2400" stroke-width="3" stroke-linejoin="round" />
-        <path d="M35 29H65" fill="none" stroke="#9C6F08" stroke-width="2.5" />
+        <path d="M23 33L18 9L35 20L50 3L65 20L82 9L77 33Z" fill="url(#al-gold)" stroke="#3B2400" stroke-width="3.5" stroke-linejoin="round" />
+        <path d="M25 28H75" fill="none" stroke="#9C6F08" stroke-width="3" />
+        <circle cx="50" cy="5" r="4" fill="#FFF3C4" stroke="#3B2400" stroke-width="2.5" />
+        <circle cx="18" cy="10" r="3.5" fill="#FFF3C4" stroke="#3B2400" stroke-width="2.5" />
+        <circle cx="82" cy="10" r="3.5" fill="#FFF3C4" stroke="#3B2400" stroke-width="2.5" />
       </g>
+      <!-- Shells & Feathers pieces -->
+      <radialGradient id="sf-pearl" cx="38%" cy="30%" r="80%">
+        <stop offset="0" stop-color="#FFFDF8" />
+        <stop offset="0.55" stop-color="#F6E9E0" />
+        <stop offset="1" stop-color="#DCC6D4" />
+      </radialGradient>
+      <linearGradient id="sf-plume" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#F7E6C4" />
+        <stop offset="0.6" stop-color="#D9A86A" />
+        <stop offset="1" stop-color="#A9703E" />
+      </linearGradient>
     </defs>
     <symbol id="al-acorn" viewBox="0 0 100 100">
       <circle cx="50" cy="50" r="45" fill="#3E2410" />
@@ -66,20 +85,65 @@
       <use href="#al-leaf-emblem" />
     </symbol>
     <symbol id="al-acorn-king" viewBox="0 0 100 100">
-      <circle cx="50" cy="55" r="44" fill="#3E2410" />
-      <circle cx="50" cy="49" r="44" fill="#3E2410" />
-      <circle cx="50" cy="49" r="39" fill="url(#al-gold)" />
-      <circle cx="50" cy="49" r="33" fill="url(#al-acorn-face)" />
-      <use href="#al-acorn-emblem" transform="translate(50 57) scale(0.7) translate(-50 -50)" />
+      <circle cx="50" cy="63" r="35" fill="#3E2410" />
+      <circle cx="50" cy="58" r="37" fill="#3E2410" />
+      <circle cx="50" cy="58" r="32.5" fill="url(#al-gold)" />
+      <circle cx="50" cy="58" r="27" fill="url(#al-acorn-face)" />
+      <use href="#al-acorn-emblem" transform="translate(50 62) scale(0.58) translate(-50 -50)" />
       <use href="#al-crown" />
     </symbol>
     <symbol id="al-leaf-king" viewBox="0 0 100 100">
-      <circle cx="50" cy="55" r="44" fill="#C9BC93" />
-      <circle cx="50" cy="49" r="44" fill="#FFF8DC" />
-      <circle cx="50" cy="49" r="39" fill="url(#al-gold)" />
-      <circle cx="50" cy="49" r="33" fill="url(#al-leaf-face)" />
-      <use href="#al-leaf-emblem" transform="translate(50 58) scale(0.68) translate(-50 -50)" />
+      <circle cx="50" cy="63" r="35" fill="#C9BC93" />
+      <circle cx="50" cy="58" r="37" fill="#FFF8DC" />
+      <circle cx="50" cy="58" r="32.5" fill="url(#al-gold)" />
+      <circle cx="50" cy="58" r="27" fill="url(#al-leaf-face)" />
+      <use href="#al-leaf-emblem" transform="translate(50 62) scale(0.56) translate(-50 -50)" />
       <use href="#al-crown" />
+    </symbol>
+    <!-- Shells & Feathers pieces (original artwork, docs/assets.md). -->
+    <!-- A spiral seashell: stacked whorls rising to a point, pearl body, blush opening. -->
+    <symbol id="sf-shell" viewBox="0 0 100 100">
+      <g transform="rotate(-28 50 52)">
+        <path d="M50 4C55 9 59 14 60 20C67 24 70 31 69 38C81 44 84 59 79 70C74 81 64 87 56 97H51C44 88 30 82 24 71C18 59 20 45 31 38C30 31 33 24 40 20C41 14 45 9 50 4Z" fill="url(#sf-pearl)" stroke="#4E3322" stroke-width="4" stroke-linejoin="round" />
+        <path d="M40 20C46 24 54 24 60 20M31 38C42 44 58 44 69 38" fill="none" stroke="#4E3322" stroke-width="3" stroke-linecap="round" />
+        <path d="M27 54C38 59 52 59 64 55M27 66C37 71 47 72 56 70" fill="none" stroke="#C5A3B0" stroke-width="2.6" stroke-linecap="round" />
+        <path d="M60 48C73 54 75 74 61 88C55 80 53 62 60 48Z" fill="#F0A99B" stroke="#4E3322" stroke-width="3" stroke-linejoin="round" />
+        <path d="M30 47C33 43 37 41 41 40" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.9" />
+      </g>
+    </symbol>
+    <!-- A soft feather: uneven barred vane with notches, downy base, bare quill. -->
+    <symbol id="sf-feather" viewBox="0 0 100 100">
+      <g transform="rotate(-40 50 50)">
+        <path d="M51 3C63 12 70 30 67 50C65 63 59 73 52 78H48C42 72 37 62 36 50C34 30 40 12 51 3Z" fill="url(#sf-plume)" stroke="#4A2C16" stroke-width="4" stroke-linejoin="round" />
+        <path d="M40 26L50 33L62 22M38 42L50 48L66 38M39 57L50 62L64 54" fill="none" stroke="#7A4A26" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M67 44L58 47M37 34L44 37M63 61L57 62" fill="none" stroke="#4A2C16" stroke-width="3" stroke-linecap="round" />
+        <path d="M44 74C40 77 37 80 35 84M47 77C45 81 44 84 44 88M54 76C58 79 61 82 63 85" fill="none" stroke="#C99A62" stroke-width="2.6" stroke-linecap="round" />
+        <path d="M50 7V98" fill="none" stroke="#4A2C16" stroke-width="3.8" stroke-linecap="round" />
+      </g>
+    </symbol>
+    <!-- Interface icons: 24 × 24, drawn in the current text color. -->
+    <symbol id="icon-tree" viewBox="0 0 24 24">
+      <path d="M12 2L5.5 10H9L4 16.5H10.5V22H13.5V16.5H20L15 10H18.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+    </symbol>
+    <symbol id="icon-pair" viewBox="0 0 24 24">
+      <circle cx="8" cy="7.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8" />
+      <circle cx="16.5" cy="8.5" r="2.8" fill="none" stroke="currentColor" stroke-width="1.8" />
+      <path d="M2.5 20C2.5 15.6 5 13.2 8 13.2S13.5 15.6 13.5 20M13.8 14.6C14.6 13.9 15.5 13.6 16.5 13.6C19.4 13.6 21.5 15.8 21.5 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+    </symbol>
+    <symbol id="icon-gear" viewBox="0 0 24 24">
+      <path d="M19.15 10.08 L21.68 10.47 L21.68 13.53 L19.15 13.92 L18.41 15.70 L19.93 17.76 L17.76 19.93 L15.70 18.41 L13.92 19.15 L13.53 21.68 L10.47 21.68 L10.08 19.15 L8.30 18.41 L6.24 19.93 L4.07 17.76 L5.59 15.70 L4.85 13.92 L2.32 13.53 L2.32 10.47 L4.85 10.08 L5.59 8.30 L4.07 6.24 L6.24 4.07 L8.30 5.59 L10.08 4.85 L10.47 2.32 L13.53 2.32 L13.92 4.85 L15.70 5.59 L17.76 4.07 L19.93 6.24 L18.41 8.30Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+      <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7" />
+    </symbol>
+    <symbol id="icon-trail" viewBox="0 0 24 24">
+      <path d="M6 21C6 17 18 17 18 13S6 9 6 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="2.2 3" />
+      <path d="M15.5 3.5C18.5 3.2 20.5 4.8 20.5 7.5C17.5 7.8 15.5 6.2 15.5 3.5Z" fill="currentColor" />
+      <circle cx="6" cy="21" r="1.6" fill="currentColor" />
+    </symbol>
+    <symbol id="icon-mist" viewBox="0 0 24 24">
+      <path d="M3 8C5 6.5 7 6.5 9 8S13 9.5 15 8 19 6.5 21 8M3 13C5 11.5 7 11.5 9 13S13 14.5 15 13 19 11.5 21 13M5 18C7 16.5 9 16.5 11 18S15 19.5 17 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+    </symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24">
+      <path d="M5 12.5L10 17.5L19 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
     </symbol>
   </svg>
 
@@ -97,9 +161,9 @@
         <article class="game-card" aria-labelledby="sf-card-title">
           <div class="card-top">
             <div class="card-art mini-board" aria-hidden="true">
-              <span>🐚</span><span></span><span>🪶</span>
-              <span></span><span>🐚</span><span></span>
-              <span>🪶</span><span></span><span>🐚</span>
+              <span><svg class="mini-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg></span><span></span><span><svg class="mini-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg></span>
+              <span></span><span><svg class="mini-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg></span><span></span>
+              <span><svg class="mini-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg></span><span></span><span><svg class="mini-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg></span>
             </div>
             <div class="card-heading">
               <h3 id="sf-card-title" class="card-title">Shells &amp; Feathers</h3>
@@ -132,8 +196,8 @@
       </div>
 
       <nav class="hub-links" aria-label="More">
-        <a class="btn btn-quiet" href="#/settings"><span aria-hidden="true">⚙️</span> Settings</a>
-        <a class="btn btn-quiet" href="#/your-path"><span aria-hidden="true">🏆</span> Your Path</a>
+        <a class="btn btn-quiet" href="#/settings"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-gear" /></svg> Settings</a>
+        <a class="btn btn-quiet" href="#/your-path"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-trail" /></svg> Your Path</a>
       </nav>
     </section>
 
@@ -141,7 +205,7 @@
     <section id="sf-setup-screen" class="screen" aria-labelledby="sf-setup-title">
       <div class="screen-top"><a class="back-link" href="#/" data-up>← All games</a></div>
       <header class="screen-header">
-        <p class="eyebrow" aria-hidden="true">🐚 🪶</p>
+        <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg></p>
         <h2 id="sf-setup-title" tabindex="-1">Shells &amp; Feathers</h2>
         <p class="screen-subtitle">Tic-Tac-Toe · three in a row wins</p>
       </header>
@@ -150,8 +214,8 @@
         <fieldset class="option-group">
           <legend>Player 1 plays as</legend>
           <div class="segmented">
-            <label class="segment"><input type="radio" name="sf-symbol" value="shell" /><span>🐚 Shell</span></label>
-            <label class="segment"><input type="radio" name="sf-symbol" value="feather" /><span>🪶 Feather</span></label>
+            <label class="segment"><input type="radio" name="sf-symbol" value="shell" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> Shell</span></label>
+            <label class="segment"><input type="radio" name="sf-symbol" value="feather" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg> Feather</span></label>
           </div>
         </fieldset>
         <fieldset class="option-group">
@@ -167,12 +231,12 @@
 
       <div class="mode-choices">
         <a class="mode-btn" href="#/shells-feathers/play/single">
-          <span class="mode-icon" aria-hidden="true">🎯</span>
+          <span class="mode-icon" aria-hidden="true"><svg class="icon icon-lg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-tree" /></svg></span>
           <span class="mode-title">Play the Spirit</span>
           <span class="mode-desc">One player, using the difficulty above</span>
         </a>
         <a class="mode-btn" href="#/shells-feathers/play/two">
-          <span class="mode-icon" aria-hidden="true">👥</span>
+          <span class="mode-icon" aria-hidden="true"><svg class="icon icon-lg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-pair" /></svg></span>
           <span class="mode-title">Two Players</span>
           <span class="mode-desc">Take turns on one device</span>
         </a>
@@ -187,12 +251,12 @@
         <p class="match-info" id="match-info"></p>
         <div class="score-display side-chips">
           <div class="side-chip" id="sf-side-1" data-player="1">
-            <span class="side-chip-glyph" id="player1-glyph" aria-hidden="true">🐚</span>
+            <span class="side-chip-glyph" id="player1-glyph" aria-hidden="true"><svg class="chip-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg></span>
             <span class="side-chip-text"><span class="score-label" id="player1-label">Shell: </span><span class="side-chip-count" id="player1-score">0</span></span>
             <span class="side-chip-tag" hidden></span>
           </div>
           <div class="side-chip" id="sf-side-2" data-player="2">
-            <span class="side-chip-glyph" id="player2-glyph" aria-hidden="true">🪶</span>
+            <span class="side-chip-glyph" id="player2-glyph" aria-hidden="true"><svg class="chip-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg></span>
             <span class="side-chip-text"><span class="score-label" id="player2-label">Feather: </span><span class="side-chip-count" id="player2-score">0</span></span>
             <span class="side-chip-tag" hidden></span>
           </div>
@@ -226,7 +290,7 @@
     <section id="sf-howto-screen" class="screen" aria-labelledby="sf-howto-title">
       <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
       <header class="screen-header">
-        <p class="eyebrow" aria-hidden="true">🐚 🪶</p>
+        <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg></p>
         <h2 id="sf-howto-title" tabindex="-1">How to Play Shells &amp; Feathers</h2>
         <p class="screen-subtitle">Tic-Tac-Toe</p>
       </header>
@@ -291,12 +355,12 @@
 
       <div class="mode-choices">
         <a class="mode-btn" id="al-play-single" href="#/acorns-leaves/play/single">
-          <span class="mode-icon" aria-hidden="true">🎯</span>
+          <span class="mode-icon" aria-hidden="true"><svg class="icon icon-lg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-tree" /></svg></span>
           <span class="mode-title">Play the Spirit</span>
           <span class="mode-desc">One player, with the side and difficulty above</span>
         </a>
         <a class="mode-btn" id="al-play-two" href="#/acorns-leaves/play/two">
-          <span class="mode-icon" aria-hidden="true">👥</span>
+          <span class="mode-icon" aria-hidden="true"><svg class="icon icon-lg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-pair" /></svg></span>
           <span class="mode-title">Two Players</span>
           <span class="mode-desc">Acorns and Leaves take turns on one device</span>
         </a>
@@ -458,7 +522,7 @@
       <p class="storage-note" id="path-storage-note" role="status" hidden>This browser isn’t saving anything right now (storage is blocked or full). New results last until you close the page.</p>
 
       <div class="panel path-panel" id="sf-path">
-        <h3 class="panel-title"><span aria-hidden="true">🐚</span> Shells &amp; Feathers</h3>
+        <h3 class="panel-title"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> Shells &amp; Feathers</h3>
         <h4>You against the Spirit</h4>
         <div class="stats-container">
           <div class="stat-card"><div class="stat-value" id="sf-wins">0</div><div class="stat-label">Wins</div></div>
@@ -569,7 +633,7 @@
          turns; the board behind it holds no pieces. -->
     <div id="al-handoff" class="handoff" role="dialog" aria-modal="true" aria-labelledby="al-handoff-title" aria-describedby="al-handoff-text" hidden>
       <div class="handoff-content">
-        <p class="handoff-icon" aria-hidden="true">🌫️</p>
+        <p class="handoff-icon" aria-hidden="true"><svg class="icon icon-xl" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-mist" /></svg></p>
         <h3 id="al-handoff-title" class="handoff-title">Acorns' turn</h3>
         <p id="al-handoff-text" class="handoff-text"></p>
         <button type="button" class="btn btn-primary handoff-btn" id="al-handoff-button" data-action="al-take-control">Show the board</button>
@@ -596,7 +660,7 @@
 
     <!-- Achievement notices during play (taps pass through) -->
     <div id="toast-region" class="toast-region" role="status" aria-live="polite" data-state="idle">
-      <p id="toast" class="toast" hidden><span class="toast-mark" aria-hidden="true">✓</span><span id="toast-text"></span></p>
+      <p id="toast" class="toast" hidden><span class="toast-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-check" /></svg></span><span id="toast-text"></span></p>
     </div>
   </main>
 
@@ -628,7 +692,7 @@
       "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
       "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
       "./src/app/navigation.js": "./src/app/navigation.js?v=df1ca271ed",
-      "./src/app/path-screen.js": "./src/app/path-screen.js?v=76a2bafe0a",
+      "./src/app/path-screen.js": "./src/app/path-screen.js?v=96702974d7",
       "./src/app/router.js": "./src/app/router.js?v=1707f9f2ce",
       "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=4c5ae018aa",
       "./src/app/toast.js": "./src/app/toast.js?v=dd91f8d7e8",
@@ -636,7 +700,7 @@
       "./src/games/acorns-leaves/engine.js": "./src/games/acorns-leaves/engine.js?v=f4ae64291c",
       "./src/games/acorns-leaves/fog-ai.js": "./src/games/acorns-leaves/fog-ai.js?v=6d7e5fc1ab",
       "./src/games/acorns-leaves/fog.js": "./src/games/acorns-leaves/fog.js?v=c6a4aaa2c2",
-      "./src/games/acorns-leaves/pieces.js": "./src/games/acorns-leaves/pieces.js?v=409be175d4",
+      "./src/games/acorns-leaves/pieces.js": "./src/games/acorns-leaves/pieces.js?v=778ba9533a",
       "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=17d01dd096",
       "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=bc2760e7a3",
       "./src/games/acorns-leaves/text.js": "./src/games/acorns-leaves/text.js?v=5d5c8090df",
@@ -647,10 +711,11 @@
       "./src/games/shells-feathers/rules.js": "./src/games/shells-feathers/rules.js?v=6f838579f5",
       "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=258f90a383",
       "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=94021cc0b1",
-      "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=a9a44bcb10",
+      "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=4f0505ed00",
       "./src/main.js": "./src/main.js?v=b0d0ca161a",
       "./src/shared/achievements.js": "./src/shared/achievements.js?v=8ea8ab6102",
       "./src/shared/audio.js": "./src/shared/audio.js?v=7d60edf7a0",
+      "./src/shared/icons.js": "./src/shared/icons.js?v=6688127809",
       "./src/shared/profile.js": "./src/shared/profile.js?v=74e5693fb0",
       "./src/shared/save-data.js": "./src/shared/save-data.js?v=3c16c6a91b",
       "./src/shared/storage.js": "./src/shared/storage.js?v=40ebff7603",

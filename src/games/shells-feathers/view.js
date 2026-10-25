@@ -19,8 +19,10 @@
 // session score and any achievements the result unlocked. It takes focus and makes the board inert while open;
 // "View Board" (or Escape) closes it to show the final board.
 import { DIFFICULTY_NAMES } from './ai.js';
+import { svgIcon } from '../../shared/icons.js';
 
-const GLYPHS = { shell: '🐚', feather: '🪶' };
+// The pieces are drawn from the SVG sprite (#sf-shell, #sf-feather).
+const piece = (doc, symbol, className) => svgIcon(doc, `#sf-${symbol}`, className);
 const NAMES = { shell: 'Shell', feather: 'Feather' };
 const PLAYER1_COLOR = '#40E0D0';
 const PLAYER2_COLOR = '#FF6B35';
@@ -68,8 +70,8 @@ export function lineName([a, , c]) {
 
 // Status line after a move: who moved where, then whose turn it is.
 export function moveStatus({ actor, symbol, index }) {
-  const piece = symbol === 'shell' ? 'a shell' : 'a feather';
-  return `${ACTORS[actor]} placed ${piece} on ${squareName(index)}.`;
+  const placed = symbol === 'shell' ? 'a shell' : 'a feather';
+  return `${ACTORS[actor]} placed ${placed} on ${squareName(index)}.`;
 }
 
 export function turnStatus(mode, isPlayer1) {
@@ -170,7 +172,7 @@ export function createShellsFeathersView(doc) {
     clearBoard() {
       lastMove = '';
       for (const cell of cells) {
-        cell.textContent = '';
+        cell.replaceChildren();
         delete cell.dataset.symbol;
         cell.classList.remove('occupied', 'winner');
       }
@@ -188,7 +190,7 @@ export function createShellsFeathersView(doc) {
     // actor: 'you' | 'spirit' | 'player1' | 'player2'
     placePiece(index, symbol, actor) {
       const cell = cells[index];
-      cell.textContent = GLYPHS[symbol];
+      cell.replaceChildren(piece(doc, symbol, 'sf-piece'));
       cell.dataset.symbol = symbol;
       cell.classList.add('occupied');
       cell.setAttribute('aria-disabled', 'true');
@@ -203,17 +205,16 @@ export function createShellsFeathersView(doc) {
     },
     showMatchInfo({ mode, difficulty, player1Symbol: symbol }) {
       player1Symbol = symbol;
-      byId('player1-glyph').textContent = GLYPHS[symbol];
-      byId('player2-glyph').textContent = GLYPHS[OTHER[symbol]];
+      byId('player1-glyph').replaceChildren(piece(doc, symbol, 'chip-piece'));
+      byId('player2-glyph').replaceChildren(piece(doc, OTHER[symbol], 'chip-piece'));
       byId('match-info').textContent = mode === 'single'
-        ? `Against the Spirit · ${DIFFICULTY_NAMES[difficulty]} · You play ${GLYPHS[symbol]} ${NAMES[symbol]}`
-        : `Two players · Player 1 plays ${GLYPHS[symbol]} ${NAMES[symbol]}`;
+        ? `Against the Spirit · ${DIFFICULTY_NAMES[difficulty]} · You play ${NAMES[symbol]}`
+        : `Two players · Player 1 plays ${NAMES[symbol]}`;
     },
     showTurn(mode, isPlayer1, symbol) {
       const el = byId('turn-indicator');
-      el.textContent = mode === 'single'
-        ? (isPlayer1 ? 'Your Turn' : "Spirit's Turn")
-        : `Player ${isPlayer1 ? 1 : 2}'s Turn ${GLYPHS[symbol]}`;
+      const text = mode === 'single' ? (isPlayer1 ? 'Your Turn' : "Spirit's Turn") : `Player ${isPlayer1 ? 1 : 2}'s Turn`;
+      el.replaceChildren(text, piece(doc, symbol, 'turn-piece'));
       el.style.color = isPlayer1 ? PLAYER1_COLOR : PLAYER2_COLOR;
       markChips(isPlayer1 ? { 1: 'To move' } : { 2: 'To move' });
       announce(`${lastMove || 'New round.'} ${turnStatus(mode, isPlayer1)}`);
@@ -246,10 +247,10 @@ export function createShellsFeathersView(doc) {
       const emblem = byId('modal-emblem');
       const pieces = outcome === 'draw' ? [player1Symbol, OTHER[player1Symbol]] : [winner];
       emblem.replaceChildren(...pieces.map((symbol) => {
-        const piece = doc.createElement('span');
-        piece.className = 'emblem-piece';
-        piece.textContent = GLYPHS[symbol];
-        return piece;
+        const medallion = doc.createElement('span');
+        medallion.className = 'emblem-piece';
+        medallion.append(piece(doc, symbol, 'emblem-art'));
+        return medallion;
       }));
       modal.dataset.outcome = outcome;
       modal.classList.add('active');
