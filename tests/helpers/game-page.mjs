@@ -19,12 +19,23 @@ export async function startHarness(t) {
   return { base, browser };
 }
 
+// Every load opens on "Touch to start" (src/app/start-gate.js). Tests about
+// the game pass it as a player's first tap would, with the intro already
+// seen this session; `gate: true` leaves the start screen and intro to the
+// test.
+const PASS_START_GATE = `(() => {
+  try { sessionStorage.setItem('spiritOfTheWoods:introSeen', '1'); } catch {}
+  document.addEventListener('DOMContentLoaded', () => document.getElementById('start-gate')?.click());
+})();`;
+
 // Opens the game's hub in a fresh browser context (empty storage). `device`
 // is a Playwright device descriptor (touch devices tap instead of click);
 // `storage` seeds localStorage before the game's first load; `initScript`
 // runs before the page's own scripts on every load; `fakeClock` gives the
 // page Playwright's controllable clock (timers run only on page.clock.runFor).
-export async function openGame({ base, browser }, { viewport = { width: 390, height: 844 }, device, storage, initScript, fakeClock = false } = {}) {
+export async function openGame({ base, browser }, {
+  viewport = { width: 390, height: 844 }, device, storage, initScript, fakeClock = false, gate = false,
+} = {}) {
   const context = await browser.newContext(device ?? { viewport });
   const page = await context.newPage();
   const game = new GamePage(page, base, { touch: Boolean(device?.hasTouch) });
@@ -47,6 +58,7 @@ export async function openGame({ base, browser }, { viewport = { width: 390, hei
       for (const [key, value] of Object.entries(entries)) localStorage.setItem(key, value);
     }, storage);
   }
+  if (!gate) await page.addInitScript({ content: PASS_START_GATE });
   if (initScript) await page.addInitScript(initScript);
   if (fakeClock) await page.clock.install();
   await page.goto(`${base}/index.html`);

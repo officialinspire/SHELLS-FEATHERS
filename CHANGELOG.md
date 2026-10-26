@@ -38,6 +38,8 @@ The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two 
   - Two players in Fog of War resume behind the handoff screen.
 - **Tutorial:** a one-minute practice for each game on its own board, offered once and easy to skip. Nothing in it counts. Its Fog of War step only ever shows what you could see.
 
+- **Opening, as in every INSPIRE game:** "Touch, click, or press any key to start", then the INSPIRE Software intro, once per browser session and skippable. The music starts when the hub appears after the intro.
+
 ### Changed
 - **Visual identity:**
   - **Look:** one woodland tabletop look across the hub and both games, built on design tokens (type, spacing, surfaces, shadows, borders, icons, states).

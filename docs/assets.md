@@ -15,6 +15,8 @@ Every file, font and picture the site uses, where it came from, and the terms it
 | `sounds/reveal.wav` | `#reveal-sound` | Fog of War: a hidden piece found by a blocked try (a short breath of air and one high note) | Original, `tools/make-sounds.py` | Part of this repository |
 | `sounds/result-draw.wav`, `sounds/result-loss.wav` | `#draw-sound`, `#loss-sound` | Results: a settling fifth for a draw, a gentle falling step for a loss | Original, `tools/make-sounds.py` | Part of this repository |
 | `sounds/achievement.wav` | `#achievement-sound` | An achievement unlocked during play: two quick bright notes | Original, `tools/make-sounds.py` | Part of this repository |
+| `inspiresoftwareintro.mp4` | `#intro-video`, set only when the intro plays | The INSPIRE Software intro after "Touch to start" (5.9 s, H.264/AAC, 272 KB), once per browser session | INSPIRE's own studio intro, copied unchanged from Bird Mahjong and Emoji Elements (the same file in both) | INSPIRE's own |
+| `inspire-logo.png` | Start screen byline | The INSPIRE logo, "by INSPIRE" (600×181, white letters with a dark outline) | INSPIRE's own logo, copied unchanged from Bird Mahjong (`logo.png`) | INSPIRE's own |
 | `sounds/select.wav` | `#select-sound` | Picking up a checker: a short, soft shell click (0.09 s) | Original, `tools/make-sounds.py` (Stage 13) | Part of this repository |
 | `sounds/invalid.wav` | `#invalid-sound` | A refused tap: a soft leaf rustle, quiet and brief (0.2 s), never an alarm | Original, `tools/make-sounds.py` (Stage 13) | Part of this repository |
 | `sounds/multi.wav` | `#multi-sound` | Two or more captures in one move: a short two-note chirp, G5 to D6 (0.36 s) | Original, `tools/make-sounds.py` (Stage 13) | Part of this repository |
