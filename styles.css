@@ -974,6 +974,71 @@ h2[tabindex="-1"]:focus {
     color: var(--text-muted);
 }
 
+/* Achievement notice: it takes the match line's own box for a few seconds,
+   so it never covers the board, the Menu button or the turn chips. */
+.match-info-slot {
+    position: relative;
+    flex: 1;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.match-info-slot.is-noticing .match-info {
+    visibility: hidden;
+}
+
+.match-notice {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-family: var(--font-label);
+    font-size: 0.86rem;
+    font-weight: bold;
+    line-height: 1.2;
+    color: var(--gold-300);
+    pointer-events: none;
+    animation: noticeIn var(--gentle) var(--ease-out);
+}
+
+.match-notice[hidden] {
+    display: none;
+}
+
+.match-notice-text {
+    display: -webkit-box;
+    min-width: 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.notice-medal {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle at 35% 30%, var(--gold-300), var(--gold-500) 70%);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(255, 212, 71, 0.3);
+    color: var(--ink);
+}
+
+.notice-medal .icon {
+    width: 18px;
+    height: 18px;
+}
+
+@keyframes noticeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .menu-btn {
     flex: none;
     display: inline-flex;
@@ -1764,57 +1829,6 @@ kbd {
     .confirm-buttons .btn-danger:where(:not(:disabled)):hover {
         background: #A3381A;
     }
-}
-
-/* Achievement notice: top of the screen, never in the way of a tap. */
-.toast-region {
-    position: fixed;
-    top: max(10px, env(safe-area-inset-top));
-    left: 50%;
-    z-index: 1200;
-    width: min(420px, calc(100vw - 32px));
-    transform: translateX(-50%);
-    pointer-events: none;
-}
-
-.toast {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    background: rgba(43, 27, 14, 0.94);
-    border: 2px solid var(--gold-soft);
-    border-radius: 14px;
-    box-shadow: 0 6px 16px var(--shadow);
-    font-family: var(--font-body);
-    font-size: 0.95rem;
-    line-height: 1.35;
-    animation: toastIn var(--gentle) var(--ease-out);
-}
-
-.toast-mark {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
-    background: var(--gold-soft);
-    border-radius: 50%;
-    color: var(--ink);
-}
-
-.toast-mark .icon {
-    width: 16px;
-    height: 16px;
-}
-
-.toast[hidden] {
-    display: none;
-}
-
-@keyframes toastIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .modal-buttons {
@@ -2623,81 +2637,302 @@ kbd {
     text-align: left;
 }
 
-.achievement-count {
+.danger-wide {
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Your Path: each game's achievement count, and the way to the journal. */
+.path-journal-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 14px;
+}
+
+.journal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    font-family: var(--font-label);
+    font-weight: bold;
+    color: var(--sand);
+}
+
+.journal-link .icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Achievement journal: four tabs (two by two on a phone), then one list per
+   part of each book: one column on a phone, two where there is room. */
+.journal-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto var(--space-3);
+}
+
+@media (min-width: 620px) {
+    .journal-tabs {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* Narrow phones: the names alone keep the tabs short. */
+@media (max-width: 419px) {
+    .journal-tab .icon,
+    .journal-tab .icon-piece {
+        display: none;
+    }
+}
+
+.journal-tab {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2px 6px;
+    min-height: 48px;
+    padding: 6px 10px;
+    background: rgba(43, 27, 14, 0.72);
+    border: 2px solid rgba(245, 222, 179, 0.35);
+    border-radius: 12px;
+    font-family: var(--font-label);
+    font-size: 0.9rem;
+    font-weight: bold;
+    line-height: 1.2;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.journal-tab .icon,
+.journal-tab .icon-piece {
+    flex: none;
+    width: 20px;
+    height: 20px;
+}
+
+.journal-tab .tab-count {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: normal;
+    color: var(--text-muted);
+}
+
+.journal-tab[aria-selected="true"] {
+    background: linear-gradient(145deg, var(--wood-500), var(--wood-600));
+    border-color: var(--gold-300);
+}
+
+@media (hover: hover) {
+    .journal-tab[aria-selected="false"]:hover {
+        border-color: var(--sand);
+    }
+}
+
+.journal-panel {
+    max-width: 760px;
+    padding: 14px;
+}
+
+@media (min-width: 600px) {
+    .journal-panel {
+        padding: 20px 24px;
+    }
+}
+
+.journal-book {
+    margin: 22px 0 2px;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+}
+
+.journal-book-count {
+    font-family: var(--font-body);
     font-size: 0.9rem;
     color: var(--text-muted);
 }
 
-.achievements {
+.journal-section {
+    margin: 14px 0 8px;
+    font-family: var(--font-label);
+    font-size: 0.95rem;
+    color: var(--sand);
+}
+
+.journal-panel > :first-child {
+    margin-top: 0;
+}
+
+.journal-list {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
     list-style: none;
 }
 
-.achievement {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 12px;
-    padding: 10px 12px;
-    border: 1.5px solid rgba(245, 222, 179, 0.3);
+@media (min-width: 720px) {
+    .journal-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.journal-entry {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(43, 27, 14, 0.45);
+    border: 1.5px solid rgba(245, 222, 179, 0.28);
     border-radius: 12px;
     font-family: var(--font-body);
 }
 
-.achievement-mark {
-    flex: none;
+.medal {
     display: grid;
     place-items: center;
-    width: 28px;
-    height: 28px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
 }
 
-.achievement-mark .icon {
-    width: 18px;
-    height: 18px;
+.medal-icon {
+    width: 24px;
+    height: 24px;
 }
 
-.achievement-text {
+@media (min-width: 600px) {
+    .journal-entry {
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 12px;
+        padding: 10px 12px;
+    }
+
+    .medal {
+        width: 44px;
+        height: 44px;
+    }
+
+    .medal-icon {
+        width: 26px;
+        height: 26px;
+    }
+}
+
+.entry-body {
     display: flex;
-    flex: 1 1 12em;
     flex-direction: column;
     gap: 2px;
     min-width: 0;
 }
 
-.achievement-text strong {
-    font-family: var(--font-label);
+/* The title, and the state beside it (under it when there is no room). */
+.entry-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 10px;
 }
 
-.achievement-state {
+.entry-title {
+    font-family: var(--font-label);
+    font-size: 1rem;
+}
+
+.entry-desc {
+    font-size: 0.9rem;
+    line-height: 1.32;
+}
+
+.entry-note {
+    font-size: 0.84rem;
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+.entry-state {
     margin-left: auto;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.journal-entry.is-unlocked {
+    background: linear-gradient(160deg, rgba(233, 181, 38, 0.16), rgba(43, 27, 14, 0.5));
+    border-color: rgba(255, 212, 71, 0.55);
+}
+
+.journal-entry.is-unlocked .medal {
+    background: radial-gradient(circle at 35% 30%, var(--gold-300), var(--gold-500) 70%);
+    box-shadow: inset 0 -2px 0 rgba(43, 27, 14, 0.25), 0 0 0 2px rgba(255, 212, 71, 0.3);
+    color: var(--ink);
+}
+
+.journal-entry.is-unlocked .entry-state {
+    color: var(--gold-300);
+}
+
+.journal-entry.is-locked .medal {
+    border: 2px dashed rgba(245, 222, 179, 0.55);
+    color: var(--text-muted);
+}
+
+.journal-entry.is-locked .medal-icon {
+    opacity: 0.75;
+}
+
+.entry-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+    font-size: 0.84rem;
+    color: var(--text-muted);
+}
+
+.progress-bar {
+    flex: 1;
+    max-width: 160px;
+    height: 6px;
+    overflow: hidden;
+    background: rgba(245, 222, 179, 0.2);
+    border-radius: 3px;
+}
+
+.progress-fill {
+    display: block;
+    height: 100%;
+    background: var(--moss-200);
+    border-radius: 3px;
+}
+
+.entry-parts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    margin-top: 2px;
+}
+
+.entry-part {
+    padding: 2px 8px;
+    border: 1px solid rgba(245, 222, 179, 0.35);
+    border-radius: 999px;
     font-size: 0.8rem;
     color: var(--text-muted);
 }
 
-.achievement.is-unlocked {
-    background: rgba(64, 224, 208, 0.14);
-    border-color: rgba(64, 224, 208, 0.6);
+.entry-part.is-done {
+    border-color: var(--moss-200);
+    color: var(--moss-200);
 }
 
-.achievement.is-unlocked .achievement-mark {
-    background: var(--turquoise);
-    color: var(--ink);
-}
-
-.achievement.is-locked .achievement-text {
-    opacity: 0.8;
-}
-
-.achievement.is-locked .achievement-mark {
-    border: 2px dashed var(--sand);
-}
-
-.danger-wide {
-    width: 100%;
-    margin-top: 20px;
+.journal-hint {
+    max-width: 760px;
+    margin: var(--space-3) auto 0;
 }
 
 .path-panel h5 {

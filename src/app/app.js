@@ -28,6 +28,7 @@ import { createRouter, documentTitle } from './router.js';
 import { initSettingsScreen, applyMotion } from './settings-screen.js';
 import { createSoundMotion } from './sound-motion.js';
 import { createPathScreen } from './path-screen.js';
+import { createJournalScreen, TAB_PATHS } from './journal-screen.js';
 import { createConfirmDialog } from './confirm-dialog.js';
 import { createToast } from './toast.js';
 import { installDialogFocus } from './dialog-focus.js';
@@ -72,31 +73,47 @@ export function createApp({ doc, win }) {
   });
   const checkersView = createAcornsLeavesView(doc);
   const checkers = createAcornsLeavesSession({
-    view: checkersView, audio, feedback, profile, clock: win, notify: (achievements) => toast.achievements(achievements),
+    view: checkersView, audio, feedback, profile, clock: win, notify: (achievements) => toast.achievements('al', achievements),
   });
   const path = createPathScreen({
     doc, profile, feedback, confirmDialog,
   });
   let settingsScreen = null;
   let firstRoute = true;
+  let router = null;
+  // A journal tab has its own URL; changing tabs replaces it.
+  const journal = createJournalScreen({
+    doc,
+    profile,
+    onTab(tab) {
+      doc.title = documentTitle(router.replace(TAB_PATHS[tab]));
+    },
+  });
 
   const nav = createNavigator(doc, {
     // Returning to the hub restarts the music (as v1's home screen did); the
     // first page load waits for a click, since browsers block autoplay.
     'hub-screen': { enter: () => { if (!firstRoute) audio.startMusic(); } },
     'path-screen': { enter: () => path.render() },
+    'journal-screen': { enter: (tab) => journal.show(tab) },
     'settings-screen': { enter: () => settingsScreen?.show() },
     'game-screen': {
       enter: (mode) => session.enter(mode),
-      leave: () => session.leave(),
+      leave: () => {
+        session.leave();
+        toast.clear();
+      },
     },
     'al-game-screen': {
       enter: (mode, variant) => checkers.enter(mode, variant),
-      leave: () => checkers.leave(),
+      leave: () => {
+        checkers.leave();
+        toast.clear();
+      },
     },
   });
 
-  const router = createRouter({
+  router = createRouter({
     win,
     onChange(route) {
       nav.show(route.screen, ...(route.args ?? []));
@@ -174,16 +191,29 @@ export function createApp({ doc, win }) {
     });
     const sfSettings = menuSettings('sf-menu');
     const alSettings = menuSettings('al-menu');
+    // The match menu holds the match, and any achievement notice with it.
     view.bindCells((index) => session.selectCell(index), {
-      onPause: () => session.pause(),
-      onResume: () => session.resume(),
+      onPause: () => {
+        session.pause();
+        toast.hold('menu');
+      },
+      onResume: () => {
+        session.resume();
+        toast.release('menu');
+      },
       onSettings: () => sfSettings.show(),
     });
     checkersView.bind({
       onSelect: (square) => checkers.selectSquare(square),
       onCancel: () => checkers.cancelSelection(),
-      onPause: () => checkers.pause(),
-      onResume: () => checkers.resume(),
+      onPause: () => {
+        checkers.pause();
+        toast.hold('menu');
+      },
+      onResume: () => {
+        checkers.resume();
+        toast.release('menu');
+      },
       onSettings: () => alSettings.show(),
     });
     openHelpWhereItFits();
@@ -205,8 +235,13 @@ export function createApp({ doc, win }) {
         if (doc.hidden) game.pause('hidden');
         else game.resume('hidden');
       }
-      if (doc.hidden) audio.suspend();
-      else audio.resume();
+      if (doc.hidden) {
+        toast.hold('hidden');
+        audio.suspend();
+      } else {
+        toast.release('hidden');
+        audio.resume();
+      }
     });
     audio.startMusic();
     router.start();

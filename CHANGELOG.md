@@ -13,7 +13,12 @@ The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two 
 - **Your Path:**
   - each game's records, with your games against the Spirit kept apart from two-player games;
   - Classic and Fog side by side;
-  - **13 achievements**, each unlocked once and dated.
+  - achievements, each unlocked once and dated.
+- **Achievement journal:** 22 achievements in a journal with tabs for All, Shells & Feathers, Acorns & Leaves and the Collection. Each has an original icon, its exact rule, progress where it means something, and the date it was unlocked.
+  - **New:** First Game in Acorns & Leaves, a win with each side (shells, feathers, acorns, leaves), Passing in the Mist (two-player Fog), and the Collection (Two Paths, Friend of the Woods, Every Side).
+  - **Counting:** your games against the Spirit and two-player games on the device are counted apart.
+  - **Earlier unlocks:** kept with their dates; new ones are added only where saved records prove them, never guessed.
+  - **Notices:** an achievement unlocked during play is told in the match header, in the match line's place, never over the board or its controls.
 - **Clearing data:** clearing a game's progress or deleting all saved data lists exactly what will be deleted first.
 - **Sounds:** new original sounds for moves, captures, crowning, Fog reveals, draws, losses and achievements.
 - **Feedback:** one shared feedback service plays each event's sound, optional vibration and animation exactly once:

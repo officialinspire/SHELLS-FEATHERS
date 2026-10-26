@@ -77,6 +77,7 @@ On a wide screen a side panel beside the board shows whose turn it is, what to d
   - **Haptics:** short, gentle vibrations for your own moves, captures, crowning, a refused move, results and achievements. Off until you turn it on, and only where the browser can vibrate (Android Chrome can; Safari on iPhone and iPad and most desktop browsers can't, and Settings says so). The Spirit's moves and hovering never vibrate.
   - Sound starts only after your first tap, click or key press, and pauses while the page is hidden.
   - Each game's own options (pieces, side, rules, difficulty) are on that game's screen.
+- **Achievement Journal** (Journal, on the hub): every achievement of both games and the Collection, in tabs, each with its rule, progress and the date it was unlocked. Wins against the Spirit are counted apart from two-player games on the device, and nothing is unlocked from guesses. An achievement unlocked during play is told briefly in the match header, where the mode and difficulty are shown, never over the board.
 - **Your Path** shows each game's records:
   - your games against the Spirit by difficulty, kept apart from two-player games on the device (a two-player win never counts as yours);
   - Classic and Fog of War side by side.

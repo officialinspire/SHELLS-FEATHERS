@@ -15,12 +15,21 @@
 // - <game>.achievements: { [id]: { at } }, each achievement unlocked once,
 //   `at` being when (ms since 1970), or null for one found in the records of
 //   a save made before achievements were kept (see achievements.js). A save
-//   without the field gets them worked out from its records, once.
+//   without the field gets them worked out from its records, once;
+// - collection.achievements: the same, for the journal's Collection, whose
+//   entries are earned from other achievements;
+// - achievementSet: the set of achievements the save has been checked
+//   against (missing means 1, from before the journal). A save from an older
+//   set gets the record achievements added since worked out once, from its
+//   exact records. Achievements that need something the records don't keep
+//   (which side won) are never guessed: they count from then on.
 import { SYMBOLS } from '../games/shells-feathers/rules.js';
 import { DIFFICULTIES } from '../games/shells-feathers/ai.js';
 import { SIDES } from '../games/acorns-leaves/engine.js';
 import { DIFFICULTIES as AL_DIFFICULTIES } from '../games/acorns-leaves/ai.js';
-import { GAMES, definition, earnedFromRecords, earnedByMoment } from './achievements.js';
+import {
+  ACHIEVEMENTS, ACHIEVEMENT_SET, GAMES, definition, earnedFromRecords, earnedFromResult, earnedByMoment, collectionNeeding,
+} from './achievements.js';
 
 export const SAVE_VERSION = 2;
 export const SAVE_KEY = 'spiritOfTheWoods:v2';
@@ -108,6 +117,8 @@ export function createDefaultSave() {
       stats: emptyAcornsLeavesStats(),
       achievements: {},
     },
+    collection: { achievements: {} },
+    achievementSet: ACHIEVEMENT_SET,
     migratedFrom: null,
   };
 }
@@ -167,13 +178,20 @@ export function normalizeSave(raw) {
       },
       achievements: achievementsOr(checkers.achievements),
     },
+    collection: { ...objectOr(raw.collection), achievements: achievementsOr(objectOr(raw.collection).achievements) },
     migratedFrom: raw.migratedFrom === 1 ? 1 : null,
   };
-  // A save from before achievements were kept: unlock what its records have
-  // already earned (with no date), once.
+  const set = Number.isSafeInteger(raw.achievementSet) && raw.achievementSet > 0 ? raw.achievementSet : 1;
   for (const name of GAMES) {
+    // A save from before achievements were kept: unlock what its records have
+    // already earned (with no date), once.
     if (!isObject(objectOr(raw[name]).achievements)) backfillAchievements(save, name);
+    // From an older set: the record achievements added since, the same way.
+    else if (set < ACHIEVEMENT_SET) backfillAchievements(save, name, { after: set });
   }
+  unlockCollection(save);
+  // A newer build's set is kept, so this build never re-checks for it.
+  save.achievementSet = Math.max(set, ACHIEVEMENT_SET);
   return save;
 }
 
@@ -187,6 +205,7 @@ export function migrateFromV1(legacy) {
   save.shellsFeathers.stats.legacy = { ...legacy };
   save.migratedFrom = 1;
   backfillAchievements(save, 'shellsFeathers');
+  unlockCollection(save);
   return save;
 }
 
@@ -237,10 +256,12 @@ export function recordResult(save, { mode, difficulty, outcome }) {
 }
 
 // Clears every Shells & Feathers record (including games from before v2)
-// and locks its achievements again. Its settings are kept.
+// and locks its achievements again, with the Collection entries that need
+// them. Its settings are kept.
 export function clearStats(save) {
   save.shellsFeathers.stats = emptyStats();
   save.shellsFeathers.achievements = {};
+  lockCollectionNeeding(save, 'shellsFeathers');
 }
 
 export function applySettings(save, patch) {
@@ -275,10 +296,12 @@ export function recordAcornsLeavesResult(save, { mode, difficulty, outcome, vari
 }
 
 // Clears every Acorns & Leaves record (Classic and Fog) and locks its
-// achievements again. Its settings are kept.
+// achievements again, with the Collection entries that need them. Its
+// settings are kept.
 export function clearAcornsLeavesStats(save) {
   save.acornsLeaves.stats = emptyAcornsLeavesStats();
   save.acornsLeaves.achievements = {};
+  lockCollectionNeeding(save, 'acornsLeaves');
 }
 
 export function applyAcornsLeavesSettings(save, patch) {
@@ -290,34 +313,66 @@ export function applyAcornsLeavesSettings(save, patch) {
 
 // Achievements -------------------------------------------------------------
 
-const recordsOf = (save) => ({
+export const recordsOf = (save) => ({
   shellsFeathers: { stats: save.shellsFeathers.stats, totals: summarizeStats(save) },
   acornsLeaves: { stats: save.acornsLeaves.stats },
 });
 
-// Unlocks `ids` of `game` that aren't unlocked yet, at time `at`. Returns the
+// Unlocks `ids` of `book` that aren't unlocked yet, at time `at`. Returns the
 // ids newly unlocked (each id only ever once). Mutates `save`.
-export function unlockAchievements(save, game, ids, at) {
-  const unlocked = save[game].achievements;
-  const fresh = [...new Set(ids)].filter((id) => definition(game, id) && !Object.hasOwn(unlocked, id));
+export function unlockAchievements(save, book, ids, at) {
+  const unlocked = save[book].achievements;
+  const fresh = [...new Set(ids)].filter((id) => definition(book, id) && !Object.hasOwn(unlocked, id));
   for (const id of fresh) unlocked[id] = { at };
   return fresh;
 }
 
-function backfillAchievements(save, game) {
-  unlockAchievements(save, game, earnedFromRecords(game, recordsOf(save)), null);
+function backfillAchievements(save, game, { after = 0 } = {}) {
+  unlockAchievements(save, game, earnedFromRecords(game, recordsOf(save), { after }), null);
 }
 
-// After a result is recorded: unlocks the record achievements now earned.
-// Returns [{ game, id }] for the new ones. Mutates `save`.
-export function checkRecordAchievements(save, at) {
+// Unlocks each Collection entry whose needs are all unlocked, dated when the
+// last of them was (no date if any has none). Returns the ids newly unlocked.
+function unlockCollection(save) {
+  const fresh = [];
+  for (const { id, needs } of ACHIEVEMENTS.collection) {
+    if (Object.hasOwn(save.collection.achievements, id)) continue;
+    const entries = needs.map(([book, need]) => save[book].achievements[need]);
+    if (!entries.every(Boolean)) continue;
+    const dates = entries.map((e) => e.at);
+    fresh.push(...unlockAchievements(save, 'collection', [id], dates.includes(null) ? null : Math.max(...dates)));
+  }
+  return fresh;
+}
+
+function lockCollectionNeeding(save, game) {
+  for (const id of collectionNeeding(game)) delete save.collection.achievements[id];
+}
+
+const tagged = (book) => (id) => ({ game: book, id });
+
+// After a game is recorded: unlocks the record achievements now earned, those
+// earned by this result ({ game, mode, outcome, side, variant, difficulty }),
+// and the Collection entries they complete. Returns [{ game, id }] for the
+// new ones (game: the book, 'collection' for the Collection). Without a
+// result, only records and the Collection. Mutates `save`.
+export function checkAchievements(save, at, result = null) {
   const records = recordsOf(save);
-  return GAMES.flatMap((game) => unlockAchievements(save, game, earnedFromRecords(game, records), at).map((id) => ({ game, id })));
+  return [
+    ...GAMES.flatMap((game) => unlockAchievements(save, game, earnedFromRecords(game, records), at).map(tagged(game))),
+    ...(result && GAMES.includes(result.game)
+      ? unlockAchievements(save, result.game, earnedFromResult(result.game, result), at).map(tagged(result.game))
+      : []),
+    ...unlockCollection(save).map(tagged('collection')),
+  ];
 }
 
 // A moment in play ('crowned', 'multi-jump'), counted only in games against
 // the Spirit. Returns [{ game, id }] for achievements newly unlocked.
 export function recordMoment(save, { game, moment, mode }, at) {
   if (mode !== 'single' || !GAMES.includes(game)) return [];
-  return unlockAchievements(save, game, earnedByMoment(game, moment), at).map((id) => ({ game, id }));
+  return [
+    ...unlockAchievements(save, game, earnedByMoment(game, moment), at).map(tagged(game)),
+    ...unlockCollection(save).map(tagged('collection')),
+  ];
 }

@@ -13,9 +13,9 @@ import {
   createDefaultSave, normalizeSave, legacyStatsFromV1, migrateFromV1, absorbNewerLegacyStats,
   summarizeStats, recordResult, clearStats, applySettings, applyGameSettings,
   recordAcornsLeavesResult, clearAcornsLeavesStats, applyAcornsLeavesSettings,
-  checkRecordAchievements, recordMoment,
+  checkAchievements, recordMoment, recordsOf,
 } from './save-data.js';
-import { ACHIEVEMENTS, definition } from './achievements.js';
+import { ACHIEVEMENTS, BOOKS, BOOK_IDS, definition } from './achievements.js';
 
 export const CORRUPT_SUFFIX = ':corrupt';
 // Every key the game writes, for "Delete all saved data".
@@ -35,11 +35,16 @@ export function loadSave(store) {
   const v2 = readJson(store, SAVE_KEY);
   const existing = v2.status === 'ok' ? normalizeSave(v2.value) : null;
   if (existing) {
+    // Checked against a newer achievement set (normalizeSave): stored at
+    // once, so the migration happens once.
+    let changed = existing.achievementSet !== v2.value.achievementSet;
+    if (changed) notes.push(`achievements checked against set ${existing.achievementSet}`);
     if (legacy && absorbNewerLegacyStats(existing, legacy)) {
-      checkRecordAchievements(existing, null);
-      store.write(SAVE_KEY, JSON.stringify(existing));
+      checkAchievements(existing, null);
+      changed = true;
       notes.push(`added games recorded only in ${LEGACY_STATS_KEY}`);
     }
+    if (changed) store.write(SAVE_KEY, JSON.stringify(existing));
     return { save: existing, source: 'v2', notes };
   }
   if (v2.status !== 'missing') {
@@ -75,15 +80,33 @@ export function createProfile(store, { onSaveError = (msg) => console.warn(msg),
     }
   }
 
-  // [{ game, id }] -> [{ game, id, title, description }]
+  // [{ game, id }] -> [{ game, id, title, description, icon }]
   const describe = (list) => list.map(({ game, id }) => ({ game, id, ...pick(definition(game, id)) }));
-  const pick = ({ title, description }) => ({ title, description });
+  const pick = ({ title, description, icon }) => ({ title, description, icon });
 
-  function afterResult(record, result, mirrorStats) {
+  // result: as recorded, plus `side` (the side the player took against the
+  // Spirit), which only the journal's side achievements use.
+  function afterResult(record, game, result, mirrorStats) {
     record(save, result);
-    const fresh = checkRecordAchievements(save, now());
+    const fresh = checkAchievements(save, now(), { ...result, game });
     persist({ mirrorStats });
     return describe(fresh);
+  }
+
+  // How far a locked achievement has come, where that means something:
+  // a count toward a goal, or which of its needs are done.
+  function progressOf(entry, records) {
+    if (entry.progress) {
+      const { value, goal, unit } = entry.progress(records);
+      return { value: Math.min(value, goal), goal, unit, parts: null };
+    }
+    if (entry.needs) {
+      const parts = entry.needs.map(([book, id]) => ({
+        book, title: definition(book, id).title, done: Object.hasOwn(save[book].achievements, id),
+      }));
+      return { value: parts.filter((p) => p.done).length, goal: parts.length, unit: null, parts };
+    }
+    return null;
   }
 
   return {
@@ -98,13 +121,13 @@ export function createProfile(store, { onSaveError = (msg) => console.warn(msg),
     updateSettings(patch) { applySettings(save, patch); persist(); },
     updateGameSettings(patch) { applyGameSettings(save, patch); persist(); },
     // Each returns the achievements this result unlocked (usually none).
-    recordResult(result) { return afterResult(recordResult, result, true); },
+    recordResult(result) { return afterResult(recordResult, 'shellsFeathers', result, true); },
     resetStats() { clearStats(save); persist({ mirrorStats: true }); },
     // Acorns & Leaves (not part of the v1 totals, so never mirrored).
     acornsLeavesSettings: () => ({ ...save.acornsLeaves.settings }),
     acornsLeavesStats: () => JSON.parse(JSON.stringify(save.acornsLeaves.stats)),
     updateAcornsLeavesSettings(patch) { applyAcornsLeavesSettings(save, patch); persist(); },
-    recordAcornsLeavesResult(result) { return afterResult(recordAcornsLeavesResult, result, false); },
+    recordAcornsLeavesResult(result) { return afterResult(recordAcornsLeavesResult, 'acornsLeaves', result, false); },
     resetAcornsLeavesStats() { clearAcornsLeavesStats(save); persist(); },
 
     // A moment in play: { game, moment, mode }. Returns achievements unlocked.
@@ -113,23 +136,43 @@ export function createProfile(store, { onSaveError = (msg) => console.warn(msg),
       if (fresh.length) persist();
       return describe(fresh);
     },
-    // Every achievement of `game`, in order: { id, title, description, unlocked, at }.
-    achievements: (game) => ACHIEVEMENTS[game].map(({ id, title, description }) => {
-      const entry = save[game].achievements[id];
-      return { id, title, description, unlocked: Boolean(entry), at: entry?.at ?? null };
-    }),
+    // Every achievement of a book ('shellsFeathers', 'acornsLeaves' or
+    // 'collection'), in journal order: { id, title, description, note, icon,
+    // section, unlocked, at, progress }.
+    achievements(book) {
+      const records = recordsOf(save);
+      return ACHIEVEMENTS[book].map((entry) => {
+        const { id, title, description, icon, section } = entry;
+        const unlocked = save[book].achievements[id];
+        return {
+          id, title, description, note: entry.note ?? null, icon, section,
+          unlocked: Boolean(unlocked), at: unlocked?.at ?? null, progress: progressOf(entry, records),
+        };
+      });
+    },
+    // The whole journal: [{ book, title, entries }], and the totals.
+    journal() {
+      const books = BOOK_IDS.map((book) => ({ book, title: BOOKS[book], entries: this.achievements(book) }));
+      const all = books.flatMap((b) => b.entries);
+      return { books, unlocked: all.filter((e) => e.unlocked).length, total: all.length };
+    },
 
     // What "Clear progress" for each game would delete, as counts.
     progress() {
       const sf = save.shellsFeathers.stats;
       const al = save.acornsLeaves.stats;
-      const unlocked = (game) => Object.keys(save[game].achievements).filter((id) => definition(game, id)).length;
+      const unlocked = (book) => Object.keys(save[book].achievements).filter((id) => definition(book, id)).length;
+      // Unlocked Collection entries that clearing `game` would lock again.
+      const collection = (game) => ACHIEVEMENTS.collection
+        .filter((a) => a.needs.some(([book]) => book === game) && Object.hasOwn(save.collection.achievements, a.id))
+        .map((a) => a.title);
       return {
         shellsFeathers: {
           spiritGames: spiritGames(sf.single),
           twoPlayerGames: sum(Object.values(sf.twoPlayer)),
           earlierGames: sf.legacy.totalGames,
           achievements: unlocked('shellsFeathers'),
+          collection: collection('shellsFeathers'),
         },
         acornsLeaves: {
           spiritGames: spiritGames(al.single),
@@ -137,6 +180,7 @@ export function createProfile(store, { onSaveError = (msg) => console.warn(msg),
           fogSpiritGames: spiritGames(al.fog.single),
           fogTwoPlayerGames: sum(Object.values(al.fog.twoPlayer)),
           achievements: unlocked('acornsLeaves'),
+          collection: collection('acornsLeaves'),
         },
       };
     },

@@ -336,21 +336,21 @@ export function createSession({
       by: piece.side, path: move.path, captures: move.captures, crowned: Boolean(move.crowned), taken,
     };
     cueMove(piece, move);
-    if (mode === 'single' && piece.side === match.humanSide) {
-      const unlocked = [
-        ...(move.captures.length >= 2 ? profile.recordMoment({ game: 'acornsLeaves', moment: 'multi-jump', mode }) : []),
-        ...(move.crowned ? profile.recordMoment({ game: 'acornsLeaves', moment: 'crowned', mode }) : []),
-      ];
-      if (unlocked.length) notify(unlocked);
-    }
+    // Only the player's own piece, against the Spirit (never two players, so
+    // nothing about either side's moves is told in Fog).
+    const moments = mode === 'single' && piece.side === match.humanSide ? [
+      ...(move.captures.length >= 2 ? profile.recordMoment({ game: 'acornsLeaves', moment: 'multi-jump', mode }) : []),
+      ...(move.crowned ? profile.recordMoment({ game: 'acornsLeaves', moment: 'crowned', mode }) : []),
+    ] : [];
     const moved = moveText({ mode, humanSide: match.humanSide, move, piece });
     const said = `${prefix} ${moved}`.trim();
     const { result } = analyze(match.state);
     if (result) {
       match.told = moved; // the game is over: the fog lifts
-      finish(result, said);
+      finish(result, said, moments); // listed with the result, not behind it
       return;
     }
+    if (moments.length) notify(moments);
     if (!fogged()) {
       match.told = moved;
       beginTurn(said);
@@ -392,7 +392,9 @@ export function createSession({
     if (own && move.captures.length >= 2) feedback.cue('multi', { key });
   }
 
-  function finish(result, said) {
+  // earlier: achievements already unlocked by the last move, listed with the
+  // result's own.
+  function finish(result, said, earlier = []) {
     if (scoredMatch === match) return; // never score a game twice
     scoredMatch = match;
     match.result = result;
@@ -401,7 +403,9 @@ export function createSession({
     spiritActing = false;
     const text = resultText({ mode, result, humanSide: match.humanSide });
     match.resultText = text;
-    const unlocked = profile.recordAcornsLeavesResult({ mode, difficulty: match.difficulty, outcome: text.outcome, variant }) ?? [];
+    const unlocked = [...earlier, ...(profile.recordAcornsLeavesResult({
+      mode, difficulty: match.difficulty, outcome: text.outcome, variant, side: match.humanSide,
+    }) ?? [])];
     if (text.outcome === 'loss') {
       feedback.cue('loss', { key: matchCount });
     } else if (text.outcome === 'draw') {

@@ -26,15 +26,17 @@ function newProfile(entries = {}, options = {}) {
   return { storage, profile, errors, tick: () => { time += 1000; } };
 }
 
-test('a new player has every achievement locked: seven in Shells & Feathers, six in Acorns & Leaves', () => {
+test('a new player has every achievement locked: nine in Shells & Feathers, ten in Acorns & Leaves, three in the Collection', () => {
   const { profile } = newProfile();
   assert.deepEqual(profile.achievements('shellsFeathers').map((a) => a.id),
-    ['first-game', 'first-win', 'gentle-win', 'balanced-win', 'steady-hand', 'shared-board', 'ten-games']);
+    ['first-game', 'ten-games', 'first-win', 'shell-win', 'feather-win', 'gentle-win', 'balanced-win', 'steady-hand', 'shared-board']);
   assert.deepEqual(profile.achievements('acornsLeaves').map((a) => a.id),
-    ['first-win', 'crowned', 'double-jump', 'fog-win', 'wise-win', 'shared-board']);
-  for (const game of ['shellsFeathers', 'acornsLeaves']) {
-    assert.ok(profile.achievements(game).every((a) => !a.unlocked && a.at === null && a.title && a.description));
+    ['first-game', 'first-win', 'acorn-win', 'leaf-win', 'crowned', 'double-jump', 'fog-win', 'wise-win', 'shared-board', 'shared-fog']);
+  assert.deepEqual(profile.achievements('collection').map((a) => a.id), ['both-games', 'both-wins', 'all-sides']);
+  for (const book of ['shellsFeathers', 'acornsLeaves', 'collection']) {
+    assert.ok(profile.achievements(book).every((a) => !a.unlocked && a.at === null && a.title && a.description && a.icon));
   }
+  assert.deepEqual(profile.journal().total, 22);
 });
 
 test('Shells & Feathers: each record achievement comes from the matching record', () => {
@@ -45,7 +47,7 @@ test('Shells & Feathers: each record achievement comes from the matching record'
     [(s) => { s.single.hard.losses = 1; }, ['first-game']],
     [(s) => { s.twoPlayer.draws = 1; }, ['first-game', 'shared-board']],
     // Two-player wins belong to whichever player won: never "First Win".
-    [(s) => { s.twoPlayer.player1Wins = 10; }, ['first-game', 'shared-board', 'ten-games']],
+    [(s) => { s.twoPlayer.player1Wins = 10; }, ['first-game', 'ten-games', 'shared-board']],
   ];
   for (const [change, expected] of cases) {
     const save = createDefaultSave();
@@ -54,15 +56,15 @@ test('Shells & Feathers: each record achievement comes from the matching record'
   }
 });
 
-test('Acorns & Leaves: First Win, Through the Fog and Wise Victory need wins against the Spirit; two-player games give Shared Board only', () => {
+test('Acorns & Leaves: First Win, Through the Fog and Wise Victory need wins against the Spirit; two-player games give First Game and the shared entries only', () => {
   const cases = [
-    [(s) => { s.single.easy.wins = 1; }, ['first-win']],
-    [(s) => { s.fog.single.easy.wins = 1; }, ['first-win', 'fog-win']],
-    [(s) => { s.single.hard.wins = 1; }, ['first-win', 'wise-win']],
-    [(s) => { s.fog.single.hard.wins = 1; }, ['first-win', 'fog-win', 'wise-win']],
-    [(s) => { s.single.hard.draws = 3; s.fog.single.medium.losses = 2; }, []],
-    [(s) => { s.twoPlayer.acornWins = 4; }, ['shared-board']],
-    [(s) => { s.fog.twoPlayer.leafWins = 1; }, ['shared-board']],
+    [(s) => { s.single.easy.wins = 1; }, ['first-game', 'first-win']],
+    [(s) => { s.fog.single.easy.wins = 1; }, ['first-game', 'first-win', 'fog-win']],
+    [(s) => { s.single.hard.wins = 1; }, ['first-game', 'first-win', 'wise-win']],
+    [(s) => { s.fog.single.hard.wins = 1; }, ['first-game', 'first-win', 'fog-win', 'wise-win']],
+    [(s) => { s.single.hard.draws = 3; s.fog.single.medium.losses = 2; }, ['first-game']],
+    [(s) => { s.twoPlayer.acornWins = 4; }, ['first-game', 'shared-board']],
+    [(s) => { s.fog.twoPlayer.leafWins = 1; }, ['first-game', 'shared-board', 'shared-fog']],
   ];
   for (const [change, expected] of cases) {
     const save = createDefaultSave();
@@ -84,6 +86,7 @@ test('each achievement unlocks once: a second earning, a reload and repeated mom
   const first = profile.recordResult({ mode: 'single', difficulty: 'easy', outcome: 'win' });
   assert.deepEqual(ids(first), ['shellsFeathers:first-game', 'shellsFeathers:first-win', 'shellsFeathers:gentle-win']);
   assert.equal(first[1].title, 'First Win');
+  assert.equal(first[1].icon, 'ach-laurel');
   tick();
   assert.deepEqual(profile.recordResult({ mode: 'single', difficulty: 'easy', outcome: 'win' }), [], 'already unlocked');
   assert.deepEqual(ids(profile.recordResult({ mode: 'single', difficulty: 'medium', outcome: 'win' })), ['shellsFeathers:balanced-win']);
@@ -95,20 +98,22 @@ test('each achievement unlocks once: a second earning, a reload and repeated mom
   // Reloaded: the same achievements, with the times they were unlocked.
   const again = createProfile(openStorage(() => storage), { now: () => 99_000 });
   assert.deepEqual(unlockedIds(again, 'shellsFeathers'), ['first-game', 'first-win', 'gentle-win', 'balanced-win']);
-  assert.deepEqual(again.achievements('shellsFeathers').map((a) => a.at), [1000, 1000, 1000, 2000, null, null, null]);
+  assert.deepEqual(again.achievements('shellsFeathers').map((a) => a.at), [1000, null, 1000, null, null, 1000, 2000, null, null]);
   assert.deepEqual(unlockedIds(again, 'acornsLeaves'), ['crowned', 'double-jump']);
   assert.deepEqual(again.recordResult({ mode: 'single', difficulty: 'easy', outcome: 'win' }), []);
   assert.deepEqual(again.recordMoment({ game: 'acornsLeaves', moment: 'crowned', mode: 'single' }), []);
-  assert.deepEqual(again.achievements('shellsFeathers').map((a) => a.at).slice(0, 3), [1000, 1000, 1000], 'times kept');
+  assert.deepEqual(again.achievements('shellsFeathers').filter((a) => a.unlocked).map((a) => a.at), [1000, 1000, 1000, 2000], 'times kept');
 });
 
-test('two-player games: moments unlock nothing, wins never count as yours, only Shared Board unlocks', () => {
+test('two-player games: moments unlock nothing, wins never count as yours (not even a side win), only milestones and shared entries unlock', () => {
   const { profile } = newProfile();
   assert.deepEqual(profile.recordMoment({ game: 'acornsLeaves', moment: 'crowned', mode: 'two' }), []);
   assert.deepEqual(profile.recordMoment({ game: 'acornsLeaves', moment: 'multi-jump', mode: 'two' }), []);
-  assert.deepEqual(ids(profile.recordAcornsLeavesResult({ mode: 'two', outcome: 'acorn', variant: 'fog' })), ['acornsLeaves:shared-board']);
-  assert.deepEqual(ids(profile.recordResult({ mode: 'two', outcome: 'player1' })), ['shellsFeathers:first-game', 'shellsFeathers:shared-board']);
-  assert.deepEqual(unlockedIds(profile, 'acornsLeaves'), ['shared-board']);
+  assert.deepEqual(ids(profile.recordAcornsLeavesResult({ mode: 'two', outcome: 'acorn', variant: 'fog', side: 'acorn' })),
+    ['acornsLeaves:first-game', 'acornsLeaves:shared-board', 'acornsLeaves:shared-fog']);
+  assert.deepEqual(ids(profile.recordResult({ mode: 'two', outcome: 'player1', side: 'shell' })),
+    ['shellsFeathers:first-game', 'shellsFeathers:shared-board', 'collection:both-games']);
+  assert.deepEqual(unlockedIds(profile, 'acornsLeaves'), ['first-game', 'shared-board', 'shared-fog']);
   // Unknown games or moments unlock nothing.
   assert.deepEqual(profile.recordMoment({ game: 'chess', moment: 'crowned', mode: 'single' }), []);
   assert.deepEqual(profile.recordMoment({ game: 'acornsLeaves', moment: 'castled', mode: 'single' }), []);
@@ -123,8 +128,10 @@ test('a save from before achievements were kept gets what its records earned, on
   old.acornsLeaves.stats.twoPlayer.draws = 1;
   const { profile } = newProfile({ [SAVE_KEY]: JSON.stringify(old) });
   assert.deepEqual(unlockedIds(profile, 'shellsFeathers'), ['first-game', 'steady-hand']);
-  assert.deepEqual(unlockedIds(profile, 'acornsLeaves'), ['first-win', 'fog-win', 'shared-board']);
+  assert.deepEqual(unlockedIds(profile, 'acornsLeaves'), ['first-game', 'first-win', 'fog-win', 'shared-board']);
   assert.ok(profile.achievements('acornsLeaves').every((a) => a.at === null));
+  assert.deepEqual(unlockedIds(profile, 'collection'), ['both-games'], 'from the two unlocked entries, with no date');
+  assert.equal(profile.achievements('collection')[0].at, null);
   assert.deepEqual(profile.recordAcornsLeavesResult({ mode: 'single', difficulty: 'easy', outcome: 'win', variant: 'fog' }), [], 'not announced again');
 
   // A save that already keeps achievements is never backfilled, even when
@@ -149,7 +156,7 @@ test('achievement entries are repaired on load; ids from a newer build are kept 
   assert.deepEqual(repaired, { 'first-game': { at: 5 }, 'first-win': { at: null }, 'future-feat': { at: 7, extra: 1 } });
   const { profile } = newProfile({ [SAVE_KEY]: JSON.stringify(save) });
   assert.deepEqual(unlockedIds(profile, 'shellsFeathers'), ['first-game', 'first-win']);
-  assert.equal(profile.achievements('shellsFeathers').length, 7);
+  assert.equal(profile.achievements('shellsFeathers').length, 9);
   assert.equal(profile.progress().shellsFeathers.achievements, 2, 'unknown ids are not counted');
 });
 
@@ -161,15 +168,16 @@ test('clearing one game deletes its records and achievements only; settings and 
   profile.recordAcornsLeavesResult({ mode: 'single', difficulty: 'hard', outcome: 'win', variant: 'fog' });
   profile.recordMoment({ game: 'acornsLeaves', moment: 'crowned', mode: 'single' });
   assert.deepEqual(profile.progress(), {
-    shellsFeathers: { spiritGames: 1, twoPlayerGames: 0, earlierGames: 0, achievements: 3 },
-    acornsLeaves: { spiritGames: 0, twoPlayerGames: 0, fogSpiritGames: 1, fogTwoPlayerGames: 0, achievements: 4 },
+    shellsFeathers: { spiritGames: 1, twoPlayerGames: 0, earlierGames: 0, achievements: 3, collection: ['Two Paths', 'Friend of the Woods'] },
+    acornsLeaves: { spiritGames: 0, twoPlayerGames: 0, fogSpiritGames: 1, fogTwoPlayerGames: 0, achievements: 5, collection: ['Two Paths', 'Friend of the Woods'] },
   });
 
   profile.resetStats();
   assert.deepEqual(unlockedIds(profile, 'shellsFeathers'), []);
   assert.equal(profile.statsSummary().totalGames, 0);
   assert.deepEqual(JSON.parse(storage.map.get(LEGACY_STATS_KEY)), { wins: 0, losses: 0, draws: 0, totalGames: 0 }, 'v1 mirror reset to match');
-  assert.deepEqual(unlockedIds(profile, 'acornsLeaves'), ['first-win', 'crowned', 'fog-win', 'wise-win']);
+  assert.deepEqual(unlockedIds(profile, 'acornsLeaves'), ['first-game', 'first-win', 'crowned', 'fog-win', 'wise-win']);
+  assert.deepEqual(unlockedIds(profile, 'collection'), [], 'the Collection entries that needed Shells & Feathers lock too');
   assert.equal(profile.settings().musicVolume, 70);
   assert.equal(profile.gameSettings().difficulty, 'hard');
 

@@ -142,7 +142,9 @@ export function createSession({
     const { winner, line } = match.result;
     const outcome = match.outcome;
     view.setBoardState('over');
-    const unlocked = profile.recordResult({ mode, difficulty: match.difficulty, outcome }) ?? [];
+    const unlocked = profile.recordResult({
+      mode, difficulty: match.difficulty, outcome, side: match.player1Symbol,
+    }) ?? [];
     if (winner !== null) {
       if (winner === match.player1Symbol) scores.player1++;
       else scores.player2++;

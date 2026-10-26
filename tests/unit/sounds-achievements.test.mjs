@@ -63,7 +63,7 @@ test('Shells & Feathers: a win plays the victory theme (music pauses) and lists 
   assert.deepEqual(audio.calls.slice(-2), ['music:stop', 'sfx:victory-sound']);
   clock.tick(SF_DELAYS.resultModal);
   assert.equal(view.result.outcome, 'win');
-  assert.deepEqual(titles(view.resultAchievements), ['First Game', 'First Win', 'Gentle Win']);
+  assert.deepEqual(titles(view.resultAchievements), ['First Game', 'First Win', 'Gentle Win', 'Win with Shells']);
 
   session.playAgain();
   for (const cell of [4, 1]) {
@@ -199,14 +199,14 @@ test('Acorns & Leaves results: a loss and a draw have their own gentle sounds; a
   assert.equal(lose.view.model.phase, 'over');
   assert.ok(lose.audio.calls.includes('sfx:loss-sound'));
   lose.clock.tick(DELAYS.resultModal);
-  assert.deepEqual(lose.view.resultAchievements, []);
+  assert.deepEqual(titles(lose.view.resultAchievements), ['First Game'], 'a loss is still a finished game');
 
   const draw = checkers({ rows: ['.......L', '........', '........', '........', '........', '........', '........', 'A.......'], quietPlies: 79 });
   draw.session.enter('two');
   draw.tap(sq(7, 0), sq(6, 1));
   assert.equal(draw.audio.calls.at(-1), 'sfx:draw-sound');
   draw.clock.tick(DELAYS.resultModal);
-  assert.deepEqual(titles(draw.view.resultAchievements), ['Shared Board']);
+  assert.deepEqual(titles(draw.view.resultAchievements), ['First Game', 'Shared Board']);
 
   const win = checkers({ rows: ['........', '........', '........', '........', '.l......', '..a.....', '........', '....a...'], variant: 'fog' });
   win.session.enter('single', 'fog');
@@ -214,27 +214,5 @@ test('Acorns & Leaves results: a loss and a draw have their own gentle sounds; a
   assert.equal(win.view.model.phase, 'over');
   assert.deepEqual(win.audio.calls.slice(-3), ['sfx:capture-sound', 'music:stop', 'sfx:victory-sound']);
   win.clock.tick(DELAYS.resultModal);
-  assert.deepEqual(titles(win.view.resultAchievements), ['First Win', 'Through the Fog']);
-});
-
-test('the achievement notice: read out politely, one at a time, with one chime per batch, then gone', async () => {
-  const { createToast } = await import('../../src/app/toast.js');
-  const el = () => ({ hidden: true, textContent: '', dataset: {} });
-  const nodes = { 'toast-region': el(), toast: el(), 'toast-text': el() };
-  const clock = createFakeClock();
-  const audio = createFakeAudio();
-  const { createFeedback } = await import('../../src/shared/feedback.js');
-  const toast = createToast({ doc: { getElementById: (id) => nodes[id] }, clock, feedback: createFeedback({ audio, clock }) });
-  toast.achievements([]);
-  assert.deepEqual(audio.calls, [], 'nothing to say, no chime');
-  toast.achievements([{ title: 'Crowned', description: 'Crown one of your pieces against the Spirit.' }, { title: 'Double Jump', description: 'Capture two or more pieces in one move against the Spirit.' }]);
-  assert.deepEqual(audio.calls, ['sfx:achievement-sound']);
-  assert.equal(nodes['toast-text'].textContent, 'Achievement unlocked: Crowned. Crown one of your pieces against the Spirit.');
-  assert.equal(nodes.toast.hidden, false);
-  clock.tick(4_500);
-  assert.match(nodes['toast-text'].textContent, /^Achievement unlocked: Double Jump\./);
-  clock.tick(4_500);
-  assert.equal(nodes.toast.hidden, true);
-  assert.equal(nodes['toast-text'].textContent, '');
-  assert.equal(clock.pending, 0);
+  assert.deepEqual(titles(win.view.resultAchievements), ['First Game', 'First Win', 'Through the Fog', 'Win with Acorns']);
 });

@@ -40,9 +40,9 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     assert.equal(await picture.locator('.checkers-square.light use').count(), 0, 'pieces only on dark squares');
 
     const more = page.locator('nav.hub-links').getByRole('link');
-    assert.deepEqual(await names(more), ['Settings', 'Your Path']);
+    assert.deepEqual(await names(more), ['Settings', 'Your Path', 'Journal']);
     // Each has a decorative icon drawn from the sprite (no emoji).
-    assert.deepEqual(await more.locator('svg use').evaluateAll((uses) => uses.map((u) => [u.getAttribute('href'), u.closest('svg').getAttribute('aria-hidden')])), [['#icon-gear', 'true'], ['#icon-trail', 'true']]);
+    assert.deepEqual(await more.locator('svg use').evaluateAll((uses) => uses.map((u) => [u.getAttribute('href'), u.closest('svg').getAttribute('aria-hidden')])), [['#icon-gear', 'true'], ['#icon-trail', 'true'], ['#icon-journal', 'true']]);
     assert.deepEqual(game.pageErrors, []);
   });
 
@@ -116,15 +116,21 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     // Your game against the Spirit, and the two-player game kept apart.
     assert.equal(await page.locator('#sf-games').textContent(), '1');
     assert.equal(await page.locator('#two-player-record').textContent(), 'Player 1 wins: 1 · Player 2 wins: 0 · Draws: 0');
-    const achievement = (title) => page.locator('#sf-path .achievement', { hasText: title });
-    for (const title of ['First Game', 'Shared Board']) assert.match(await achievement(title).getAttribute('class'), /is-unlocked/, title);
-    for (const title of ['Steady Hand', 'Ten Games']) assert.match(await achievement(title).getAttribute('class'), /is-locked/, title);
     const gentleWon = first.title === 'Victory!';
-    for (const title of ['First Win', 'Gentle Win']) {
-      assert.match(await achievement(title).getAttribute('class'), gentleWon ? /is-unlocked/ : /is-locked/, title);
+    assert.equal(await page.locator('#sf-journal-count').textContent(), `${gentleWon ? 5 : 2} of 9 unlocked.`);
+    assert.equal(await page.locator('#al-journal-count').textContent(), '0 of 10 unlocked.', 'Acorns & Leaves untouched');
+    // Its page of the journal.
+    await page.locator('#sf-path .journal-link').click();
+    await game.waitForScreen('journal-screen');
+    assert.equal(await page.locator('#journal-tab-shellsFeathers').getAttribute('aria-selected'), 'true');
+    const achievement = (id) => page.locator(`#journal-panel .journal-entry[data-id="${id}"]`);
+    for (const id of ['first-game', 'shared-board']) assert.match(await achievement(id).getAttribute('class'), /is-unlocked/, id);
+    for (const id of ['steady-hand', 'ten-games', 'feather-win']) assert.match(await achievement(id).getAttribute('class'), /is-locked/, id);
+    for (const id of ['first-win', 'gentle-win', 'shell-win']) {
+      assert.match(await achievement(id).getAttribute('class'), gentleWon ? /is-unlocked/ : /is-locked/, id);
     }
-    assert.equal(await page.locator('#achievement-count').textContent(), `(${gentleWon ? 4 : 2} of 7)`);
-    assert.equal(await page.locator('#al-achievement-count').textContent(), '(0 of 6)', 'Acorns & Leaves untouched');
+    await game.press('Back');
+    await game.waitForScreen('path-screen');
     await game.press('Back');
     await game.waitForScreen('hub-screen');
     assert.deepEqual(game.pageErrors, []);
@@ -307,6 +313,7 @@ test('game hub', { timeout: 300_000 }, async (t) => {
       ['#/acorns-leaves/how-to-play', 'al-howto-screen'],
       ['#/settings', 'settings-screen'],
       ['#/your-path', 'path-screen'],
+      ['#/journal', 'journal-screen'],
     ];
     // Scrolls each control into view and checks it is on screen and not covered.
     const unreachable = (scope) => game.page.evaluate((selector) => {

@@ -182,10 +182,11 @@ test('settings and progress', { timeout: 300_000 }, async (t) => {
     await game.waitForResult();
     assert.equal(await page.locator('#modal-achievements').textContent(), '', 'not again after a reload');
 
+    await game.goTo('#/journal/shells-feathers', 'journal-screen');
+    const item = (id) => page.locator(`#journal-panel .journal-entry[data-id="${id}"] .entry-state`);
+    assert.match(await item('shared-board').textContent(), /^Unlocked \S+/);
+    assert.equal(await item('first-win').textContent(), 'Locked', 'two-player wins are not yours');
     await game.goTo('#/your-path', 'path-screen');
-    const item = (title) => page.locator('#sf-path .achievement', { hasText: title });
-    assert.match(await item('Shared Board').locator('.achievement-state').textContent(), /^Unlocked \S+/);
-    assert.equal(await item('First Win').locator('.achievement-state').textContent(), 'Locked', 'two-player wins are not yours');
     assert.equal(await page.locator('#sf-wins').textContent(), '0');
     assert.equal(await page.locator('#two-player-record').textContent(), 'Player 1 wins: 3 · Player 2 wins: 0 · Draws: 0');
     const stored = JSON.parse(await game.storageItem(V2_KEY)).shellsFeathers.achievements;
@@ -198,10 +199,12 @@ test('settings and progress', { timeout: 300_000 }, async (t) => {
     await game.goTo('#/your-path', 'path-screen');
     const { page } = game;
     assert.match(await page.locator('#legacy-note').textContent(), /^Earlier games: 12 games from before results were kept by mode \(6 wins, which may include two-player wins/);
-    const state = (title) => page.locator('#sf-path .achievement', { hasText: title }).locator('.achievement-state').textContent();
-    assert.equal(await state('First Game'), 'Unlocked earlier');
-    assert.equal(await state('Ten Games'), 'Unlocked earlier');
-    assert.equal(await state('First Win'), 'Locked');
+    await game.goTo('#/journal/shells-feathers', 'journal-screen');
+    const state = (id) => page.locator(`#journal-panel .journal-entry[data-id="${id}"] .entry-state`).textContent();
+    assert.equal(await state('first-game'), 'Unlocked before dates were kept');
+    assert.equal(await state('ten-games'), 'Unlocked before dates were kept');
+    assert.equal(await state('first-win'), 'Locked', 'v1 wins may be two-player wins: never guessed');
+    assert.equal(await state('shell-win'), 'Locked');
     assert.equal(await game.storageItem(V1_KEY), v1);
   });
 

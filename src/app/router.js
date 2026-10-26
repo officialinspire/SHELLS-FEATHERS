@@ -18,6 +18,10 @@ export const ROUTES = {
   '/acorns-leaves/how-to-play': { screen: 'al-howto-screen', title: 'How to Play Acorns & Leaves' },
   '/settings': { screen: 'settings-screen', title: 'Settings' },
   '/your-path': { screen: 'path-screen', title: 'Your Path' },
+  '/journal': { screen: 'journal-screen', args: ['all'], title: 'Achievement Journal' },
+  '/journal/shells-feathers': { screen: 'journal-screen', args: ['shellsFeathers'], title: 'Achievement Journal: Shells & Feathers' },
+  '/journal/acorns-leaves': { screen: 'journal-screen', args: ['acornsLeaves'], title: 'Achievement Journal: Acorns & Leaves' },
+  '/journal/collection': { screen: 'journal-screen', args: ['collection'], title: 'Achievement Journal: Collection' },
 };
 
 export const documentTitle = (route) => (route.title === APP_TITLE ? APP_TITLE : `${route.title} · ${APP_TITLE}`);
@@ -69,6 +73,14 @@ export function createRouter({ win, onChange }) {
     up(path) {
       if (win.history.state?.prev === resolveRoute(path).path) win.history.back();
       else router.go(path);
+    },
+    // The same screen at another URL (a journal tab): replaces this history
+    // entry, without showing the screen again. Returns the route.
+    replace(path) {
+      const { path: target, route } = resolveRoute(path);
+      win.history.replaceState(win.history.state, '', `#${target}`);
+      current = target;
+      return route;
     },
     // "Back" link: previous screen of this visit, or `fallback` on a fresh visit.
     back(fallback) {

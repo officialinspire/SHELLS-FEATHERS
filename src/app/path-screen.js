@@ -6,11 +6,11 @@
 // results were kept by mode (the v1 record) are listed on their own.
 // Acorns & Leaves shows Classic and Fog of War side by side.
 //
-// "Clear … progress" deletes one game's records and achievements after a
-// dialog that lists exactly what goes and what stays.
+// Each game's achievements are counted here and listed in the journal
+// (journal-screen.js). "Clear … progress" deletes one game's records and
+// achievements after a dialog that lists exactly what goes and what stays.
 import { DIFFICULTIES, DIFFICULTY_NAMES } from '../games/shells-feathers/ai.js';
 import { DIFFICULTIES as AL_DIFFICULTIES, DIFFICULTY_NAMES as AL_DIFFICULTY_NAMES } from '../games/acorns-leaves/ai.js';
-import { svgIcon } from '../shared/icons.js';
 
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const totals = (single, levels) => {
@@ -19,7 +19,7 @@ const totals = (single, levels) => {
   return { ...t, games: t.wins + t.draws + t.losses };
 };
 
-export function createPathScreen({ doc, profile, feedback, confirmDialog, dateText = (ms) => new Date(ms).toLocaleDateString() }) {
+export function createPathScreen({ doc, profile, feedback, confirmDialog }) {
   const byId = (id) => doc.getElementById(id);
   const make = (tag, props = {}, children = [], attrs = {}) => {
     const el = Object.assign(doc.createElement(tag), props);
@@ -43,24 +43,9 @@ export function createPathScreen({ doc, profile, feedback, confirmDialog, dateTe
     byId(`${prefix}-games`).textContent = games;
   }
 
-  function showAchievements(game, countId, listId) {
+  function showAchievements(game, countId) {
     const list = profile.achievements(game);
-    byId(countId).textContent = `(${list.filter((a) => a.unlocked).length} of ${list.length})`;
-    byId(listId).replaceChildren(...list.map((a) => make(
-      'li',
-      { className: `achievement ${a.unlocked ? 'is-unlocked' : 'is-locked'}` },
-      [
-        make('span', { className: 'achievement-mark' }, a.unlocked ? [svgIcon(doc, '#icon-check', 'icon', '0 0 24 24')] : [], { 'aria-hidden': 'true' }),
-        make('span', { className: 'achievement-text' }, [
-          make('strong', { textContent: a.title }),
-          make('span', { textContent: a.description }),
-        ]),
-        make('span', {
-          className: 'achievement-state',
-          textContent: !a.unlocked ? 'Locked' : a.at === null ? 'Unlocked earlier' : `Unlocked ${dateText(a.at)}`,
-        }),
-      ],
-    )));
+    byId(countId).textContent = `${list.filter((a) => a.unlocked).length} of ${list.length} unlocked.`;
   }
 
   function render() {
@@ -78,7 +63,7 @@ export function createPathScreen({ doc, profile, feedback, confirmDialog, dateTe
     note.textContent = `Earlier games: ${plural(legacy.totalGames, 'game')} from before results were kept by mode `
       + `(${plural(legacy.wins, 'win')}, which may include two-player wins; ${plural(legacy.draws, 'draw')}; ${plural(legacy.losses, 'loss', 'losses')}). `
       + 'They count toward First Game and Ten Games.';
-    showAchievements('shellsFeathers', 'achievement-count', 'achievement-list');
+    showAchievements('shellsFeathers', 'sf-journal-count');
 
     // Acorns & Leaves
     const checkers = profile.acornsLeavesStats();
@@ -90,8 +75,13 @@ export function createPathScreen({ doc, profile, feedback, confirmDialog, dateTe
       const { acornWins, leafWins, draws: twoDraws } = records.twoPlayer;
       byId(`${prefix}-two-player-record`).textContent = `Acorns wins: ${acornWins} · Leaves wins: ${leafWins} · Draws: ${twoDraws}`;
     }
-    showAchievements('acornsLeaves', 'al-achievement-count', 'al-achievement-list');
+    showAchievements('acornsLeaves', 'al-journal-count');
   }
+
+  // Unlocked Collection entries that need the game being cleared.
+  const collectionLine = (titles) => (titles.length
+    ? [`Collection achievements that need this game, which lock again: ${titles.join(', ')}.`]
+    : []);
 
   async function clear({ title, deletes, keeps, confirmLabel, run }) {
     if (!await confirmDialog.ask({ title, deletes, keeps, confirmLabel })) return false;
@@ -110,6 +100,7 @@ export function createPathScreen({ doc, profile, feedback, confirmDialog, dateTe
         `Two-player results on this device: ${plural(p.twoPlayerGames, 'game')}.`,
         ...(p.earlierGames ? [`Earlier games from before results were kept by mode: ${plural(p.earlierGames, 'game')}.`] : []),
         `Shells & Feathers achievements: ${p.achievements} unlocked, which lock again.`,
+        ...collectionLine(p.collection),
         'The totals kept for the first version of the game (spiritOfTheWoodsStats) go back to zero to match.',
       ],
       keeps: [
@@ -130,6 +121,7 @@ export function createPathScreen({ doc, profile, feedback, confirmDialog, dateTe
         `Classic results: ${plural(p.spiritGames, 'game')} against the Spirit, ${plural(p.twoPlayerGames, 'two-player game')}.`,
         `Fog of War results: ${plural(p.fogSpiritGames, 'game')} against the Spirit, ${plural(p.fogTwoPlayerGames, 'two-player game')}.`,
         `Acorns & Leaves achievements: ${p.achievements} unlocked, which lock again.`,
+        ...collectionLine(p.collection),
       ],
       keeps: [
         'Your side, rules and Spirit difficulty for Acorns & Leaves.',
