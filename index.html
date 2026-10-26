@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#654321" />
   <meta name="description" content="Spirit of the Woods: peaceful forest games. Play Shells &amp; Feathers (tic-tac-toe) and Acorns &amp; Leaves (checkers) against the forest Spirit or a friend." />
   <title>Spirit of the Woods</title>
-  <link rel="stylesheet" href="styles.css?v=3e34daea23" />
+  <link rel="stylesheet" href="styles.css?v=010782ac1c" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
@@ -208,6 +208,23 @@
       <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5L14 10L21.5 12L14 14L12 21.5L10 14L2.5 12L10 10Z" /><circle cx="12" cy="12" r="1.4" /></g>
     </symbol>
   </svg>
+
+  <!-- Touch to start, then the INSPIRE intro, as in every INSPIRE game
+       (src/app/start-gate.js). Shown at load, before any script runs. -->
+  <section id="start-gate" class="start-gate" aria-labelledby="start-gate-title">
+    <div class="start-card">
+      <p class="start-pieces" aria-hidden="true"><svg class="start-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg><svg class="start-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg><svg class="start-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg><svg class="start-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg></p>
+      <h2 id="start-gate-title" class="start-title">Spirit of the Woods</h2>
+      <p class="start-subtitle">Peaceful games from the forest</p>
+      <button type="button" class="start-prompt" id="start-button">Touch, click, or press any key to start</button>
+    </div>
+    <p class="start-byline"><span>by</span> <img class="inspire-logo" src="inspire-logo.png" alt="INSPIRE" width="600" height="181" /></p>
+  </section>
+  <section id="intro-gate" class="intro-gate" aria-label="INSPIRE Software intro" hidden>
+    <h2 class="visually-hidden">INSPIRE Software</h2>
+    <video id="intro-video" class="intro-video" playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
+    <button type="button" class="intro-skip" id="intro-skip">Skip <span aria-hidden="true">›</span></button>
+  </section>
 
   <main id="game-container">
     <!-- Hub: choose a game -->
@@ -1036,9 +1053,10 @@
   <script type="importmap">
   {
     "imports": {
-      "./src/app/app.js": "./src/app/app.js?v=88b655e6de",
+      "./src/app/app.js": "./src/app/app.js?v=76b4980e54",
       "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
       "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
+      "./src/app/intro.js": "./src/app/intro.js?v=5e46ddd3ac",
       "./src/app/journal-screen.js": "./src/app/journal-screen.js?v=e49f865d11",
       "./src/app/navigation.js": "./src/app/navigation.js?v=df1ca271ed",
       "./src/app/path-screen.js": "./src/app/path-screen.js?v=5ed64db792",
@@ -1046,6 +1064,7 @@
       "./src/app/router.js": "./src/app/router.js?v=cbc93752ac",
       "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=c63f17cc7a",
       "./src/app/sound-motion.js": "./src/app/sound-motion.js?v=f7e46a67c0",
+      "./src/app/start-gate.js": "./src/app/start-gate.js?v=7f1003c308",
       "./src/app/toast.js": "./src/app/toast.js?v=8e6cb89471",
       "./src/app/tutorial.js": "./src/app/tutorial.js?v=7d842e314f",
       "./src/games/acorns-leaves/ai.js": "./src/games/acorns-leaves/ai.js?v=ec51e2bd96",
@@ -1083,9 +1102,10 @@
     }
   }
   </script>
-  <link rel="modulepreload" href="src/app/app.js?v=88b655e6de" />
+  <link rel="modulepreload" href="src/app/app.js?v=76b4980e54" />
   <link rel="modulepreload" href="src/app/confirm-dialog.js?v=fba3c17fca" />
   <link rel="modulepreload" href="src/app/dialog-focus.js?v=77ccee0736" />
+  <link rel="modulepreload" href="src/app/intro.js?v=5e46ddd3ac" />
   <link rel="modulepreload" href="src/app/journal-screen.js?v=e49f865d11" />
   <link rel="modulepreload" href="src/app/navigation.js?v=df1ca271ed" />
   <link rel="modulepreload" href="src/app/path-screen.js?v=5ed64db792" />
@@ -1093,6 +1113,7 @@
   <link rel="modulepreload" href="src/app/router.js?v=cbc93752ac" />
   <link rel="modulepreload" href="src/app/settings-screen.js?v=c63f17cc7a" />
   <link rel="modulepreload" href="src/app/sound-motion.js?v=f7e46a67c0" />
+  <link rel="modulepreload" href="src/app/start-gate.js?v=7f1003c308" />
   <link rel="modulepreload" href="src/app/toast.js?v=8e6cb89471" />
   <link rel="modulepreload" href="src/app/tutorial.js?v=7d842e314f" />
   <link rel="modulepreload" href="src/games/acorns-leaves/ai.js?v=ec51e2bd96" />

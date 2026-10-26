@@ -8,9 +8,11 @@
 // links step back through history when that leads to the same screen.
 // Buttons that act on the current screen declare `data-action`.
 //
-// Sound starts only after the player's first tap, click or key press (any
-// later one unlocks it again if the browser refused a sound), and the music
-// pauses while the page is hidden. So does a match: a hidden page holds it
+// Every load opens on "Touch to start", then the INSPIRE intro (once per
+// browser session; src/app/start-gate.js). That first tap is also the
+// gesture that lets sound play (any later one unlocks it again if the
+// browser refused a sound). The music starts when the game appears after
+// the intro, and pauses while the page is hidden. So does a match: a hidden page holds it
 // like the match menu does, and it goes on when the page is shown again.
 //
 // Focus after an action is predictable: Restart and Play Again/Rematch put
@@ -32,6 +34,7 @@ import { createJournalScreen, TAB_PATHS } from './journal-screen.js';
 import { createResumeUi } from './resume-ui.js';
 import { createTutorial, SETUP_PATHS } from './tutorial.js';
 import { createResumeStore } from '../shared/resume.js';
+import { createStartGate } from './start-gate.js';
 import { createConfirmDialog } from './confirm-dialog.js';
 import { createToast } from './toast.js';
 import { installDialogFocus } from './dialog-focus.js';
@@ -181,11 +184,15 @@ export function createApp({ doc, win }) {
       }
       // Move keyboard and screen-reader focus to the new screen.
       win.scrollTo(0, 0);
-      if (route.screen === 'game-screen') view.focusBoard();
-      else if (route.screen === 'al-game-screen') checkersView.focusBoard();
-      else doc.getElementById(route.screen).querySelector('[tabindex="-1"]')?.focus();
+      focusScreen(route.screen);
     },
   });
+
+  function focusScreen(screen) {
+    if (screen === 'game-screen') view.focusBoard();
+    else if (screen === 'al-game-screen') checkersView.focusBoard();
+    else doc.getElementById(screen)?.querySelector('[tabindex="-1"]')?.focus();
+  }
 
   const actions = {
     'restart-match': () => {
@@ -324,7 +331,26 @@ export function createApp({ doc, win }) {
         audio.resume();
       }
     });
-    audio.startMusic();
+    // Nothing moves or plays behind the start screen and the intro: a match
+    // on screen (a resumed one, a deep link) waits, and so do notices.
+    for (const game of [session, checkers]) game.pause('start');
+    toast.hold('start');
+    const gate = createStartGate({
+      doc,
+      win,
+      // The intro sounds at the music's volume, or plays silently with music off.
+      introOptions: () => {
+        const { music, musicVolume } = profile.settings();
+        return { muted: !music || musicVolume === 0, volume: musicVolume / 100 };
+      },
+      onReady() {
+        for (const game of [session, checkers]) game.resume('start');
+        toast.release('start');
+        audio.startMusic();
+        focusScreen(nav.current);
+      },
+    });
+    gate.show();
     router.start();
     for (const note of profile.notes) console.info(`Spirit of the Woods: ${note}`);
   }

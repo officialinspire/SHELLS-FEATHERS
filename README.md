@@ -69,6 +69,10 @@ On a phone the board takes all the room the rest of the screen leaves, in portra
 
 On a wide screen a side panel beside the board shows whose turn it is, what to do, the last move, the rule behind what is happening, and the rules and keys. The game pauses while the menu or its Settings is open, and while the page is hidden.
 
+## Opening
+
+Like every INSPIRE game, it opens on **Touch to start**, then the INSPIRE Software intro (once per browser session; Skip, or Escape, Enter or Space, goes straight on). The music starts when the games appear after the intro.
+
 ## Settings, Your Path and saved data
 
 - **Settings** are shared by both games:
