@@ -84,10 +84,14 @@ export function createFakeView() {
     showFinalTurn(outcome, winner, line) { view.finalTurn = { outcome, winner, line }; },
     showScores(mode, scores) { view.scores = { ...scores }; },
     resultAchievements: null, // the achievements the last result dialog listed
-    showResult(outcome, winner, achievements = []) {
+    flow: null, // what the last result dialog offered next
+    setLine: '',
+    showSet(text) { view.setLine = text; },
+    showResult(outcome, winner, achievements = [], flow = null) {
       view.result = { outcome, winner };
       view.resultsShown.push(outcome);
       view.resultAchievements = achievements;
+      view.flow = flow;
     },
     hideResult() { view.result = null; },
     hideMenu() {},
@@ -113,10 +117,14 @@ export function createFakeCheckersView() {
     render(model) { view.model = model; view.models.push(model); },
     announce(text) { view.announcements.push(text); },
     resultAchievements: null, // the achievements the last result dialog listed
-    showResult(result, achievements = []) {
+    flow: null, // what the last result dialog offered next
+    setLine: '',
+    showSet(text) { view.setLine = text; },
+    showResult(result, achievements = [], flow = null) {
       view.result = result;
       view.results.push(result);
       view.resultAchievements = achievements;
+      view.flow = flow;
     },
     hideResult() { view.result = null; },
     hideMenu() {},
@@ -185,5 +193,18 @@ export function createFakeAudioElement() {
       return Promise.resolve();
     },
     pause() { this.paused = true; },
+  };
+}
+
+// An in-memory resume store with the same calls as src/shared/resume.js.
+export function createFakeResume() {
+  const data = {};
+  return {
+    data,
+    saves: 0,
+    get: (game) => data[game] ?? null,
+    save(game, snapshot) { data[game] = JSON.parse(JSON.stringify(snapshot)); this.saves += 1; },
+    clear(game) { delete data[game]; },
+    reject(game) { delete data[game]; },
   };
 }

@@ -29,9 +29,9 @@ export function initSettingsScreen({
     const agreed = await confirmDialog.ask({
       title: 'Delete all saved data?',
       deletes: [
-        'Every Shells & Feathers and Acorns & Leaves record, Classic and Fog of War, against the Spirit and two-player.',
-        'Every achievement in both games.',
-        'Your choices on each game’s screen: pieces, side, rules and difficulty.',
+        'Every Shells & Feathers and Acorns & Leaves record, games and sets, Classic and Fog of War, against the Spirit and two-player.',
+        'Every achievement in both games, any unfinished match, and which tutorials you have seen.',
+        'Your choices on each game’s screen: pieces, side, rules, difficulty and match length.',
         'These settings: sound, volumes and motion go back to their defaults.',
         'The record kept by the first version of the game (spiritOfTheWoodsStats), and any damaged copies set aside.',
       ],

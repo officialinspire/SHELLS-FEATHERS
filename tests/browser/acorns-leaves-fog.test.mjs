@@ -289,18 +289,20 @@ test('Acorns & Leaves: Fog of War', { timeout: 900_000 }, async (t) => {
     assert.deepEqual(await game.checkersRows(), rowsFromBoard(createInitialState().board), 'Classic: the whole board');
     assert.equal(await game.page.locator('#al-match-info').textContent(), 'Against the Spirit · Gentle · You: Acorns');
 
-    // Two players: leaving with Back and coming back starts a fresh game,
-    // with the handoff to the Acorns.
+    // Two players: leaving with Back keeps the match. Back leads to another
+    // kind of match (Classic against the Spirit), so the setup screen offers
+    // the unfinished one instead; Forward resumes it behind the handoff, for
+    // the Leaves, with no piece drawn.
     await game.goTo('#/acorns-leaves/fog/two', 'al-game-screen');
     await game.press("Show the Acorns' board");
     await game.playPath([sq(5, 2), sq(4, 3)]);
     assert.equal(await game.page.locator('#al-handoff-title').textContent(), "Leaves' turn");
     await game.page.goBack();
-    await game.waitForScreen('al-game-screen');
-    await game.page.waitForFunction(() => document.getElementById('al-handoff').hidden);
+    await game.waitForScreen('al-setup-screen');
+    assert.match(await game.page.locator('#al-resume-text').textContent(), /^Fog of War, two players · Single game · 1 move played this round$/);
     await game.page.goForward();
     await game.page.locator('#al-handoff').waitFor();
-    assert.equal(await game.page.locator('#al-handoff-title').textContent(), "Acorns' turn", 'a fresh game starts with the Acorns');
+    assert.equal(await game.page.locator('#al-handoff-title').textContent(), "Leaves' turn", 'resumed, for the player to move');
     assert.equal(await game.page.locator('#al-board [data-piece]').count(), 0);
     assert.deepEqual(game.pageErrors, []);
   });

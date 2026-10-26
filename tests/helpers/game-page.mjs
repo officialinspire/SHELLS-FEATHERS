@@ -109,6 +109,19 @@ export class GamePage {
     if (screen) await this.waitForScreen(screen);
   }
 
+  // Starts a new match at `hash` the way a Play link does (a link pressed
+  // always starts a new match; typing the address or Back/Forward resumes an
+  // unfinished one).
+  async startNew(hash, screen) {
+    await this.page.evaluate((h) => {
+      const link = Object.assign(document.createElement('a'), { href: h });
+      document.body.append(link);
+      link.click();
+      link.remove();
+    }, hash);
+    if (screen) await this.waitForScreen(screen);
+  }
+
   goHome() {
     return this.goTo('#/', 'hub-screen');
   }

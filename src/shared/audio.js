@@ -2,7 +2,9 @@
 //
 // - Nothing plays until unlock(), which the app calls on the player's first
 //   tap, click or key press: browsers refuse sound before that. Music asked
-//   for earlier (startMusic) begins at that moment.
+//   for earlier (startMusic) begins at that moment. The effects (marked
+//   data-sfx, preload="none") are only fetched then too, so they never
+//   compete with the page's own files while it loads.
 // - play() may be refused. A refusal for lack of a user gesture
 //   (NotAllowedError) locks audio again, and the next gesture retries the
 //   music. An AbortError (a pause() that overtook a pending play()) is
@@ -111,6 +113,17 @@ export function createAudio({
     rampMusic(el, 0, () => el.pause());
   }
 
+  // Fetches every effect once, at the first gesture.
+  let effectsLoading = false;
+  function loadEffects() {
+    if (effectsLoading) return;
+    effectsLoading = true;
+    for (const el of doc.querySelectorAll?.('audio[data-sfx]') ?? []) {
+      el.preload = 'auto';
+      el.load?.();
+    }
+  }
+
   function stopEffects() {
     for (const el of effects) {
       if (el.paused) continue;
@@ -124,6 +137,7 @@ export function createAudio({
     unlock() {
       if (unlocked) return;
       unlocked = true;
+      loadEffects();
       playMusic();
     },
     get unlocked() { return unlocked; },

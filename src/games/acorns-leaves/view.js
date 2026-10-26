@@ -321,7 +321,7 @@ export function createAcornsLeavesView(doc) {
       if (mode === 'two') info = fogged ? 'Fog of War · Two players' : 'Two players · Acorns move first';
       else if (fogged) info = `Fog of War · ${DIFFICULTY_NAMES[difficulty]} Spirit · You: ${SIDE_NAMES[humanSide]}`;
       else info = `Against the Spirit · ${DIFFICULTY_NAMES[difficulty]} · You: ${SIDE_NAMES[humanSide]}`;
-      byId('al-match-info').textContent = info;
+      byId('al-info-main').textContent = info;
       byId('al-menu-info').textContent = info;
       screen.dataset.variant = variant;
     },
@@ -345,9 +345,26 @@ export function createAcornsLeavesView(doc) {
     },
     render,
     announce,
-    showResult({ title, message, outcome }, achievements = []) {
+    // A set's progress under the match line ('' for a single game).
+    showSet(text) {
+      const line = byId('al-set-line');
+      if (!text) {
+        line.replaceChildren();
+        return;
+      }
+      // A spoken break between the two lines ("… Shell. Round 2 of 3 …").
+      const pause = doc.createElement('span');
+      pause.className = 'visually-hidden';
+      pause.textContent = '. ';
+      line.replaceChildren(pause, text);
+    },
+    // flow: what comes next ({ progress, primary, switchSides }; see session.js).
+    showResult({ title, message, outcome }, achievements = [], flow = {}) {
       byId('al-modal-title').textContent = title;
       byId('al-modal-message').textContent = message;
+      byId('al-modal-set').textContent = flow.progress ?? '';
+      for (const button of doc.querySelectorAll('[data-action="al-rematch"]')) button.textContent = flow.primary ?? 'Rematch';
+      modal.querySelector('[data-action="al-switch-sides"]').hidden = !flow.switchSides;
       const winner = shown?.winner;
       const sides = winner ? [winner] : ['acorn', 'leaf'];
       byId('al-modal-emblem').replaceChildren(...sides.map((side) => createPieceIcon(doc, { side, king: false }, 'emblem-piece')));

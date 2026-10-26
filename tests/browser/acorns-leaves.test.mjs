@@ -174,7 +174,7 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
     assert.deepEqual(panel.emblem, result.winner ? [`#al-${result.winner}`] : ['#al-acorn', '#al-leaf']);
     const captured = (await game.checkersView()).captured;
     assert.equal(panel.summary, `Captured · Acorns ${captured.acorn} · Leaves ${captured.leaf}`);
-    assert.equal(panel.describedBy, 'al-modal-message al-modal-summary al-modal-achievements');
+    assert.equal(panel.describedBy, 'al-modal-message al-modal-set al-modal-summary al-modal-achievements');
     assert.equal((await game.checkersView()).turn, shown.title, 'the turn line shows the result');
     assert.equal((await game.checkersView()).state, 'over');
 
@@ -284,8 +284,11 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
         assert.deepEqual(await game.checkersRows(), START, 'no Spirit move on the new board');
         assert.equal((await game.checkersView()).state, 'ready');
       } else {
+        // Coming back resumes the match as it was left, the Spirit still to
+        // move (its old timer is gone; a new one starts).
         await game.goTo('#/acorns-leaves/play/single', 'al-game-screen');
-        assert.deepEqual(await game.checkersRows(), START, 'coming back starts a clean game');
+        assert.deepEqual(await game.checkersRows(), left.rows, 'coming back resumes the match as it was left');
+        assert.equal((await game.checkersView()).state, 'waiting');
       }
       const { single } = await records(game);
       assert.ok(Object.values(single).every((r) => r.wins + r.losses + r.draws === 0), 'nothing recorded');

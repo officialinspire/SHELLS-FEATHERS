@@ -8,12 +8,27 @@
 // only what they can see, and the Spirit decides from its own view
 // (fog-ai.js).
 //
-// Lifecycle: enter(mode, variant) when the match screen opens, restart() for
-// "Restart", playAgain() for "Rematch", leave() when the screen closes, and
+// Lifecycle: enter(mode, variant) when the match screen opens (a new match:
+// a single game or a best-of-three or -five set, from the saved setting),
+// resumeFrom(snapshot) to rebuild an unfinished one, restart() for "Restart"
+// (this round again; the set keeps its score), playAgain() for the result's
+// main button (the next round, or a new match once the set is decided),
+// switchSides() to take the other side from the next round on (against the
+// Spirit; the score follows you), leave() when the screen closes, and
 // pause()/resume() while the match menu is open or the page is hidden (the
-// Spirit's move, its steps and the result dialog wait). Each match owns a timer scope; starting
-// another match or leaving disposes it, so a pending Spirit move, result
-// dialog or music restart from an old match can never fire.
+// Spirit's move, its steps and the result dialog wait). Each match owns a
+// timer scope; starting another match or leaving disposes it, so a pending
+// Spirit move, result dialog or music restart from an old match can never
+// fire.
+//
+// Sets (src/shared/match-set.js): with two players the sides of a set are
+// the Acorns and the Leaves. Every round is also recorded as a game; a
+// decided set of three or five is recorded apart (profile.recordSet).
+//
+// Resume: after every move, and between rounds, the match is saved with the
+// paths played this round (resume.js); a restored match is rebuilt by
+// replaying them through the rules, with nothing sounded or announced but
+// "Match resumed". Two players in Fog resume behind the handoff screen.
 //
 // The Spirit: after a short pause it picks its move (ai.js, bounded, legal
 // moves only) and, in Classic, shows it a square at a time so a chain of
@@ -56,6 +71,15 @@ import {
 } from './text.js';
 import { createTimerScope } from '../../shared/timers.js';
 import { createFeedback } from '../../shared/feedback.js';
+import { snapshotOf, restoreAcornsLeaves } from './resume.js';
+import {
+  createSet, recordRound, setScore, setProgressText,
+} from '../../shared/match-set.js';
+
+const SET_NAMES = { single: { first: 'You', second: 'the Spirit' }, two: { first: 'the Acorns', second: 'the Leaves' } };
+const ROUND_WINNER = {
+  win: 'first', acorn: 'first', loss: 'second', leaf: 'second', draw: 'draw',
+};
 
 export const DELAYS = { spiritThink: 500, spiritStep: 400, resultModal: 900, musicRestart: 300 };
 
@@ -73,6 +97,7 @@ export function createSession({
   view, audio, profile, notify = () => {},
   clock = globalThis, rng = Math.random, delays = DELAYS, feedback = createFeedback({ audio, clock }),
   chooseMove = spiritChoice, chooseFogStep = fogSpiritChoice, initialState = createInitialState,
+  resume = null,
 }) {
   let mode = null;
   let variant = 'classic';
@@ -83,15 +108,46 @@ export function createSession({
   let scoredMatch = null;
   let matchCount = 0;
   const holds = new Set();
+  // The match's own settings, fixed when it starts (or is restored), and the
+  // set so far.
+  let config = null;
+  let set = createSet(1);
 
   const fogged = () => variant === 'fog';
+  const inSet = () => set.length > 1;
+
+  function useVariant(newVariant) {
+    variant = newVariant === 'fog' ? 'fog' : 'classic';
+    rules = fogged() ? FOG_RULES : CLASSIC_RULES;
+  }
 
   function enter(newMode, newVariant = 'classic') {
     mode = newMode;
-    variant = newVariant === 'fog' ? 'fog' : 'classic';
-    rules = fogged() ? FOG_RULES : CLASSIC_RULES;
-    startMatch();
+    useVariant(newVariant);
+    newSet();
     feedback.cue('newGame', { key: matchCount });
+  }
+
+  // A new match from the saved settings: it replaces any unfinished one.
+  function newSet() {
+    const { difficulty, side, setLength } = profile.acornsLeavesSettings();
+    config = { difficulty, side };
+    set = createSet(setLength);
+    resume?.clear('acornsLeaves');
+    startMatch();
+  }
+
+  // Rebuilds an unfinished match exactly as saved, or returns false (and
+  // changes nothing) if the snapshot doesn't fit the rules.
+  function resumeFrom(snapshot) {
+    const restored = restoreAcornsLeaves(snapshot, { initialState });
+    if (!restored) return false;
+    mode = restored.mode;
+    useVariant(restored.variant);
+    config = { difficulty: restored.difficulty, side: restored.side };
+    set = restored.set;
+    startMatch(restored.moves);
+    return true;
   }
 
   function leave() {
@@ -99,30 +155,62 @@ export function createSession({
     mode = null;
   }
 
+  // This round again; the set keeps its score.
   function restart() {
-    if (mode) startMatch();
+    if (!mode) return;
+    startMatch();
+    saveProgress();
   }
 
+  // The result's main button: the set's next round, or a new match.
   function playAgain() {
     if (!mode) return;
     audio.stopMusic();
-    startMatch();
+    if (inSet() && setScore(set).done) newSet();
+    else startMatch();
+    saveProgress();
     feedback.cue('newGame', { key: matchCount });
     timers.after(delays.musicRestart, () => audio.startMusic());
   }
 
-  function startMatch() {
+  // Against the Spirit: the other side from now on (saved as the setting
+  // too), then on as playAgain. The set keeps its score: it follows you.
+  function switchSides() {
+    if (mode !== 'single' || !config) return;
+    const side = config.side === 'acorn' ? 'leaf' : 'acorn';
+    profile.updateAcornsLeavesSettings({ side });
+    config = { ...config, side };
+    playAgain();
+  }
+
+  // Saves the match as it stands for resuming, or removes it once there is
+  // nothing to resume (nothing played, or the match is over).
+  function saveProgress() {
+    if (!resume || !mode || !match) return;
+    const over = match.result && (!inSet() || setScore(set).done);
+    if (over || (!match.paths.length && !set.rounds.length)) {
+      resume.clear('acornsLeaves');
+      return;
+    }
+    resume.save('acornsLeaves', snapshotOf({
+      mode, variant, difficulty: config.difficulty, side: config.side, set, moves: match.result ? [] : match.paths,
+    }));
+  }
+
+  // restored: the legal moves of a saved round, replayed without a sound.
+  function startMatch(restored = []) {
     teardownMatch();
     matchCount += 1;
-    const { difficulty, side } = profile.acornsLeavesSettings();
+    const { difficulty, side } = config;
     match = {
       state: initialState(),
+      paths: [], // each move's path this round, for resuming
       played: 0, // moves played this match
       turn: null,
       humanSide: mode === 'single' ? side : null,
       difficulty,
       captured: { acorn: 0, leaf: 0 }, // pieces each side has taken
-      lastMove: null, // { by, path, captures, crowned, taken: [{ square, piece }] }
+      lastMove: null, // { by, path, captures, crowned, taken: [{ square, piece }], from, to, king }
       told: '', // the last move as the player now looking was told it
       result: null,
       resultText: null,
@@ -136,13 +224,47 @@ export function createSession({
     if (fogged()) {
       for (const s of SIDES) match.inView[s] = fog.opponentsInView(fog.observe(match.state.board, s), s);
     }
+    for (const move of restored) replay(move);
     timers = createTimerScope(clock);
     if (holds.size) timers.pause();
     // Against the Spirit the player's pieces sit at the bottom.
     view.setOrientation(match.humanSide ?? 'acorn');
     view.showMatchInfo({ mode, difficulty, humanSide: match.humanSide, variant });
-    beginTurn('New game.');
+    view.showSet?.(setLine());
+    if (!restored.length) {
+      beginTurn('New game.');
+      return;
+    }
+    // What the player now looking was last told (in Fog, as far as they could
+    // see; two players in Fog are behind the handoff, told nothing yet).
+    const last = match.lastMove;
+    const lastPiece = { side: last.by, king: last.king };
+    if (!fogged()) match.told = moveText({ mode, humanSide: match.humanSide, move: last, piece: lastPiece });
+    else if (mode === 'single') {
+      match.told = last.by === match.humanSide
+        ? moveText({ mode, humanSide: match.humanSide, move: last, piece: lastPiece })
+        : opponentMoveText(match.humanSide);
+    }
+    beginTurn(`Match resumed. ${match.told}`.trim());
   }
+
+  // A saved move, played again as it was: the same bookkeeping as play(),
+  // with no sound, announcement or achievement (they happened already).
+  function replay(move) {
+    const piece = match.state.board[move.from];
+    const taken = move.captures.map((square) => ({ square, piece: match.state.board[square] }));
+    match.state = applyMove(match.state, move);
+    match.played += 1;
+    match.paths.push([...move.path]);
+    match.captured[piece.side] += move.captures.length;
+    match.lastMove = {
+      by: piece.side, path: move.path, captures: move.captures, crowned: Boolean(move.crowned), taken, from: move.from, to: move.to, king: piece.king,
+    };
+    if (fogged()) match.inView[piece.side] = fog.opponentsInView(fog.observe(match.state.board, piece.side), piece.side);
+  }
+
+  // The set's progress for the match header, or '' for a single game.
+  const setLine = () => (inSet() ? setProgressText(set, SET_NAMES[mode]) : '');
 
   function teardownMatch() {
     timers?.dispose();
@@ -331,9 +453,10 @@ export function createSession({
     const taken = move.captures.map((square) => ({ square, piece: match.state.board[square] }));
     match.state = applyMove(match.state, move);
     match.played += 1;
+    match.paths.push([...move.path]);
     match.captured[piece.side] += move.captures.length;
     match.lastMove = {
-      by: piece.side, path: move.path, captures: move.captures, crowned: Boolean(move.crowned), taken,
+      by: piece.side, path: move.path, captures: move.captures, crowned: Boolean(move.crowned), taken, from: move.from, to: move.to, king: piece.king,
     };
     cueMove(piece, move);
     // Only the player's own piece, against the Spirit (never two players, so
@@ -351,6 +474,7 @@ export function createSession({
       return;
     }
     if (moments.length) notify(moments);
+    saveProgress();
     if (!fogged()) {
       match.told = moved;
       beginTurn(said);
@@ -406,6 +530,16 @@ export function createSession({
     const unlocked = [...earlier, ...(profile.recordAcornsLeavesResult({
       mode, difficulty: match.difficulty, outcome: text.outcome, variant, side: match.humanSide,
     }) ?? [])];
+    set = recordRound(set, ROUND_WINNER[text.outcome]);
+    const decided = setScore(set);
+    if (inSet() && decided.done) {
+      const setOutcome = mode === 'single' ? { first: 'win', second: 'loss', draw: 'draw' }[decided.winner] : decided.winner;
+      profile.recordSet({
+        game: 'acornsLeaves', mode, length: set.length, outcome: setOutcome, variant,
+      });
+    }
+    saveProgress();
+    view.showSet?.(setLine());
     if (text.outcome === 'loss') {
       feedback.cue('loss', { key: matchCount });
     } else if (text.outcome === 'draw') {
@@ -417,7 +551,13 @@ export function createSession({
     render();
     // The game is over, so the fog lifts and the last move can be told in full.
     view.announce(`${said} ${fogged() ? 'The fog lifts. ' : ''}${text.title} ${text.message}`);
-    timers.after(delays.resultModal, () => view.showResult(text, unlocked));
+    const flow = {
+      progress: setLine(),
+      primary: inSet() && !decided.done ? 'Next Round' : 'Rematch',
+      setDone: inSet() && decided.done,
+      switchSides: mode === 'single',
+    };
+    timers.after(delays.resultModal, () => view.showResult(text, unlocked, flow));
   }
 
   function render() {
@@ -564,13 +704,14 @@ export function createSession({
     feedback.hold(reason);
   }
 
-  function resume(reason = 'menu') {
+  function resumeMatch(reason = 'menu') {
     holds.delete(reason);
     feedback.release(reason);
     if (!holds.size) timers?.resume();
   }
 
   return {
-    enter, leave, restart, playAgain, selectSquare, cancelSelection, takeControl, pause, resume,
+    enter, resumeFrom, leave, restart, playAgain, switchSides, selectSquare, cancelSelection, takeControl, pause, resume: resumeMatch,
+    get set() { return set; },
   };
 }

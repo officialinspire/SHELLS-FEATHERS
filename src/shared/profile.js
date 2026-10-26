@@ -13,13 +13,14 @@ import {
   createDefaultSave, normalizeSave, legacyStatsFromV1, migrateFromV1, absorbNewerLegacyStats,
   summarizeStats, recordResult, clearStats, applySettings, applyGameSettings,
   recordAcornsLeavesResult, clearAcornsLeavesStats, applyAcornsLeavesSettings,
-  checkAchievements, recordMoment, recordsOf,
+  checkAchievements, recordMoment, recordsOf, recordSet, setTutorial,
 } from './save-data.js';
 import { ACHIEVEMENTS, BOOKS, BOOK_IDS, definition } from './achievements.js';
+import { RESUME_KEY } from './resume.js';
 
 export const CORRUPT_SUFFIX = ':corrupt';
 // Every key the game writes, for "Delete all saved data".
-export const ALL_KEYS = [SAVE_KEY, LEGACY_STATS_KEY, SAVE_KEY + CORRUPT_SUFFIX, LEGACY_STATS_KEY + CORRUPT_SUFFIX];
+export const ALL_KEYS = [SAVE_KEY, LEGACY_STATS_KEY, SAVE_KEY + CORRUPT_SUFFIX, LEGACY_STATS_KEY + CORRUPT_SUFFIX, RESUME_KEY];
 
 // Returns { save, source, notes }. source: 'v2' | 'migrated-v1' | 'new'.
 export function loadSave(store) {
@@ -129,6 +130,17 @@ export function createProfile(store, { onSaveError = (msg) => console.warn(msg),
     updateAcornsLeavesSettings(patch) { applyAcornsLeavesSettings(save, patch); persist(); },
     recordAcornsLeavesResult(result) { return afterResult(recordAcornsLeavesResult, 'acornsLeaves', result, false); },
     resetAcornsLeavesStats() { clearAcornsLeavesStats(save); persist(); },
+    // A finished set of 3 or 5 rounds (save-data.js recordSet).
+    recordSet(set) {
+      recordSet(save, set);
+      persist();
+    },
+    // The game's tutorial: null (not yet), 'done' or 'skipped'.
+    tutorial: (game) => save.tutorials[game] ?? null,
+    setTutorial(game, state) {
+      setTutorial(save, game, state);
+      persist();
+    },
 
     // A moment in play: { game, moment, mode }. Returns achievements unlocked.
     recordMoment(event) {
@@ -161,6 +173,8 @@ export function createProfile(store, { onSaveError = (msg) => console.warn(msg),
     progress() {
       const sf = save.shellsFeathers.stats;
       const al = save.acornsLeaves.stats;
+      // Finished sets of every kind.
+      const setCount = (sets) => sum([sets.single, sets.twoPlayer].flatMap((kind) => Object.values(kind).map((r) => sum(Object.values(r)))));
       const unlocked = (book) => Object.keys(save[book].achievements).filter((id) => definition(book, id)).length;
       // Unlocked Collection entries that clearing `game` would lock again.
       const collection = (game) => ACHIEVEMENTS.collection
@@ -171,6 +185,7 @@ export function createProfile(store, { onSaveError = (msg) => console.warn(msg),
           spiritGames: spiritGames(sf.single),
           twoPlayerGames: sum(Object.values(sf.twoPlayer)),
           earlierGames: sf.legacy.totalGames,
+          sets: setCount(sf.sets),
           achievements: unlocked('shellsFeathers'),
           collection: collection('shellsFeathers'),
         },
@@ -179,6 +194,7 @@ export function createProfile(store, { onSaveError = (msg) => console.warn(msg),
           twoPlayerGames: sum(Object.values(al.twoPlayer)),
           fogSpiritGames: spiritGames(al.fog.single),
           fogTwoPlayerGames: sum(Object.values(al.fog.twoPlayer)),
+          sets: setCount(al.sets) + setCount(al.fog.sets),
           achievements: unlocked('acornsLeaves'),
           collection: collection('acornsLeaves'),
         },

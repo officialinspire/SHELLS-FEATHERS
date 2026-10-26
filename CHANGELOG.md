@@ -28,6 +28,16 @@ The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two 
   - in Fog nothing gives away a hidden piece, and with two players every move sounds and feels the same.
 - **Haptics setting:** optional short vibrations for your own actions (never the Spirit's moves or hovering), rate limited, off by default, and shown as unavailable, with the reason, where the browser can't vibrate.
 
+- **Match sets:** best of three and best of five, for both games and every mode, besides single games.
+  - **Draws:** a drawn round counts as a round but scores for no one, so every set ends.
+  - **Progress:** shown in the match header and the result.
+  - **Records:** every round is still a game in your records, and finished sets are recorded apart.
+- **Result screen:** the outcome, the set's progress or result, then Next Round or Play Again/Rematch, Switch Sides (against the Spirit, and the score follows you), Change Setup and Home.
+- **Resume:** an unfinished match, including a set in progress, comes back after a reload or when you return.
+  - It is checked against the rules and restored exactly, or set aside with a note: never changed.
+  - Two players in Fog of War resume behind the handoff screen.
+- **Tutorial:** a one-minute practice for each game on its own board, offered once and easy to skip. Nothing in it counts. Its Fog of War step only ever shows what you could see.
+
 ### Changed
 - **Visual identity:**
   - **Look:** one woodland tabletop look across the hub and both games, built on design tokens (type, spacing, surfaces, shadows, borders, icons, states).
@@ -59,6 +69,8 @@ The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two 
   - the owner's sound effects start on time (up to half a second of leading silence trimmed);
   - all audio is half the size it was (15.4 MB → 7.9 MB).
 - **Deploys:** the site is safe to redeploy on GitHub Pages. Content-hashed module URLs (`tools/stamp-assets.mjs`) stop browsers mixing old and new files during the ten-minute cache window, and `.nojekyll` serves files as they are.
+
+- **Loading on slow phones:** about 1.5 s faster to be ready, measured on an emulated slow phone. Every script is fetched at once, and sound effects wait for the first tap.
 
 ### Fixed (from v1)
 - **Broken audio paths:** the published page loaded sounds from a missing `SHELLS & FEATHERS MINI GAME/` folder.

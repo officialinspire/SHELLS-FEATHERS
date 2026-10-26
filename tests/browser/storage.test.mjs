@@ -17,7 +17,7 @@ async function playTwoPlayerWin(game) {
   await game.newMatch('two');
   for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
   const result = await game.waitForResult();
-  await game.press('All Games');
+  await game.press('Home');
   await game.waitForScreen('hub-screen');
   return result;
 }

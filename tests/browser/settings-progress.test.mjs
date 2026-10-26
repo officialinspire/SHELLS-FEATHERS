@@ -222,7 +222,7 @@ test('settings and progress', { timeout: 300_000 }, async (t) => {
     assert.equal(await page.locator('#confirm-title').textContent(), 'Delete all saved data?');
     const listed = await page.locator('#confirm-deletes li').allTextContents();
     assert.equal(listed.length, 5);
-    assert.match(listed.join(' '), /record.*achievement.*pieces, side, rules and difficulty.*sound, volumes and motion.*spiritOfTheWoodsStats/s);
+    assert.match(listed.join(' '), /record.*games and sets.*achievement.*unfinished match.*pieces, side, rules, difficulty and match length.*sound, volumes and motion.*spiritOfTheWoodsStats/s);
     await game.press('Cancel');
     assert.equal((await keys()).length, 4, 'Cancel deletes nothing');
 

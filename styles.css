@@ -1771,6 +1771,36 @@ kbd {
     display: none;
 }
 
+/* Buttons and links styled as buttons stay hidden when marked hidden
+   (Switch Sides with two players, Resume with nothing to resume). */
+.btn[hidden] {
+    display: none;
+}
+
+/* A set's progress or result in the result dialog. */
+.modal-set {
+    margin: -6px 0 14px;
+    font-family: var(--font-label);
+    font-weight: bold;
+    color: var(--sand);
+}
+
+.modal-set:empty {
+    display: none;
+}
+
+/* A set's progress under the match line. */
+.match-set {
+    display: block;
+    font-family: var(--font-label);
+    font-weight: bold;
+    color: var(--gold-300);
+}
+
+.match-set:empty {
+    display: none;
+}
+
 /* Deleting saved data: what goes, what stays. */
 .confirm-content {
     max-width: 480px;
@@ -3089,4 +3119,164 @@ kbd {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+}
+
+/* Setup screens: an unfinished match, and the tutorial offered once. */
+.resume-panel,
+.tutorial-card {
+    max-width: 560px;
+    margin-bottom: var(--space-3);
+    padding: var(--space-4);
+    font-family: var(--font-body);
+    text-align: left;
+}
+
+.resume-panel {
+    border-color: var(--gold-300);
+}
+
+.resume-title {
+    margin-bottom: 6px;
+    font-family: var(--font-label);
+    font-size: 1.05rem;
+    color: var(--sand);
+}
+
+.resume-text {
+    margin-bottom: 10px;
+}
+
+.resume-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.resume-actions .btn {
+    flex: 1 1 140px;
+}
+
+.setup-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 22px;
+}
+
+/* Tutorial: a practice board, square, as wide as the panel allows. */
+.tutorial-panel {
+    max-width: 560px;
+    font-family: var(--font-body);
+}
+
+.tutorial-lesson {
+    margin-bottom: 12px;
+    font-size: 1.02rem;
+    line-height: 1.4;
+}
+
+.practice-board {
+    --size: 8;
+    display: grid;
+    grid-template-columns: repeat(var(--size), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--size), minmax(0, 1fr));
+    width: min(100%, 420px, 58dvh);
+    margin: 0 auto;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 6px solid var(--wood-700);
+    border-radius: 10px;
+    box-shadow: 0 6px 16px var(--shadow);
+}
+
+.practice-board[data-game="shellsFeathers"] {
+    gap: 6px;
+    width: min(100%, 300px);
+    padding: 6px;
+    background: var(--wood-800);
+}
+
+.practice-board button {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+.practice-cell {
+    background: linear-gradient(160deg, var(--wood-200), var(--wood-300));
+    border-radius: 8px;
+}
+
+.practice-square.light {
+    background: var(--wood-100);
+    cursor: default;
+}
+
+.practice-square.dark {
+    background: var(--wood-600);
+}
+
+.practice-piece {
+    width: 82%;
+    height: 82%;
+    pointer-events: none;
+}
+
+.practice-square.is-fog {
+    background: repeating-linear-gradient(135deg, #5d6b62 0 6px, #66756b 6px 12px);
+}
+
+.practice-square.can-move::after,
+.practice-board .is-target::after {
+    content: "";
+    position: absolute;
+    inset: 12%;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.practice-square.can-move::after {
+    border: 3px solid var(--turquoise);
+}
+
+.practice-board .is-target::after {
+    background: rgba(255, 212, 71, 0.4);
+    border: 3px solid var(--gold-300);
+}
+
+.practice-square.is-selected {
+    background: var(--gold-500);
+}
+
+.tutorial-hint {
+    min-height: 2.8em;
+    margin: 12px 0 8px;
+    font-weight: 600;
+    color: var(--gold-300);
+}
+
+.tutorial-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.tutorial-actions .btn {
+    flex: 0 1 180px;
+}
+
+/* Your Path: finished sets, one per line. */
+.set-records {
+    display: grid;
+    gap: 4px;
+    padding-left: 1.2em;
+    font-family: var(--font-body);
 }

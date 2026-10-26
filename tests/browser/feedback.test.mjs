@@ -94,7 +94,7 @@ test('feedback', { timeout: 600_000 }, async (t) => {
     assert.equal(await page.locator('#haptics-toggle').isChecked(), true, 'remembered');
     await page.mouse.click(5, 5);
 
-    await game.goTo('#/acorns-leaves/play/single', 'al-game-screen');
+    await game.startNew('#/acorns-leaves/play/single', 'al-game-screen');
     // Hovering over pieces and squares: nothing.
     for (const s of [sq(5, 0), sq(5, 2), sq(4, 1), sq(2, 1)]) await game.square(s).hover();
     assert.deepEqual(await vibes(game), []);
@@ -145,7 +145,7 @@ test('feedback', { timeout: 600_000 }, async (t) => {
 
     await game.goTo('#/settings', 'settings-screen');
     await page.locator('#settings-screen label[for="audio-toggle"]').click(); // effects on
-    await game.goTo('#/shells-feathers/play/two', 'game-screen');
+    await game.startNew('#/shells-feathers/play/two', 'game-screen');
     const mark = (await plays(game)).length;
     await page.locator('.cell[data-index="4"]').dblclick();
     assert.deepEqual((await plays(game)).slice(mark).filter((id) => id === 'player-select'), ['player-select'], 'a double click sounds once');

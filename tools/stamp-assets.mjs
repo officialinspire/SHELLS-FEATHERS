@@ -7,7 +7,12 @@
 // up to ten-minute-old modules, or new modules with old markup. With them:
 // - styles.css and src/main.js are linked as `…?v=<hash>`;
 // - an import map sends every other module (imported by plain relative
-//   paths) to `…?v=<hash>` too, so a changed file always has a new URL.
+//   paths) to `…?v=<hash>` too, so a changed file always has a new URL;
+// - a modulepreload link for every module, so the browser fetches them all
+//   at once instead of one level of imports at a time (six round trips on a
+//   slow phone network before; see docs/upgrade-plan.md §0.1). The block
+//   stays at the end of <body>: in <head> the fetches competed with the
+//   stylesheet and delayed the first paint (measured: 1.8 s against 1.2 s).
 // Browsers without import maps (Safari before 16.4) ignore the map and load
 // the plain paths, as before.
 //
@@ -47,6 +52,7 @@ export function stampedIndex(root = ROOT, html = readFileSync(path.join(root, 'i
     '  <script type="importmap">',
     map,
     '  </script>',
+    ...modules().map((file) => `  <link rel="modulepreload" href="${file}?v=${hash(file)}" />`),
     `  <script type="module" src="src/main.js?v=${hash('src/main.js')}"></script>`,
     `  ${END}`,
   ].join(eol);

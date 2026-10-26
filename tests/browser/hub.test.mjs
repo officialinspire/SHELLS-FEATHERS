@@ -103,7 +103,7 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     await game.startMatch('two');
     for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
     assert.equal((await game.waitForResult()).title, 'Player 1 Wins!');
-    await game.press('All Games');
+    await game.press('Home');
     await game.waitForScreen('hub-screen');
 
     await game.press('Settings');
@@ -147,8 +147,8 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     assert.equal(await page.title(), 'Shells & Feathers · Spirit of the Woods');
     await page.goForward();
     await game.waitForScreen('game-screen');
-    assert.deepEqual(await game.cells(), Array(9).fill(''), 'Forward starts a fresh match');
-    assert.match(await game.turnText(), /^Player 1's Turn/);
+    assert.deepEqual(await game.cells(), ['🐚', '', '', '', '', '', '', '', ''], 'Forward resumes the match as it was left');
+    assert.match(await game.turnText(), /^Player 2's Turn/);
     await page.goBack();
     await game.waitForScreen('sf-setup-screen');
     await page.goBack();

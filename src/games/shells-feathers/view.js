@@ -24,8 +24,10 @@
 // to move is marked "To move", and after a win the winner's is marked
 // "Winner", so the turn never depends on color alone.
 //
-// Result dialog: the winning piece (both pieces for a draw), the result, the
-// session score and any achievements the result unlocked. It takes focus and makes the board inert while open;
+// Result dialog: the winning piece (both pieces for a draw), the result, a
+// set's progress (or result), the session score and any achievements the
+// result unlocked; then the next round or Play Again, Switch Sides (against
+// the Spirit), Change Setup and Home. It takes focus and makes the board inert while open;
 // "View Board" (or Escape) closes it to show the final board.
 import { DIFFICULTY_NAMES } from './ai.js';
 import { svgIcon } from '../../shared/icons.js';
@@ -257,8 +259,21 @@ export function createShellsFeathersView(doc) {
       const info = mode === 'single'
         ? `Against the Spirit · ${DIFFICULTY_NAMES[difficulty]} · You play ${NAMES[symbol]}`
         : `Two players · Player 1 plays ${NAMES[symbol]}`;
-      byId('match-info').textContent = info;
+      byId('sf-info-main').textContent = info;
       byId('sf-menu-info').textContent = info;
+    },
+    // A set's progress under the match line ('' for a single game).
+    showSet(text) {
+      const line = byId('sf-set-line');
+      if (!text) {
+        line.replaceChildren();
+        return;
+      }
+      // A spoken break between the two lines ("… Shell. Round 2 of 3 …").
+      const pause = doc.createElement('span');
+      pause.className = 'visually-hidden';
+      pause.textContent = '. ';
+      line.replaceChildren(pause, text);
     },
     showTurn(mode, isPlayer1, symbol) {
       const el = byId('turn-indicator');
@@ -295,11 +310,16 @@ export function createShellsFeathersView(doc) {
         ? `Score · You ${scores.player1} · Spirit ${scores.player2}`
         : `Score · Player 1 ${scores.player1} · Player 2 ${scores.player2}`;
     },
-    showResult(outcome, winner, achievements = []) {
+    // flow: what comes next ({ progress, primary, switchSides }; see session.js).
+    showResult(outcome, winner, achievements = [], flow = {}) {
       const { title, message = `The ${winner} spirit prevails` } = RESULTS[outcome];
       byId('modal-title').textContent = title;
       byId('modal-message').textContent = message;
-      byId('modal-summary').textContent = scoreLine;
+      byId('modal-set').textContent = flow.progress ?? '';
+      for (const button of doc.querySelectorAll('[data-action="play-again"]')) button.textContent = flow.primary ?? 'Play Again';
+      modal.querySelector('[data-action="switch-sides"]').hidden = !flow.switchSides;
+      // In a set the set line says the score; the session score is for single games.
+      byId('modal-summary').textContent = flow.progress ? '' : scoreLine;
       byId('modal-achievements').textContent = achievementLine(achievements);
       const emblem = byId('modal-emblem');
       const pieces = outcome === 'draw' ? [player1Symbol, OTHER[player1Symbol]] : [winner];

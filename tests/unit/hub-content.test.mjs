@@ -168,8 +168,8 @@ test('clearing one game deletes its records and achievements only; settings and 
   profile.recordAcornsLeavesResult({ mode: 'single', difficulty: 'hard', outcome: 'win', variant: 'fog' });
   profile.recordMoment({ game: 'acornsLeaves', moment: 'crowned', mode: 'single' });
   assert.deepEqual(profile.progress(), {
-    shellsFeathers: { spiritGames: 1, twoPlayerGames: 0, earlierGames: 0, achievements: 3, collection: ['Two Paths', 'Friend of the Woods'] },
-    acornsLeaves: { spiritGames: 0, twoPlayerGames: 0, fogSpiritGames: 1, fogTwoPlayerGames: 0, achievements: 5, collection: ['Two Paths', 'Friend of the Woods'] },
+    shellsFeathers: { spiritGames: 1, twoPlayerGames: 0, earlierGames: 0, sets: 0, achievements: 3, collection: ['Two Paths', 'Friend of the Woods'] },
+    acornsLeaves: { spiritGames: 0, twoPlayerGames: 0, fogSpiritGames: 1, fogTwoPlayerGames: 0, sets: 0, achievements: 5, collection: ['Two Paths', 'Friend of the Woods'] },
   });
 
   profile.resetStats();

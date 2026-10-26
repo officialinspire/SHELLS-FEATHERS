@@ -109,7 +109,7 @@ test('a v2 save with bad fields is repaired field by field', () => {
   assert.deepEqual(save.settings, {
     sfx: true, music: false, sfxVolume: 50, musicVolume: 30, motion: 'system', haptics: false,
   });
-  assert.deepEqual(save.shellsFeathers.settings, { difficulty: 'easy', player1Symbol: 'feather' });
+  assert.deepEqual(save.shellsFeathers.settings, { difficulty: 'easy', player1Symbol: 'feather', setLength: 1 });
   assert.deepEqual(save.shellsFeathers.stats.single.easy, { wins: 2, losses: 0, draws: 0 });
   assert.deepEqual(save.shellsFeathers.stats.single.hard, { wins: 0, losses: 0, draws: 0 });
   assert.deepEqual(save.shellsFeathers.stats.twoPlayer, { player1Wins: 0, player2Wins: 0, draws: 0 });
@@ -167,7 +167,7 @@ test('settings are validated and saved', () => {
   assert.deepEqual(reloaded.settings(), {
     sfx: true, music: false, sfxVolume: 35, musicVolume: 73, motion: 'reduce', haptics: true,
   });
-  assert.deepEqual(reloaded.gameSettings(), { difficulty: 'medium', player1Symbol: 'shell' });
+  assert.deepEqual(reloaded.gameSettings(), { difficulty: 'medium', player1Symbol: 'shell', setLength: 1 });
 });
 
 test('storage that throws on every call: defaults in memory, nothing throws', () => {
@@ -214,7 +214,9 @@ test('a v2 save from before Acorns & Leaves gains its defaults; nothing else cha
   assert.equal(source, 'v2');
   assert.deepEqual(save.shellsFeathers, before.shellsFeathers);
   assert.deepEqual(save.acornsLeaves, createDefaultSave().acornsLeaves);
-  assert.deepEqual(save.acornsLeaves.settings, { difficulty: 'easy', side: 'acorn', variant: 'classic' });
+  assert.deepEqual(save.acornsLeaves.settings, {
+    difficulty: 'easy', side: 'acorn', variant: 'classic', setLength: 1,
+  });
   assert.deepEqual(save.acornsLeaves.stats.fog.twoPlayer, { acornWins: 0, leafWins: 0, draws: 0 });
   assert.deepEqual(save.acornsLeaves.stats.twoPlayer, { acornWins: 0, leafWins: 0, draws: 0 });
   assert.equal(stored(LEGACY_STATS_KEY), mirror);
@@ -227,7 +229,9 @@ test('bad Acorns & Leaves fields are repaired field by field; unknown ones are k
     stats: { single: { medium: { wins: '3', draws: -2 }, hard: null }, twoPlayer: { acornWins: 2, leafWins: 'x' }, streak: 5 },
   };
   const save = normalizeSave(raw);
-  assert.deepEqual(save.acornsLeaves.settings, { difficulty: 'easy', side: 'leaf', variant: 'classic', boardTheme: 'birch' });
+  assert.deepEqual(save.acornsLeaves.settings, {
+    difficulty: 'easy', side: 'leaf', variant: 'classic', boardTheme: 'birch', setLength: 1,
+  });
   assert.deepEqual(save.acornsLeaves.stats.single.medium, { wins: 3, losses: 0, draws: 0 });
   assert.deepEqual(save.acornsLeaves.stats.single.hard, { wins: 0, losses: 0, draws: 0 });
   assert.deepEqual(save.acornsLeaves.stats.twoPlayer, { acornWins: 2, leafWins: 0, draws: 0 });
@@ -252,7 +256,9 @@ test('Acorns & Leaves records and settings are saved apart from Shells & Feather
   profile.recordAcornsLeavesResult({ mode: 'two', outcome: 'acorn', variant: 'fog' });
 
   const reloaded = createProfile(openStorage(() => area));
-  assert.deepEqual(reloaded.acornsLeavesSettings(), { side: 'leaf', difficulty: 'hard', variant: 'fog' });
+  assert.deepEqual(reloaded.acornsLeavesSettings(), {
+    side: 'leaf', difficulty: 'hard', variant: 'fog', setLength: 1,
+  });
   const stats = reloaded.acornsLeavesStats();
   assert.deepEqual(stats.single, {
     easy: { wins: 0, losses: 0, draws: 1 },

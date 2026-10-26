@@ -29,7 +29,7 @@ test('complete games', { timeout: 180_000 }, async (t) => {
         assert.deepEqual(await game.scores(), ['0', '1']);
       }
 
-      await game.press('All Games');
+      await game.press('Home');
       await game.waitForScreen('hub-screen');
       const records = await game.pathRecords();
       assert.equal(records.games, '1');
@@ -51,7 +51,7 @@ test('complete games', { timeout: 180_000 }, async (t) => {
     assert.deepEqual(await game.waitForResult(), { title: 'Balance Achieved', message: 'The spirits are in harmony' });
     assert.deepEqual(await game.scores(), ['0', '1']);
 
-    await game.press('All Games');
+    await game.press('Home');
     await game.waitForScreen('hub-screen');
     // Two-player games are kept apart from yours against the Spirit.
     assert.deepEqual(await game.pathRecords(), { wins: '0', draws: '0', losses: '0', games: '0', twoPlayer: 'Player 1 wins: 0 · Player 2 wins: 1 · Draws: 1', earlier: '' });

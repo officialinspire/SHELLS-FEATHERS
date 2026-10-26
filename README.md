@@ -77,6 +77,9 @@ On a wide screen a side panel beside the board shows whose turn it is, what to d
   - **Haptics:** short, gentle vibrations for your own moves, captures, crowning, a refused move, results and achievements. Off until you turn it on, and only where the browser can vibrate (Android Chrome can; Safari on iPhone and iPad and most desktop browsers can't, and Settings says so). The Spirit's moves and hovering never vibrate.
   - Sound starts only after your first tap, click or key press, and pauses while the page is hidden.
   - Each game's own options (pieces, side, rules, difficulty) are on that game's screen.
+- **Matches:** each game's screen offers a single game, best of three or best of five. A drawn round counts as a round but scores for no one; level after the last round is a drawn set. Sets are recorded apart from games in Your Path.
+- **Resume:** an unfinished match is kept as you play and comes back after a reload, or from the game's screen and the hub. Two players in Fog of War resume behind the handoff screen. Pressing Play starts a new match in its place.
+- **Tutorial:** each game offers a short practice once (Tutorial on its screen any time). Nothing in it counts.
 - **Achievement Journal** (Journal, on the hub): every achievement of both games and the Collection, in tabs, each with its rule, progress and the date it was unlocked. Wins against the Spirit are counted apart from two-player games on the device, and nothing is unlocked from guesses. An achievement unlocked during play is told briefly in the match header, where the mode and difficulty are shown, never over the board.
 - **Your Path** shows each game's records:
   - your games against the Spirit by difficulty, kept apart from two-player games on the device (a two-player win never counts as yours);

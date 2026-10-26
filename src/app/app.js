@@ -29,6 +29,9 @@ import { initSettingsScreen, applyMotion } from './settings-screen.js';
 import { createSoundMotion } from './sound-motion.js';
 import { createPathScreen } from './path-screen.js';
 import { createJournalScreen, TAB_PATHS } from './journal-screen.js';
+import { createResumeUi } from './resume-ui.js';
+import { createTutorial, SETUP_PATHS } from './tutorial.js';
+import { createResumeStore } from '../shared/resume.js';
 import { createConfirmDialog } from './confirm-dialog.js';
 import { createToast } from './toast.js';
 import { installDialogFocus } from './dialog-focus.js';
@@ -41,8 +44,14 @@ import { createAcornsLeavesView } from '../games/acorns-leaves/view.js';
 import { createSession as createAcornsLeavesSession } from '../games/acorns-leaves/session.js';
 import { initAcornsLeavesSetup } from '../games/acorns-leaves/setup.js';
 
+const GAME_OF_SCREEN = { 'game-screen': 'shellsFeathers', 'al-game-screen': 'acornsLeaves' };
+const RESUME_PATHS = { shellsFeathers: '/shells-feathers/resume', acornsLeaves: '/acorns-leaves/resume' };
+
 export function createApp({ doc, win }) {
-  const profile = createProfile(openStorage(() => win.localStorage));
+  const store = openStorage(() => win.localStorage);
+  const profile = createProfile(store);
+  // Unfinished matches, one per game (src/shared/resume.js).
+  const resumeStore = createResumeStore(store);
   const settings = profile.settings();
   applyMotion(doc, settings.motion);
   const audio = createAudio({
@@ -69,18 +78,33 @@ export function createApp({ doc, win }) {
   const confirmDialog = createConfirmDialog(doc);
   const view = createShellsFeathersView(doc);
   const session = createSession({
-    view, audio, feedback, profile, clock: win,
+    view, audio, feedback, profile, clock: win, resume: resumeStore,
   });
   const checkersView = createAcornsLeavesView(doc);
   const checkers = createAcornsLeavesSession({
-    view: checkersView, audio, feedback, profile, clock: win, notify: (achievements) => toast.achievements('al', achievements),
+    view: checkersView, audio, feedback, profile, clock: win, resume: resumeStore, notify: (achievements) => toast.achievements('al', achievements),
   });
+  const resumeUi = createResumeUi({ doc, resumeStore });
+  const tutorial = createTutorial({ doc, profile, feedback });
+  let sfSetup = null;
+  let alSetup = null;
+  // The tutorial is offered once on each game's setup screen.
+  const showTutorialCard = (game, p) => {
+    doc.getElementById(`${p}-tutorial-card`).hidden = profile.tutorial(game) !== null;
+  };
   const path = createPathScreen({
     doc, profile, feedback, confirmDialog,
   });
   let settingsScreen = null;
   let firstRoute = true;
   let router = null;
+  let startingNew = false; // a Play link was just pressed
+  // Whether a match route ([mode] or [mode, variant]) asks for the same kind
+  // of match as the game's unfinished one.
+  const sameKind = (game, [mode, variant = 'classic'] = []) => {
+    const saved = resumeStore.get(game);
+    return saved.mode === mode && (game !== 'acornsLeaves' || saved.variant === variant);
+  };
   // A journal tab has its own URL; changing tabs replaces it.
   const journal = createJournalScreen({
     doc,
@@ -93,19 +117,40 @@ export function createApp({ doc, win }) {
   const nav = createNavigator(doc, {
     // Returning to the hub restarts the music (as v1's home screen did); the
     // first page load waits for a click, since browsers block autoplay.
-    'hub-screen': { enter: () => { if (!firstRoute) audio.startMusic(); } },
+    'hub-screen': {
+      enter: () => {
+        resumeUi.renderHub();
+        if (!firstRoute) audio.startMusic();
+      },
+    },
+    'sf-setup-screen': {
+      enter: () => {
+        sfSetup?.show();
+        resumeUi.render('shellsFeathers');
+        showTutorialCard('shellsFeathers', 'sf');
+      },
+    },
+    'al-setup-screen': {
+      enter: () => {
+        alSetup?.show();
+        resumeUi.render('acornsLeaves');
+        showTutorialCard('acornsLeaves', 'al');
+      },
+    },
+    'tutorial-screen': { enter: (game) => tutorial.start(game) },
     'path-screen': { enter: () => path.render() },
     'journal-screen': { enter: (tab) => journal.show(tab) },
     'settings-screen': { enter: () => settingsScreen?.show() },
+    // A resume route rebuilds the saved match (checked before it is shown).
     'game-screen': {
-      enter: (mode) => session.enter(mode),
+      enter: (mode) => (mode === 'resume' ? session.resumeFrom(resumeStore.get('shellsFeathers')) : session.enter(mode)),
       leave: () => {
         session.leave();
         toast.clear();
       },
     },
     'al-game-screen': {
-      enter: (mode, variant) => checkers.enter(mode, variant),
+      enter: (mode, variant) => (mode === 'resume' ? checkers.resumeFrom(resumeStore.get('acornsLeaves')) : checkers.enter(mode, variant)),
       leave: () => {
         checkers.leave();
         toast.clear();
@@ -115,7 +160,19 @@ export function createApp({ doc, win }) {
 
   router = createRouter({
     win,
-    onChange(route) {
+    onChange(requested) {
+      let route = requested;
+      const game = GAME_OF_SCREEN[route.screen];
+      // Nothing (or nothing sound) to resume: the setup screen says why.
+      if (route.resume && !resumeUi.resumable(route.resume)) route = router.replace(SETUP_PATHS[route.resume]);
+      // Only a Play link pressed starts a new match over an unfinished one.
+      // A reload, a typed or bookmarked link, or Back/Forward to the same
+      // kind of match resumes it; to another kind, the setup screen offers
+      // it (Resume or Discard). Nothing is lost or swapped without asking.
+      else if (game && !route.resume && !startingNew && resumeUi.resumable(game)) {
+        route = router.replace(sameKind(game, route.args) ? RESUME_PATHS[game] : SETUP_PATHS[game]);
+      }
+      startingNew = false;
       nav.show(route.screen, ...(route.args ?? []));
       doc.title = documentTitle(route);
       if (firstRoute) {
@@ -140,6 +197,29 @@ export function createApp({ doc, win }) {
       view.focusBoard();
     },
     'view-board': () => view.dismissResult(),
+    'switch-sides': () => {
+      session.switchSides();
+      view.focusBoard();
+    },
+    'al-switch-sides': () => {
+      checkers.switchSides();
+      checkersView.focusBoard();
+    },
+    'sf-discard-resume': () => resumeUi.discard('shellsFeathers'),
+    'al-discard-resume': () => resumeUi.discard('acornsLeaves'),
+    'sf-skip-tutorial': () => {
+      profile.setTutorial('shellsFeathers', 'skipped');
+      showTutorialCard('shellsFeathers', 'sf');
+    },
+    'al-skip-tutorial': () => {
+      profile.setTutorial('acornsLeaves', 'skipped');
+      showTutorialCard('acornsLeaves', 'al');
+    },
+    'tutorial-next': () => tutorial.next(),
+    'tutorial-skip': () => {
+      tutorial.skip();
+      router.up(SETUP_PATHS[tutorial.game]);
+    },
     'reset-stats': () => path.reset(),
     'al-restart': () => {
       checkers.restart();
@@ -177,6 +257,7 @@ export function createApp({ doc, win }) {
     event.preventDefault();
     feedback.cue('button');
     const target = link.getAttribute('href').slice(1);
+    startingNew = /\/(play|fog)\/(single|two)$/.test(target);
     if (link.hasAttribute('data-back')) router.back(target);
     else if (link.hasAttribute('data-up')) router.up(target);
     else router.go(target);
@@ -218,8 +299,8 @@ export function createApp({ doc, win }) {
     });
     openHelpWhereItFits();
     rescueFocusOnResize();
-    initShellsFeathersSetup({ doc, profile, feedback });
-    initAcornsLeavesSetup({ doc, profile, feedback });
+    sfSetup = initShellsFeathersSetup({ doc, profile, feedback });
+    alSetup = initAcornsLeavesSetup({ doc, profile, feedback });
     settingsScreen = initSettingsScreen({
       doc, win, profile, audio, haptics, feedback, confirmDialog, onDeletedAll: deletedAll,
     });

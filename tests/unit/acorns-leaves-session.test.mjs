@@ -304,7 +304,7 @@ test('two players: wins go to the side that won, draws to draws', () => {
   assert.deepEqual(draw.records().twoPlayer, { acornWins: 0, leafWins: 0, draws: 1 });
 });
 
-test('side and difficulty apply from the next game; the Spirit is told its difficulty', () => {
+test('side and difficulty apply from the next match (a match, or a set, keeps its own); the Spirit is told its difficulty', () => {
   const seen = [];
   const { clock, view, profile, session, tap } = setup({
     chooseMove: (state, options) => { seen.push(options.difficulty); return legalMoves(state)[0]; },
@@ -316,6 +316,8 @@ test('side and difficulty apply from the next game; the Spirit is told its diffi
   clock.tick(SPIRIT_THINK + SPIRIT_STEP);
   assert.deepEqual(seen, ['easy']);
   session.restart();
+  assert.equal(view.orientation, 'acorn', 'Restart plays this round again, as it was set up');
+  session.enter('single');
   assert.equal(view.orientation, 'leaf');
   assert.deepEqual(view.matchInfo, { mode: 'single', difficulty: 'hard', humanSide: 'leaf', variant: 'classic' });
   clock.tick(SPIRIT_THINK + SPIRIT_STEP);

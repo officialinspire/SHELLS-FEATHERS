@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#654321" />
   <meta name="description" content="Spirit of the Woods: peaceful forest games. Play Shells &amp; Feathers (tic-tac-toe) and Acorns &amp; Leaves (checkers) against the forest Spirit or a friend." />
   <title>Spirit of the Woods</title>
-  <link rel="stylesheet" href="styles.css?v=fcfa0ad4d9" />
+  <link rel="stylesheet" href="styles.css?v=3e34daea23" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
@@ -237,6 +237,7 @@
           <div class="card-actions">
             <a class="btn btn-primary" href="#/shells-feathers" aria-label="Play Shells &amp; Feathers">Play</a>
             <a class="btn btn-secondary" href="#/shells-feathers/how-to-play" aria-label="How to Play Shells &amp; Feathers">How to Play</a>
+            <a class="btn btn-secondary hub-resume" id="sf-hub-resume" href="#/shells-feathers/resume" aria-label="Resume your unfinished Shells &amp; Feathers match" hidden>Resume match</a>
           </div>
         </article>
 
@@ -253,6 +254,7 @@
           <div class="card-actions">
             <a class="btn btn-primary" href="#/acorns-leaves" aria-label="Play Acorns &amp; Leaves">Play</a>
             <a class="btn btn-secondary" href="#/acorns-leaves/how-to-play" aria-label="How to Play Acorns &amp; Leaves">How to Play</a>
+            <a class="btn btn-secondary hub-resume" id="al-hub-resume" href="#/acorns-leaves/resume" aria-label="Resume your unfinished Acorns &amp; Leaves match" hidden>Resume match</a>
           </div>
         </article>
       </div>
@@ -273,6 +275,25 @@
         <p class="screen-subtitle">Tic-Tac-Toe · three in a row wins</p>
       </header>
 
+      <p class="storage-note" id="sf-resume-note" role="status" hidden></p>
+      <section class="panel resume-panel" id="sf-resume" aria-labelledby="sf-resume-title" hidden>
+        <h3 class="resume-title" id="sf-resume-title">Unfinished match</h3>
+        <p class="resume-text" id="sf-resume-text"></p>
+        <div class="resume-actions">
+          <a class="btn btn-primary" href="#/shells-feathers/resume">Resume</a>
+          <button type="button" class="btn" data-action="sf-discard-resume">Discard</button>
+        </div>
+        <p class="hint">Starting a new match below replaces it.</p>
+      </section>
+      <section class="panel tutorial-card" id="sf-tutorial-card" aria-labelledby="sf-tutorial-card-title" hidden>
+        <h3 class="resume-title" id="sf-tutorial-card-title">New to Shells &amp; Feathers?</h3>
+        <p>A one-minute practice on its own board shows how to play. Nothing in it counts toward your records.</p>
+        <div class="resume-actions">
+          <a class="btn btn-secondary" href="#/shells-feathers/tutorial">Try the tutorial</a>
+          <button type="button" class="btn btn-quiet" data-action="sf-skip-tutorial">Skip</button>
+        </div>
+      </section>
+
       <div class="panel setup-panel">
         <fieldset class="option-group">
           <legend>Player 1 plays as</legend>
@@ -290,6 +311,15 @@
           </div>
           <p class="hint" id="sf-difficulty-hint"></p>
         </fieldset>
+        <fieldset class="option-group">
+          <legend>Match</legend>
+          <div class="segmented segmented-stack">
+            <label class="segment"><input type="radio" name="sf-length" value="1" aria-describedby="sf-length-hint" /><span>Single game</span></label>
+            <label class="segment"><input type="radio" name="sf-length" value="3" aria-describedby="sf-length-hint" /><span>Best of 3</span></label>
+            <label class="segment"><input type="radio" name="sf-length" value="5" aria-describedby="sf-length-hint" /><span>Best of 5</span></label>
+          </div>
+          <p class="hint" id="sf-length-hint"></p>
+        </fieldset>
       </div>
 
       <div class="mode-choices">
@@ -304,7 +334,7 @@
           <span class="mode-desc">Take turns on one device</span>
         </a>
       </div>
-      <a class="text-link" href="#/shells-feathers/how-to-play">How to Play</a>
+      <p class="setup-links"><a class="text-link" href="#/shells-feathers/how-to-play">How to Play</a> <a class="text-link" href="#/shells-feathers/tutorial">Tutorial</a></p>
     </section>
 
     <!-- Shells & Feathers: match -->
@@ -313,7 +343,7 @@
       <div class="game-header">
         <div class="match-bar">
           <div class="match-info-slot" id="sf-notice-slot">
-            <p class="match-info" id="match-info"></p>
+            <p class="match-info" id="match-info"><span id="sf-info-main"></span><span class="match-set" id="sf-set-line"></span></p>
             <p class="match-notice" id="sf-notice" aria-hidden="true" hidden><span class="notice-medal"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use id="sf-notice-icon" href="#ach-sprout" /></svg></span><span class="match-notice-text" id="sf-notice-text"></span></p>
           </div>
           <button type="button" class="menu-btn" id="sf-menu-button" aria-haspopup="dialog" aria-controls="sf-menu" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-menu" /></svg><span>Menu</span></button>
@@ -413,6 +443,25 @@
         <p class="screen-subtitle">Checkers · capture every piece, or leave no move</p>
       </header>
 
+      <p class="storage-note" id="al-resume-note" role="status" hidden></p>
+      <section class="panel resume-panel" id="al-resume" aria-labelledby="al-resume-title" hidden>
+        <h3 class="resume-title" id="al-resume-title">Unfinished match</h3>
+        <p class="resume-text" id="al-resume-text"></p>
+        <div class="resume-actions">
+          <a class="btn btn-primary" href="#/acorns-leaves/resume">Resume</a>
+          <button type="button" class="btn" data-action="al-discard-resume">Discard</button>
+        </div>
+        <p class="hint">Starting a new match below replaces it.</p>
+      </section>
+      <section class="panel tutorial-card" id="al-tutorial-card" aria-labelledby="al-tutorial-card-title" hidden>
+        <h3 class="resume-title" id="al-tutorial-card-title">New to Acorns &amp; Leaves?</h3>
+        <p>A one-minute practice on its own board shows how to play. Nothing in it counts toward your records.</p>
+        <div class="resume-actions">
+          <a class="btn btn-secondary" href="#/acorns-leaves/tutorial">Try the tutorial</a>
+          <button type="button" class="btn btn-quiet" data-action="al-skip-tutorial">Skip</button>
+        </div>
+      </section>
+
       <div class="panel setup-panel">
         <fieldset class="option-group">
           <legend>Rules</legend>
@@ -439,6 +488,15 @@
           </div>
           <p class="hint" id="al-difficulty-hint"></p>
         </fieldset>
+        <fieldset class="option-group">
+          <legend>Match</legend>
+          <div class="segmented segmented-stack">
+            <label class="segment"><input type="radio" name="al-length" value="1" aria-describedby="al-length-hint" /><span>Single game</span></label>
+            <label class="segment"><input type="radio" name="al-length" value="3" aria-describedby="al-length-hint" /><span>Best of 3</span></label>
+            <label class="segment"><input type="radio" name="al-length" value="5" aria-describedby="al-length-hint" /><span>Best of 5</span></label>
+          </div>
+          <p class="hint" id="al-length-hint"></p>
+        </fieldset>
       </div>
 
       <div class="mode-choices">
@@ -453,7 +511,7 @@
           <span class="mode-desc">Acorns and Leaves take turns on one device</span>
         </a>
       </div>
-      <a class="text-link" href="#/acorns-leaves/how-to-play">How to Play</a>
+      <p class="setup-links"><a class="text-link" href="#/acorns-leaves/how-to-play">How to Play</a> <a class="text-link" href="#/acorns-leaves/tutorial">Tutorial</a></p>
     </section>
 
     <!-- Acorns & Leaves: match -->
@@ -462,7 +520,7 @@
       <div class="game-header al-header">
         <div class="match-bar">
           <div class="match-info-slot" id="al-notice-slot">
-            <p class="match-info" id="al-match-info"></p>
+            <p class="match-info" id="al-match-info"><span id="al-info-main"></span><span class="match-set" id="al-set-line"></span></p>
             <p class="match-notice" id="al-notice" aria-hidden="true" hidden><span class="notice-medal"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use id="al-notice-icon" href="#ach-sprout" /></svg></span><span class="match-notice-text" id="al-notice-text"></span></p>
           </div>
           <button type="button" class="menu-btn" id="al-menu-button" aria-haspopup="dialog" aria-controls="al-menu" aria-expanded="false"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-menu" /></svg><span>Menu</span></button>
@@ -663,6 +721,9 @@
         <p class="hint">Shared games are kept apart: a two-player win is never counted as one of your wins.</p>
         <p class="hint" id="legacy-note" hidden></p>
 
+        <h4>Sets</h4>
+        <ul class="set-records" id="sf-set-records"></ul>
+
         <h4>Achievements</h4>
         <p class="path-journal-line"><span id="sf-journal-count"></span> <a class="journal-link" href="#/journal/shells-feathers"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-journal" /></svg> Open in the journal</a></p>
 
@@ -705,6 +766,9 @@
         <p id="al-fog-two-player-record"></p>
         <p class="hint">Shared games are kept apart: a two-player win is never counted as one of your wins.</p>
 
+        <h4>Sets</h4>
+        <ul class="set-records" id="al-set-records"></ul>
+
         <h4>Achievements</h4>
         <p class="path-journal-line"><span id="al-journal-count"></span> <a class="journal-link" href="#/journal/acorns-leaves"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-journal" /></svg> Open in the journal</a></p>
 
@@ -730,23 +794,45 @@
       <p class="hint journal-hint">“Against the Spirit” counts only your own games against the Spirit; games for two players on this device have their own entries and never count as anyone’s win. Achievements are unlocked once, from what really happened: nothing is guessed from older totals. Clearing a game’s progress in Your Path locks its achievements again, with the Collection entries that need them.</p>
     </section>
 
+    <!-- Tutorial: a short practice on its own board (src/app/tutorial.js) -->
+    <section id="tutorial-screen" class="screen" aria-labelledby="tutorial-title">
+      <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
+      <header class="screen-header">
+        <h2 id="tutorial-title" tabindex="-1">Tutorial</h2>
+        <p class="screen-subtitle" id="tutorial-progress"></p>
+      </header>
+      <div class="panel tutorial-panel">
+        <p class="tutorial-lesson" id="tutorial-lesson"></p>
+        <div class="practice-board" id="practice-board" aria-label="Practice board"></div>
+        <p class="tutorial-hint" id="tutorial-hint" role="status" aria-live="polite"></p>
+        <div class="tutorial-actions">
+          <button type="button" class="btn btn-primary" id="tutorial-next" data-action="tutorial-next" hidden>Next</button>
+          <a class="btn btn-primary" id="tutorial-play" href="#/" data-up hidden>Play</a>
+          <button type="button" class="btn btn-quiet" id="tutorial-skip" data-action="tutorial-skip">Skip tutorial</button>
+        </div>
+        <p class="hint">Practice only: nothing here counts toward your records or achievements.</p>
+      </div>
+    </section>
+
     <!-- Announcements (outside the match screens, which turn inert while a
          result dialog is open) -->
     <p id="sf-status" class="visually-hidden" role="status" aria-live="polite"></p>
     <p id="al-status" class="visually-hidden" role="status" aria-live="polite"></p>
 
     <!-- Shells & Feathers result -->
-    <div id="game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message modal-summary modal-achievements">
+    <div id="game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message modal-set modal-summary modal-achievements">
       <div class="modal-content">
         <div class="modal-emblem" id="modal-emblem" aria-hidden="true"></div>
         <h3 id="modal-title" class="modal-title">Victory!</h3>
         <p id="modal-message" class="modal-message">The spirits smile upon you</p>
+        <p id="modal-set" class="modal-set"></p>
         <p id="modal-summary" class="modal-summary"></p>
         <p id="modal-achievements" class="modal-achievements"></p>
         <div class="modal-buttons">
           <button type="button" class="btn btn-primary modal-btn" data-action="play-again">Play Again</button>
-          <a class="btn modal-btn" href="#/shells-feathers" data-up>Change Mode</a>
-          <a class="btn modal-btn" href="#/" data-up>All Games</a>
+          <button type="button" class="btn modal-btn" data-action="switch-sides">Switch Sides</button>
+          <a class="btn modal-btn" href="#/shells-feathers" data-up>Change Setup</a>
+          <a class="btn modal-btn" href="#/" data-up>Home</a>
         </div>
         <button type="button" class="view-board-btn" data-action="view-board" aria-keyshortcuts="Escape">View Board</button>
       </div>
@@ -812,17 +898,19 @@
     </div>
 
     <!-- Acorns & Leaves result -->
-    <div id="al-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="al-modal-title" aria-describedby="al-modal-message al-modal-summary al-modal-achievements">
+    <div id="al-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="al-modal-title" aria-describedby="al-modal-message al-modal-set al-modal-summary al-modal-achievements">
       <div class="modal-content">
         <div class="modal-emblem" id="al-modal-emblem" aria-hidden="true"></div>
         <h3 id="al-modal-title" class="modal-title">Victory!</h3>
         <p id="al-modal-message" class="modal-message"></p>
+        <p id="al-modal-set" class="modal-set"></p>
         <p id="al-modal-summary" class="modal-summary"></p>
         <p id="al-modal-achievements" class="modal-achievements"></p>
         <div class="modal-buttons">
           <button type="button" class="btn btn-primary modal-btn" data-action="al-rematch">Rematch</button>
-          <a class="btn modal-btn" href="#/acorns-leaves" data-up>Change Mode</a>
-          <a class="btn modal-btn" href="#/" data-up>All Games</a>
+          <button type="button" class="btn modal-btn" data-action="al-switch-sides">Switch Sides</button>
+          <a class="btn modal-btn" href="#/acorns-leaves" data-up>Change Setup</a>
+          <a class="btn modal-btn" href="#/" data-up>Home</a>
         </div>
         <button type="button" class="view-board-btn" data-action="al-view-board" aria-keyshortcuts="Escape">View Board</button>
       </div>
@@ -927,68 +1015,118 @@
   <audio id="gameplay-music" loop preload="none">
     <source src="gameplay.mp3" type="audio/mpeg" />
   </audio>
-  <audio id="button-select" preload="auto"><source src="button_select.mp3" type="audio/mpeg" /></audio>
-  <audio id="player-select" preload="auto"><source src="player_select.mp3" type="audio/mpeg" /></audio>
-  <audio id="opponent-select" preload="auto"><source src="opponent_select.mp3" type="audio/mpeg" /></audio>
-  <audio id="newgame-sound" preload="auto"><source src="newgame.mp3" type="audio/mpeg" /></audio>
-  <audio id="victory-sound" preload="auto"><source src="victory.mp3" type="audio/mpeg" /></audio>
-  <audio id="piece-move" preload="auto"><source src="sounds/piece-move.wav" type="audio/wav" /></audio>
-  <audio id="piece-move-other" preload="auto"><source src="sounds/piece-move-other.wav" type="audio/wav" /></audio>
-  <audio id="capture-sound" preload="auto"><source src="sounds/capture.wav" type="audio/wav" /></audio>
-  <audio id="crown-sound" preload="auto"><source src="sounds/crown.wav" type="audio/wav" /></audio>
-  <audio id="reveal-sound" preload="auto"><source src="sounds/reveal.wav" type="audio/wav" /></audio>
-  <audio id="draw-sound" preload="auto"><source src="sounds/result-draw.wav" type="audio/wav" /></audio>
-  <audio id="loss-sound" preload="auto"><source src="sounds/result-loss.wav" type="audio/wav" /></audio>
-  <audio id="achievement-sound" preload="auto"><source src="sounds/achievement.wav" type="audio/wav" /></audio>
-  <audio id="select-sound" preload="auto"><source src="sounds/select.wav" type="audio/wav" /></audio>
-  <audio id="invalid-sound" preload="auto"><source src="sounds/invalid.wav" type="audio/wav" /></audio>
-  <audio id="multi-sound" preload="auto"><source src="sounds/multi.wav" type="audio/wav" /></audio>
+  <audio id="button-select" preload="none" data-sfx><source src="button_select.mp3" type="audio/mpeg" /></audio>
+  <audio id="player-select" preload="none" data-sfx><source src="player_select.mp3" type="audio/mpeg" /></audio>
+  <audio id="opponent-select" preload="none" data-sfx><source src="opponent_select.mp3" type="audio/mpeg" /></audio>
+  <audio id="newgame-sound" preload="none" data-sfx><source src="newgame.mp3" type="audio/mpeg" /></audio>
+  <audio id="victory-sound" preload="none" data-sfx><source src="victory.mp3" type="audio/mpeg" /></audio>
+  <audio id="piece-move" preload="none" data-sfx><source src="sounds/piece-move.wav" type="audio/wav" /></audio>
+  <audio id="piece-move-other" preload="none" data-sfx><source src="sounds/piece-move-other.wav" type="audio/wav" /></audio>
+  <audio id="capture-sound" preload="none" data-sfx><source src="sounds/capture.wav" type="audio/wav" /></audio>
+  <audio id="crown-sound" preload="none" data-sfx><source src="sounds/crown.wav" type="audio/wav" /></audio>
+  <audio id="reveal-sound" preload="none" data-sfx><source src="sounds/reveal.wav" type="audio/wav" /></audio>
+  <audio id="draw-sound" preload="none" data-sfx><source src="sounds/result-draw.wav" type="audio/wav" /></audio>
+  <audio id="loss-sound" preload="none" data-sfx><source src="sounds/result-loss.wav" type="audio/wav" /></audio>
+  <audio id="achievement-sound" preload="none" data-sfx><source src="sounds/achievement.wav" type="audio/wav" /></audio>
+  <audio id="select-sound" preload="none" data-sfx><source src="sounds/select.wav" type="audio/wav" /></audio>
+  <audio id="invalid-sound" preload="none" data-sfx><source src="sounds/invalid.wav" type="audio/wav" /></audio>
+  <audio id="multi-sound" preload="none" data-sfx><source src="sounds/multi.wav" type="audio/wav" /></audio>
 
   <!-- asset versions (tools/stamp-assets.mjs) -->
   <script type="importmap">
   {
     "imports": {
-      "./src/app/app.js": "./src/app/app.js?v=6e630e53fd",
+      "./src/app/app.js": "./src/app/app.js?v=88b655e6de",
       "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
       "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
       "./src/app/journal-screen.js": "./src/app/journal-screen.js?v=e49f865d11",
       "./src/app/navigation.js": "./src/app/navigation.js?v=df1ca271ed",
-      "./src/app/path-screen.js": "./src/app/path-screen.js?v=1d9317ce63",
-      "./src/app/router.js": "./src/app/router.js?v=cef3647dea",
-      "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=e15ae585c7",
+      "./src/app/path-screen.js": "./src/app/path-screen.js?v=5ed64db792",
+      "./src/app/resume-ui.js": "./src/app/resume-ui.js?v=2965e78509",
+      "./src/app/router.js": "./src/app/router.js?v=cbc93752ac",
+      "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=c63f17cc7a",
       "./src/app/sound-motion.js": "./src/app/sound-motion.js?v=f7e46a67c0",
       "./src/app/toast.js": "./src/app/toast.js?v=8e6cb89471",
+      "./src/app/tutorial.js": "./src/app/tutorial.js?v=7d842e314f",
       "./src/games/acorns-leaves/ai.js": "./src/games/acorns-leaves/ai.js?v=ec51e2bd96",
       "./src/games/acorns-leaves/engine.js": "./src/games/acorns-leaves/engine.js?v=f4ae64291c",
       "./src/games/acorns-leaves/fog-ai.js": "./src/games/acorns-leaves/fog-ai.js?v=9792d8c2f9",
       "./src/games/acorns-leaves/fog.js": "./src/games/acorns-leaves/fog.js?v=c6a4aaa2c2",
       "./src/games/acorns-leaves/pieces.js": "./src/games/acorns-leaves/pieces.js?v=778ba9533a",
-      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=ea68fa62ac",
-      "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=66ff37c370",
+      "./src/games/acorns-leaves/resume.js": "./src/games/acorns-leaves/resume.js?v=05e5c19654",
+      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=32d26f8842",
+      "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=ce6b957d2b",
       "./src/games/acorns-leaves/text.js": "./src/games/acorns-leaves/text.js?v=5229e61624",
       "./src/games/acorns-leaves/turn.js": "./src/games/acorns-leaves/turn.js?v=4c32d00fbb",
-      "./src/games/acorns-leaves/view.js": "./src/games/acorns-leaves/view.js?v=884b257ce7",
+      "./src/games/acorns-leaves/view.js": "./src/games/acorns-leaves/view.js?v=9daa2d25a4",
       "./src/games/shells-feathers/ai.js": "./src/games/shells-feathers/ai.js?v=50536a19f8",
       "./src/games/shells-feathers/match.js": "./src/games/shells-feathers/match.js?v=dd264e8ee4",
+      "./src/games/shells-feathers/resume.js": "./src/games/shells-feathers/resume.js?v=4c5bdb2421",
       "./src/games/shells-feathers/rules.js": "./src/games/shells-feathers/rules.js?v=6f838579f5",
-      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=3fc95c2458",
-      "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=04f2defdb3",
-      "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=6dc8ec7704",
+      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=e47624754e",
+      "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=059417c2b3",
+      "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=381e9162aa",
       "./src/main.js": "./src/main.js?v=b0d0ca161a",
       "./src/shared/achievements.js": "./src/shared/achievements.js?v=ebc7788204",
-      "./src/shared/audio.js": "./src/shared/audio.js?v=43e08821a5",
+      "./src/shared/audio.js": "./src/shared/audio.js?v=1d1539e3ec",
       "./src/shared/board-taps.js": "./src/shared/board-taps.js?v=0d80361510",
       "./src/shared/feedback.js": "./src/shared/feedback.js?v=b7f605d3e9",
       "./src/shared/haptics.js": "./src/shared/haptics.js?v=28c182c91c",
       "./src/shared/icons.js": "./src/shared/icons.js?v=6688127809",
       "./src/shared/match-menu.js": "./src/shared/match-menu.js?v=5240555d5f",
-      "./src/shared/profile.js": "./src/shared/profile.js?v=41778efb72",
-      "./src/shared/save-data.js": "./src/shared/save-data.js?v=636e33b5d5",
+      "./src/shared/match-set.js": "./src/shared/match-set.js?v=8b8d6e7271",
+      "./src/shared/profile.js": "./src/shared/profile.js?v=bb74b3f4a1",
+      "./src/shared/resume.js": "./src/shared/resume.js?v=93281f7ecf",
+      "./src/shared/save-data.js": "./src/shared/save-data.js?v=e19049cace",
       "./src/shared/storage.js": "./src/shared/storage.js?v=40ebff7603",
       "./src/shared/timers.js": "./src/shared/timers.js?v=22efd36a1d"
     }
   }
   </script>
+  <link rel="modulepreload" href="src/app/app.js?v=88b655e6de" />
+  <link rel="modulepreload" href="src/app/confirm-dialog.js?v=fba3c17fca" />
+  <link rel="modulepreload" href="src/app/dialog-focus.js?v=77ccee0736" />
+  <link rel="modulepreload" href="src/app/journal-screen.js?v=e49f865d11" />
+  <link rel="modulepreload" href="src/app/navigation.js?v=df1ca271ed" />
+  <link rel="modulepreload" href="src/app/path-screen.js?v=5ed64db792" />
+  <link rel="modulepreload" href="src/app/resume-ui.js?v=2965e78509" />
+  <link rel="modulepreload" href="src/app/router.js?v=cbc93752ac" />
+  <link rel="modulepreload" href="src/app/settings-screen.js?v=c63f17cc7a" />
+  <link rel="modulepreload" href="src/app/sound-motion.js?v=f7e46a67c0" />
+  <link rel="modulepreload" href="src/app/toast.js?v=8e6cb89471" />
+  <link rel="modulepreload" href="src/app/tutorial.js?v=7d842e314f" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/ai.js?v=ec51e2bd96" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/engine.js?v=f4ae64291c" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/fog-ai.js?v=9792d8c2f9" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/fog.js?v=c6a4aaa2c2" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/pieces.js?v=778ba9533a" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/resume.js?v=05e5c19654" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/session.js?v=32d26f8842" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/setup.js?v=ce6b957d2b" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/text.js?v=5229e61624" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/turn.js?v=4c32d00fbb" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/view.js?v=9daa2d25a4" />
+  <link rel="modulepreload" href="src/games/shells-feathers/ai.js?v=50536a19f8" />
+  <link rel="modulepreload" href="src/games/shells-feathers/match.js?v=dd264e8ee4" />
+  <link rel="modulepreload" href="src/games/shells-feathers/resume.js?v=4c5bdb2421" />
+  <link rel="modulepreload" href="src/games/shells-feathers/rules.js?v=6f838579f5" />
+  <link rel="modulepreload" href="src/games/shells-feathers/session.js?v=e47624754e" />
+  <link rel="modulepreload" href="src/games/shells-feathers/setup.js?v=059417c2b3" />
+  <link rel="modulepreload" href="src/games/shells-feathers/view.js?v=381e9162aa" />
+  <link rel="modulepreload" href="src/main.js?v=b0d0ca161a" />
+  <link rel="modulepreload" href="src/shared/achievements.js?v=ebc7788204" />
+  <link rel="modulepreload" href="src/shared/audio.js?v=1d1539e3ec" />
+  <link rel="modulepreload" href="src/shared/board-taps.js?v=0d80361510" />
+  <link rel="modulepreload" href="src/shared/feedback.js?v=b7f605d3e9" />
+  <link rel="modulepreload" href="src/shared/haptics.js?v=28c182c91c" />
+  <link rel="modulepreload" href="src/shared/icons.js?v=6688127809" />
+  <link rel="modulepreload" href="src/shared/match-menu.js?v=5240555d5f" />
+  <link rel="modulepreload" href="src/shared/match-set.js?v=8b8d6e7271" />
+  <link rel="modulepreload" href="src/shared/profile.js?v=bb74b3f4a1" />
+  <link rel="modulepreload" href="src/shared/resume.js?v=93281f7ecf" />
+  <link rel="modulepreload" href="src/shared/save-data.js?v=e19049cace" />
+  <link rel="modulepreload" href="src/shared/storage.js?v=40ebff7603" />
+  <link rel="modulepreload" href="src/shared/timers.js?v=22efd36a1d" />
   <script type="module" src="src/main.js?v=b0d0ca161a"></script>
   <!-- /asset versions -->
 </body>

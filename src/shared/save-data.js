@@ -22,7 +22,16 @@
 //   against (missing means 1, from before the journal). A save from an older
 //   set gets the record achievements added since worked out once, from its
 //   exact records. Achievements that need something the records don't keep
-//   (which side won) are never guessed: they count from then on.
+//   (which side won) are never guessed: they count from then on;
+// - <game>.settings.setLength: 1 (a single game), 3 or 5 (best of three or
+//   five; see match-set.js);
+// - <game>.stats.sets (and acornsLeaves.stats.fog.sets): finished sets, apart
+//   from the rounds (every round is also a game in the usual records):
+//   { single: { bestOf3, bestOf5 }: { wins, losses, draws },
+//     twoPlayer: { bestOf3, bestOf5 }: the two-player fields };
+// - tutorials: { shellsFeathers, acornsLeaves }: null until the game's
+//   tutorial is finished ('done') or skipped ('skipped'), so it is offered
+//   once.
 import { SYMBOLS } from '../games/shells-feathers/rules.js';
 import { DIFFICULTIES } from '../games/shells-feathers/ai.js';
 import { SIDES } from '../games/acorns-leaves/engine.js';
@@ -41,6 +50,9 @@ const TWO_PLAYER_FIELDS = ['player1Wins', 'player2Wins', 'draws'];
 const AL_TWO_PLAYER_FIELDS = ['acornWins', 'leafWins', 'draws'];
 const AL_VARIANTS = ['classic', 'fog'];
 export const MOTION_CHOICES = ['system', 'reduce', 'full'];
+export const SET_LENGTHS = [1, 3, 5];
+const SET_KEYS = { 3: 'bestOf3', 5: 'bestOf5' };
+const TUTORIAL_STATES = ['done', 'skipped'];
 export const DEFAULT_SETTINGS = {
   sfx: true, music: true, sfxVolume: 50, musicVolume: 30, motion: 'system', haptics: false,
 };
@@ -80,20 +92,32 @@ function legacyCounts(raw) {
   return counts;
 }
 
+// Finished sets, by length: against the Spirit, and two players.
+function setRecords(raw, twoPlayerFields) {
+  const single = objectOr(objectOr(raw).single);
+  const two = objectOr(objectOr(raw).twoPlayer);
+  return {
+    single: Object.fromEntries(Object.values(SET_KEYS).map((k) => [k, countsOf(single[k], SINGLE_FIELDS)])),
+    twoPlayer: Object.fromEntries(Object.values(SET_KEYS).map((k) => [k, countsOf(two[k], twoPlayerFields)])),
+  };
+}
+
 function emptyStats() {
   return {
     single: Object.fromEntries(DIFFICULTIES.map((d) => [d, countsOf({}, SINGLE_FIELDS)])),
     twoPlayer: countsOf({}, TWO_PLAYER_FIELDS),
     legacy: countsOf({}, LEGACY_FIELDS),
+    sets: setRecords({}, TWO_PLAYER_FIELDS),
   };
 }
 
-// One set of checkers records: per Spirit difficulty, and two players.
+// One set of checkers records: per Spirit difficulty, two players, and sets.
 function checkersRecords(raw = {}) {
   const single = objectOr(raw.single);
   return {
     single: { ...single, ...Object.fromEntries(AL_DIFFICULTIES.map((d) => [d, countsOf(single[d], SINGLE_FIELDS)])) },
     twoPlayer: countsOf(raw.twoPlayer, AL_TWO_PLAYER_FIELDS),
+    sets: setRecords(raw.sets, AL_TWO_PLAYER_FIELDS),
   };
 }
 
@@ -106,19 +130,22 @@ export function createDefaultSave() {
     version: SAVE_VERSION,
     settings: { ...DEFAULT_SETTINGS },
     shellsFeathers: {
-      settings: { difficulty: 'easy', player1Symbol: 'shell' },
+      settings: { difficulty: 'easy', player1Symbol: 'shell', setLength: 1 },
       stats: emptyStats(),
       achievements: {},
     },
     // side: the side the player takes against the Spirit; variant: the rules
     // last chosen ('classic' or 'fog').
     acornsLeaves: {
-      settings: { difficulty: 'easy', side: 'acorn', variant: 'classic' },
+      settings: {
+        difficulty: 'easy', side: 'acorn', variant: 'classic', setLength: 1,
+      },
       stats: emptyAcornsLeavesStats(),
       achievements: {},
     },
     collection: { achievements: {} },
     achievementSet: ACHIEVEMENT_SET,
+    tutorials: { shellsFeathers: null, acornsLeaves: null },
     migratedFrom: null,
   };
 }
@@ -154,12 +181,14 @@ export function normalizeSave(raw) {
         ...gameSettings,
         difficulty: oneOf(gameSettings.difficulty, DIFFICULTIES, 'easy'),
         player1Symbol: oneOf(gameSettings.player1Symbol, SYMBOLS, 'shell'),
+        setLength: oneOf(gameSettings.setLength, SET_LENGTHS, 1),
       },
       stats: {
         ...stats,
         single: { ...single, ...Object.fromEntries(DIFFICULTIES.map((d) => [d, countsOf(single[d], SINGLE_FIELDS)])) },
         twoPlayer: countsOf(stats.twoPlayer, TWO_PLAYER_FIELDS),
         legacy: legacyCounts(stats.legacy),
+        sets: setRecords(stats.sets, TWO_PLAYER_FIELDS),
       },
       achievements: achievementsOr(game.achievements),
     },
@@ -170,6 +199,7 @@ export function normalizeSave(raw) {
         difficulty: oneOf(checkersSettings.difficulty, AL_DIFFICULTIES, 'easy'),
         side: oneOf(checkersSettings.side, SIDES, 'acorn'),
         variant: oneOf(checkersSettings.variant, AL_VARIANTS, 'classic'),
+        setLength: oneOf(checkersSettings.setLength, SET_LENGTHS, 1),
       },
       stats: {
         ...checkersStats,
@@ -179,6 +209,7 @@ export function normalizeSave(raw) {
       achievements: achievementsOr(checkers.achievements),
     },
     collection: { ...objectOr(raw.collection), achievements: achievementsOr(objectOr(raw.collection).achievements) },
+    tutorials: Object.fromEntries(GAMES.map((g) => [g, oneOf(objectOr(raw.tutorials)[g], TUTORIAL_STATES, null)])),
     migratedFrom: raw.migratedFrom === 1 ? 1 : null,
   };
   const set = Number.isSafeInteger(raw.achievementSet) && raw.achievementSet > 0 ? raw.achievementSet : 1;
@@ -276,6 +307,7 @@ export function applyGameSettings(save, patch) {
   const settings = save.shellsFeathers.settings;
   settings.difficulty = oneOf(patch.difficulty, DIFFICULTIES, settings.difficulty);
   settings.player1Symbol = oneOf(patch.player1Symbol, SYMBOLS, settings.player1Symbol);
+  settings.setLength = oneOf(patch.setLength, SET_LENGTHS, settings.setLength);
 }
 
 // Acorns & Leaves. outcome: 'win' | 'loss' | 'draw' against the Spirit (from
@@ -309,6 +341,35 @@ export function applyAcornsLeavesSettings(save, patch) {
   settings.difficulty = oneOf(patch.difficulty, AL_DIFFICULTIES, settings.difficulty);
   settings.side = oneOf(patch.side, SIDES, settings.side);
   settings.variant = oneOf(patch.variant, AL_VARIANTS, settings.variant);
+  settings.setLength = oneOf(patch.setLength, SET_LENGTHS, settings.setLength);
+}
+
+// A finished set of 3 or 5 rounds: { game, mode, length, outcome, variant }.
+// outcome: 'win' | 'loss' | 'draw' against the Spirit (the player's side),
+// 'first' | 'second' | 'draw' for two players (Player 1 or 2; the Acorns or
+// the Leaves). Single games are not sets. Mutates `save`.
+export function recordSet(save, {
+  game, mode, length, outcome, variant = 'classic',
+}) {
+  const key = SET_KEYS[length];
+  if (!key || !GAMES.includes(game)) return;
+  const stats = game === 'acornsLeaves' && variant === 'fog' ? save.acornsLeaves.stats.fog : save[game].stats;
+  if (mode === 'single') {
+    const record = stats.sets.single[key];
+    if (outcome === 'win') record.wins++;
+    else if (outcome === 'loss') record.losses++;
+    else if (outcome === 'draw') record.draws++;
+  } else if (mode === 'two') {
+    const record = stats.sets.twoPlayer[key];
+    const [first, second] = game === 'acornsLeaves' ? ['acornWins', 'leafWins'] : ['player1Wins', 'player2Wins'];
+    if (outcome === 'first') record[first]++;
+    else if (outcome === 'second') record[second]++;
+    else if (outcome === 'draw') record.draws++;
+  }
+}
+
+export function setTutorial(save, game, state) {
+  if (GAMES.includes(game) && (TUTORIAL_STATES.includes(state) || state === null)) save.tutorials[game] = state;
 }
 
 // Achievements -------------------------------------------------------------
