@@ -1,0 +1,394 @@
+// The Spirit of the Woods hub: game cards, How to Play, Settings and Your
+// Path entry points, the route from game selection to match and back, browser
+// navigation, keyboard play, and phone/desktop layout.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { devices } from 'playwright';
+import { startHarness, openGame } from '../helpers/game-page.mjs';
+
+const SINGLE_RESULT_TITLES = ['Victory!', 'Wisdom Gained', 'Balance Achieved'];
+
+const names = (locator) => locator.evaluateAll((els) => els.map((el) => el.getAttribute('aria-label') || el.textContent.trim()));
+
+test('game hub', { timeout: 300_000 }, async (t) => {
+  const harness = await startHarness(t);
+
+  await t.test('both games are ready to play from the hub, each with Play and How to Play', async () => {
+    const game = await openGame(harness);
+    const { page } = game;
+    assert.equal(await game.activeScreen(), 'hub-screen');
+    assert.equal(await page.title(), 'Spirit of the Woods');
+
+    const sf = page.locator('article', { has: page.locator('#sf-card-title') });
+    assert.equal(await sf.locator('.badge').textContent(), 'Ready to play');
+    assert.deepEqual(await names(sf.getByRole('link')), ['Play Shells & Feathers', 'How to Play Shells & Feathers']);
+    assert.equal(await sf.getByRole('link', { name: 'Play Shells & Feathers', exact: true }).getAttribute('href'), '#/shells-feathers');
+
+    const al = page.locator('article', { has: page.locator('#al-card-title') });
+    assert.equal(await al.locator('.badge').textContent(), 'Ready to play');
+    assert.doesNotMatch(await al.textContent(), /preview|can't be played/i);
+    assert.deepEqual(await names(al.getByRole('link')), ['Play Acorns & Leaves', 'How to Play Acorns & Leaves']);
+    assert.equal(await al.getByRole('link', { name: 'Play Acorns & Leaves', exact: true }).getAttribute('href'), '#/acorns-leaves');
+    assert.equal(await al.locator('.btn-primary').count(), 1);
+
+    // The card's picture is the starting position, drawn with the game's pieces.
+    const picture = al.locator('[data-checkers-board]');
+    assert.equal(await picture.getAttribute('aria-hidden'), 'true', 'the picture is decorative');
+    assert.equal(await picture.locator('.checkers-square').count(), 64);
+    assert.equal(await picture.locator('use[href="#al-acorn"]').count(), 12);
+    assert.equal(await picture.locator('use[href="#al-leaf"]').count(), 12);
+    assert.equal(await picture.locator('.checkers-square.light use').count(), 0, 'pieces only on dark squares');
+
+    const more = page.locator('nav.hub-links').getByRole('link');
+    assert.deepEqual(await names(more), ['Settings', 'Your Path', 'Journal']);
+    // Each has a decorative icon drawn from the sprite (no emoji).
+    assert.deepEqual(await more.locator('svg use').evaluateAll((uses) => uses.map((u) => [u.getAttribute('href'), u.closest('svg').getAttribute('aria-hidden')])), [['#icon-gear', 'true'], ['#icon-trail', 'true'], ['#icon-journal', 'true']]);
+    assert.deepEqual(game.pageErrors, []);
+  });
+
+  await t.test('How to Play pages for both games', async () => {
+    const game = await openGame(harness);
+    const { page } = game;
+    await game.press('How to Play Shells & Feathers');
+    await game.waitForScreen('sf-howto-screen');
+    assert.match(await page.locator('#sf-howto-screen').textContent(), /three of your pieces in a row/);
+    await game.press('Play Shells & Feathers', { exact: true });
+    await game.waitForScreen('sf-setup-screen');
+
+    // From the setup screen, How to Play and Back return to the setup screen.
+    await game.press('How to Play');
+    await game.waitForScreen('sf-howto-screen');
+    await game.press('Back');
+    await game.waitForScreen('sf-setup-screen');
+
+    await game.goHome();
+    await game.press('How to Play Acorns & Leaves');
+    await game.waitForScreen('al-howto-screen');
+    const screen = page.locator('#al-howto-screen');
+    const text = await screen.textContent();
+    for (const rule of [/Acorns move first/, /capture forward only/, /Capturing is compulsory, but you choose/, /keeps jumping/,
+      /Being crowned ends the move/, /40 moves each/, /a dot is a move, a ring is a jump/, /orange ring/, /Escape/]) {
+      assert.match(text, rule);
+    }
+    assert.equal(await screen.locator('.checkers-square').count(), 64);
+    assert.deepEqual(await screen.locator('.piece-legend li').allTextContents(), ['Acorn', 'Acorn king', 'Leaf', 'Leaf king'].map((n) => ` ${n}`));
+    assert.doesNotMatch(text, /traditional|native|tribe|sacred|preview/i);
+    assert.equal(await page.title(), 'How to Play Acorns & Leaves · Spirit of the Woods');
+    await game.press('Play Acorns & Leaves');
+    await game.waitForScreen('al-setup-screen');
+    await game.press('How to Play');
+    await game.waitForScreen('al-howto-screen');
+    await game.press('Back');
+    await game.waitForScreen('al-setup-screen');
+
+    await game.goTo('#/acorns-leaves/play', 'hub-screen');
+    assert.equal(await page.evaluate(() => location.hash), '#/', 'unknown play routes go to the hub');
+  });
+
+  await t.test('full trip: hub, setup, match, result, play again, change mode, other mode, all games, settings, Your Path', async () => {
+    const game = await openGame(harness);
+    const { page } = game;
+    await game.newMatch('single', { difficulty: 'Gentle' });
+    assert.equal(await page.title(), 'Shells & Feathers: vs the Spirit · Spirit of the Woods');
+    const first = await game.playFirstEmptyUntilResult();
+    assert.ok(SINGLE_RESULT_TITLES.includes(first.title), first.title);
+    assert.equal(await game.turnText(), first.title, 'turn line shows the result');
+
+    await game.press('Play Again');
+    await game.waitForTurn('Your Turn');
+    assert.deepEqual(await game.cells(), Array(9).fill(''));
+
+    await game.fromMenu('Change Mode');
+    await game.waitForScreen('sf-setup-screen');
+    await game.startMatch('two');
+    for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
+    assert.equal((await game.waitForResult()).title, 'Player 1 Wins!');
+    await game.press('Home');
+    await game.waitForScreen('hub-screen');
+
+    await game.press('Settings');
+    await game.waitForScreen('settings-screen');
+    await game.press('Back');
+    await game.waitForScreen('hub-screen');
+
+    await game.press('Your Path');
+    await game.waitForScreen('path-screen');
+    // Your game against the Spirit, and the two-player game kept apart.
+    assert.equal(await page.locator('#sf-games').textContent(), '1');
+    assert.equal(await page.locator('#two-player-record').textContent(), 'Player 1 wins: 1 · Player 2 wins: 0 · Draws: 0');
+    const gentleWon = first.title === 'Victory!';
+    assert.equal(await page.locator('#sf-journal-count').textContent(), `${gentleWon ? 5 : 2} of 9 unlocked.`);
+    assert.equal(await page.locator('#al-journal-count').textContent(), '0 of 10 unlocked.', 'Acorns & Leaves untouched');
+    // Its page of the journal.
+    await page.locator('#sf-path .journal-link').click();
+    await game.waitForScreen('journal-screen');
+    assert.equal(await page.locator('#journal-tab-shellsFeathers').getAttribute('aria-selected'), 'true');
+    const achievement = (id) => page.locator(`#journal-panel .journal-entry[data-id="${id}"]`);
+    for (const id of ['first-game', 'shared-board']) assert.match(await achievement(id).getAttribute('class'), /is-unlocked/, id);
+    for (const id of ['steady-hand', 'ten-games', 'feather-win']) assert.match(await achievement(id).getAttribute('class'), /is-locked/, id);
+    for (const id of ['first-win', 'gentle-win', 'shell-win']) {
+      assert.match(await achievement(id).getAttribute('class'), gentleWon ? /is-unlocked/ : /is-locked/, id);
+    }
+    await game.press('Back');
+    await game.waitForScreen('path-screen');
+    await game.press('Back');
+    await game.waitForScreen('hub-screen');
+    assert.deepEqual(game.pageErrors, []);
+  });
+
+  await t.test('browser Back/Forward, reload, deep links and unknown links', async () => {
+    const game = await openGame(harness);
+    const { page } = game;
+    await game.newMatch('two');
+    await game.tap(0);
+
+    await page.goBack();
+    await game.waitForScreen('sf-setup-screen');
+    assert.equal(await page.title(), 'Shells & Feathers · Spirit of the Woods');
+    await page.goForward();
+    await game.waitForScreen('game-screen');
+    assert.deepEqual(await game.cells(), ['🐚', '', '', '', '', '', '', '', ''], 'Forward resumes the match as it was left');
+    assert.match(await game.turnText(), /^Player 2's Turn/);
+    await page.goBack();
+    await game.waitForScreen('sf-setup-screen');
+    await page.goBack();
+    await game.waitForScreen('hub-screen');
+    assert.equal(await page.title(), 'Spirit of the Woods');
+
+    // "Change Mode" steps back through history instead of piling up entries,
+    // so Forward returns to the match.
+    await game.openShellsFeathers();
+    await game.startMatch('two');
+    const historyLength = await page.evaluate(() => history.length);
+    await game.fromMenu('Change Mode');
+    await game.waitForScreen('sf-setup-screen');
+    assert.equal(await page.evaluate(() => history.length), historyLength);
+    await page.goForward();
+    await game.waitForScreen('game-screen');
+    await page.goBack();
+    await game.waitForScreen('sf-setup-screen');
+    await game.press('All games');
+    await game.waitForScreen('hub-screen');
+
+    // Back while the result dialog is open closes it with the match.
+    await game.newMatch('two');
+    for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
+    await game.waitForResult();
+    await page.goBack();
+    await game.waitForScreen('sf-setup-screen');
+    assert.equal(await game.modalOpen(), false);
+    assert.equal(await page.locator('#game-screen').evaluate((el) => el.inert), false);
+
+    await page.goto(`${game.base}/index.html#/shells-feathers/play/single`);
+    await game.waitForScreen('game-screen');
+    await game.waitForTurn('Your Turn');
+    assert.match(await page.locator('#match-info').textContent(), /^Against the Spirit · Gentle/);
+    await page.reload();
+    await game.waitForScreen('game-screen');
+    await game.tap(4);
+    await game.waitForPieces(2);
+
+    await page.goto(`${game.base}/index.html#/nowhere`);
+    await game.waitForScreen('hub-screen');
+    assert.equal(await page.evaluate(() => location.hash), '#/');
+    assert.deepEqual(game.pageErrors, []);
+  });
+
+  await t.test('keyboard only: reach the game, play two players to a win, use the result dialog', async () => {
+    const game = await openGame(harness, { viewport: { width: 1280, height: 800 } });
+    const { page } = game;
+    const active = () => page.evaluate(() => {
+      const el = document.activeElement;
+      return {
+        label: el.getAttribute('aria-label') || el.textContent.trim().replace(/\s+/g, ' '),
+        id: el.id,
+        index: el.dataset?.index ?? null,
+        inModal: Boolean(el.closest('#game-modal')),
+        inBoard: Boolean(el.closest('#game-screen')),
+        outline: getComputedStyle(el).outlineStyle,
+      };
+    });
+    const tabTo = async (pattern) => {
+      for (let i = 0; i < 25; i++) {
+        await page.keyboard.press('Tab');
+        if (pattern.test((await active()).label)) return;
+      }
+      assert.fail(`never reached ${pattern} with Tab`);
+    };
+
+    await tabTo(/^Play Shells & Feathers$/);
+    assert.equal((await active()).outline, 'solid', 'visible focus ring');
+    await page.keyboard.press('Enter');
+    await game.waitForScreen('sf-setup-screen');
+    assert.equal((await active()).id, 'sf-setup-title', 'focus moves to the new screen');
+
+    await tabTo(/Two Players/);
+    await page.keyboard.press('Enter');
+    await game.waitForScreen('game-screen');
+    assert.equal((await active()).index, '0', 'focus lands on the board');
+
+    // P1 0, P2 3, P1 1, P2 4, P1 2 using arrows and Enter/Space.
+    for (const keys of [['Enter'], ['ArrowDown', 'Enter'], ['ArrowUp', 'ArrowRight', 'Space'], ['ArrowDown', 'Enter'], ['ArrowUp', 'ArrowRight', 'Enter']]) {
+      for (const key of keys) await page.keyboard.press(key);
+    }
+    const cell = await active();
+    assert.equal(cell.index, '2');
+    assert.equal(cell.outline, 'solid');
+    assert.deepEqual(await game.waitForResult(), { title: 'Player 1 Wins!', message: 'The shell spirit prevails' });
+    assert.equal((await active()).label, 'Play Again', 'the dialog takes focus');
+    for (let i = 0; i < 6; i++) {
+      await page.keyboard.press('Tab');
+      assert.equal((await active()).inBoard, false, 'focus never reaches the board behind the dialog');
+    }
+
+    await page.keyboard.press('Escape');
+    assert.equal(await game.modalOpen(), false);
+    assert.equal((await active()).label, 'Play Again', 'View Board leaves focus on Play Again, under the board');
+    assert.deepEqual(await game.cells(), ['🐚', '🐚', '🐚', '🪶', '🪶', '', '', '', '']);
+    assert.match(await page.locator('.cell[data-index="0"]').getAttribute('aria-label'), /Row 1, column 1: shell, winning line/);
+
+    // Back through the side panel (Rules and keys) and the board to the Menu
+    // button; the board keeps one tab stop, on the square last used.
+    const stops = [];
+    for (let i = 0; i < 8 && (await active()).label !== 'Menu'; i++) {
+      await page.keyboard.press('Shift+Tab');
+      const at = await active();
+      stops.push(at.index ?? at.label);
+    }
+    assert.deepEqual(stops, ['Rules and keys', '2', 'Menu']);
+    await page.keyboard.press('Enter');
+    assert.equal((await active()).label, 'Resume', 'the menu takes focus');
+    await page.keyboard.press('Tab');
+    assert.equal((await active()).label, 'Settings');
+    await page.keyboard.press('Tab');
+    assert.equal((await active()).label, 'Restart');
+    await page.keyboard.press('Tab');
+    assert.equal((await active()).label, 'Change Mode');
+    await page.keyboard.press('Enter');
+    await game.waitForScreen('sf-setup-screen');
+    assert.deepEqual(game.pageErrors, []);
+  });
+
+  for (const [label, options] of [
+    ['narrow phone (320×568, touch)', { device: devices['iPhone SE'] }],
+    ['desktop (1280×800)', { viewport: { width: 1280, height: 800 } }],
+  ]) {
+    await t.test(`${label}: reach Shells & Feathers from the hub and play both modes to a result`, async () => {
+      const game = await openGame(harness, options);
+      const { page } = game;
+      await game.newMatch('single');
+      await game.settle();
+      const height = await page.evaluate(() => [document.documentElement.scrollHeight, innerHeight]);
+      assert.ok(height[0] <= height[1] + 1, `the whole match fits on screen (${height[0]}px of ${height[1]}px)`);
+      const { title } = await game.playFirstEmptyUntilResult();
+      assert.ok(SINGLE_RESULT_TITLES.includes(title), title);
+
+      await game.press('Play Again');
+      await game.waitForTurn('Your Turn');
+      await game.fromMenu('Change Mode');
+      await game.waitForScreen('sf-setup-screen');
+      await game.startMatch('two');
+      for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
+      assert.equal((await game.waitForResult()).title, 'Player 1 Wins!');
+      await game.press('View Board');
+      assert.equal(await game.modalOpen(), false);
+      assert.equal(await game.turnText(), 'Player 1 Wins!');
+      await game.fromMenu('Change Mode');
+      await game.waitForScreen('sf-setup-screen');
+      await game.press('All games');
+      await game.waitForScreen('hub-screen');
+      assert.deepEqual(game.pageErrors, []);
+    });
+  }
+
+  await t.test('every control on every screen can be reached, and is at least 44px, at phone (including short Android), landscape and desktop sizes', async () => {
+    const sizes = [[320, 568], [360, 560], [360, 640], [640, 360], [750, 340], [1280, 800]];
+    const routes = [
+      ['#/', 'hub-screen'],
+      ['#/shells-feathers', 'sf-setup-screen'],
+      ['#/shells-feathers/play/two', 'game-screen'],
+      ['#/shells-feathers/how-to-play', 'sf-howto-screen'],
+      ['#/acorns-leaves', 'al-setup-screen'],
+      ['#/acorns-leaves/play/two', 'al-game-screen'],
+      ['#/acorns-leaves/how-to-play', 'al-howto-screen'],
+      ['#/settings', 'settings-screen'],
+      ['#/your-path', 'path-screen'],
+      ['#/journal', 'journal-screen'],
+    ];
+    // Scrolls each control into view and checks it is on screen and not covered.
+    const unreachable = (scope) => game.page.evaluate((selector) => {
+      const problems = [];
+      for (const el of document.querySelectorAll(`${selector} :is(a, button, input)`)) {
+        // Not shown at this size or in this state (Play Again before the game
+        // is over, the side panel's controls on a phone).
+        if (el.closest('[hidden]') || !el.checkVisibility()) continue;
+        el.scrollIntoView({ block: 'center', inline: 'center' });
+        const r = el.getBoundingClientRect();
+        const onScreen = r.width > 0 && r.left >= -1 && r.right <= innerWidth + 1 && r.top >= -1 && r.bottom <= innerHeight + 1;
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        const name = el.getAttribute('aria-label') || el.textContent.trim() || el.name || el.id;
+        if (!onScreen || !(hit === el || el.contains(hit))) {
+          problems.push(`${name} @ ${Math.round(r.left)},${Math.round(r.top)}`);
+        }
+        // Comfortable touch target: at least 44×44 (a whole label counts for its
+        // input). The 64 checkers squares share the screen width, so they get
+        // 36×36 on the narrowest phone.
+        const target = (el.closest('label') ?? el).getBoundingClientRect();
+        const least = el.matches('.al-square') ? 36 : 44;
+        if (target.width < least - 0.5 || target.height < least - 0.5) {
+          problems.push(`${name} is only ${Math.round(target.width)}×${Math.round(target.height)}px`);
+        }
+      }
+      if (document.documentElement.scrollWidth > innerWidth) problems.push(`page is ${document.documentElement.scrollWidth}px wide`);
+      return problems;
+    }, scope);
+
+    let game;
+    for (const [width, height] of sizes) {
+      game = await openGame(harness, { viewport: { width, height } });
+      for (const [hash, screen] of routes) {
+        await game.goTo(hash, screen);
+        await game.settle();
+        assert.deepEqual(await unreachable('.screen.active'), [], `${width}×${height} ${hash}`);
+      }
+      // The match menus.
+      for (const [hash, screen, menu] of [['#/shells-feathers/play/two', 'game-screen', '#sf-menu'], ['#/acorns-leaves/play/two', 'al-game-screen', '#al-menu']]) {
+        await game.goTo(hash, screen);
+        await game.press('Menu', { exact: true });
+        await game.settle();
+        assert.deepEqual(await unreachable(menu), [], `${width}×${height} ${menu}`);
+        await game.press('Resume');
+      }
+      // The result dialog, on the match screen.
+      await game.goTo('#/shells-feathers/play/two', 'game-screen');
+      for (const i of [0, 3, 1, 4, 2]) await game.tap(i);
+      await game.waitForResult();
+      await game.settle();
+      assert.deepEqual(await unreachable('#game-modal'), [], `${width}×${height} result dialog`);
+      await game.press('View Board');
+      assert.deepEqual(await unreachable('.screen.active'), [], `${width}×${height} finished match with Play Again`);
+      // The Acorns & Leaves dialog has the same layout; shown directly here, as
+      // reaching it takes a whole game (tests/browser/acorns-leaves.test.mjs).
+      await game.goTo('#/acorns-leaves/play/two', 'al-game-screen');
+      await game.page.evaluate(() => document.getElementById('al-modal').classList.add('active'));
+      await game.settle();
+      assert.deepEqual(await unreachable('#al-modal'), [], `${width}×${height} Acorns & Leaves result dialog`);
+      // Fog of War with two players: the handoff screen, then the match behind it.
+      await game.goTo('#/acorns-leaves/fog/two', 'al-game-screen');
+      await game.settle();
+      assert.deepEqual(await unreachable('#al-handoff'), [], `${width}×${height} handoff screen`);
+      await game.press("Show the Acorns' board");
+      await game.settle();
+      assert.deepEqual(await unreachable('.screen.active'), [], `${width}×${height} Fog match`);
+      // The dialog that confirms deleting saved data (the longest one).
+      await game.goTo('#/settings', 'settings-screen');
+      await game.press('Delete all saved data');
+      await game.settle();
+      assert.deepEqual(await unreachable('#confirm-dialog'), [], `${width}×${height} delete-all dialog`);
+      await game.press('Cancel');
+      // The page itself never scrolls sideways.
+      assert.equal(await game.page.evaluate(() => { window.scrollTo(5000, 0); return scrollX; }), 0);
+      await game.page.context().close();
+    }
+  });
+});

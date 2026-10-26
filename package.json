@@ -1,0 +1,20 @@
+{
+  "name": "shells-feathers",
+  "private": true,
+  "type": "module",
+  "description": "Spirit of the Woods: Shells & Feathers and Acorns & Leaves (static site, no build step). Dev tooling only; the game has no runtime dependencies.",
+  "scripts": {
+    "test": "npm run test:unit && npm run test:browser",
+    "test:unit": "node --test tests/unit/*.test.mjs",
+    "test:browser": "node --test tests/browser/*.test.mjs",
+    "test:smoke": "node --test tests/browser/gameplay.smoke.test.mjs",
+    "stamp": "node tools/stamp-assets.mjs",
+    "stamp:check": "node tools/stamp-assets.mjs --check"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

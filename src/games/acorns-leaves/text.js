@@ -1,0 +1,216 @@
+// Words for Acorns & Leaves: square names, what a move did, whose turn it
+// is, guidance for the player, and results. Pure, so the session and the
+// tests share them.
+//
+// Squares are named like a chess board seen from the Acorns' side: files a-h
+// from left to right and ranks 1-8 from the bottom (the Acorns' back row) up,
+// so the Acorns start on ranks 1-3 and the Leaves on ranks 6-8.
+import { rowOf, colOf, SIZE } from './engine.js';
+
+export const SIDE_NAMES = { acorn: 'Acorns', leaf: 'Leaves' };
+const ONE = { acorn: 'acorn', leaf: 'leaf' };
+const MANY = { acorn: 'acorns', leaf: 'leaves' };
+
+export const squareName = (square) => `${'abcdefgh'[colOf(square)]}${SIZE - rowOf(square)}`;
+
+export const pieceName = (piece) => (piece ? `${ONE[piece.side]}${piece.king ? ' king' : ''}` : 'empty');
+
+const count = (n, side) => `${n} ${n === 1 ? ONE[side] : MANY[side]}`;
+
+// "e3", "c5 or e5", "b4, d4 or f4".
+export function listSquares(squares) {
+  const names = squares.map(squareName);
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}` : names.join('');
+}
+
+// After a piece is picked up: "Acorn on c3 picked up. It can move to b4 or d4."
+// In Fog a jump into a fogged square is only a try: `maybe` says so.
+export function pickText({ square, piece, destinations, capture, maybe = false }) {
+  const name = pieceName(piece);
+  const can = maybe ? 'may be able to' : 'can';
+  return `${name[0].toUpperCase()}${name.slice(1)} on ${squareName(square)} picked up. `
+    + `It ${can} ${capture ? 'jump' : 'move'} to ${listSquares(destinations)}.`;
+}
+
+// After one jump of a chain: "Jumped to e5. Keep jumping: c7 or g7."
+export const jumpText = ({ to, destinations }) => `Jumped to ${squareName(to)}. Keep jumping: ${listSquares(destinations)}.`;
+
+// Who is playing `side`: "You" / "The Spirit" against the Spirit, the side's
+// name with two players.
+export function actorName(mode, side, humanSide) {
+  if (mode === 'single') return side === humanSide ? 'You' : 'The Spirit';
+  return SIDE_NAMES[side];
+}
+
+// "You jumped from c3 to e5 to c7, capturing 2 leaves." `piece` is the piece
+// that moved, as it was before the move.
+export function moveText({ mode, humanSide, move, piece }) {
+  const who = actorName(mode, piece.side, humanSide);
+  const route = move.path.map(squareName).join(' to ');
+  const king = piece.king ? ' a king' : '';
+  const other = piece.side === 'acorn' ? 'leaf' : 'acorn';
+  let text = move.captures.length
+    ? `${who} jumped${king} from ${route}, capturing ${count(move.captures.length, other)}.`
+    : `${who} moved${king} from ${route}.`;
+  if (move.crowned) text += ` The ${ONE[piece.side]} on ${squareName(move.to)} is now a king.`;
+  return text;
+}
+
+// "Your turn." / "The Spirit's turn." / "Leaves' turn. Leaves must capture."
+export function turnText({ mode, turn, humanSide, mustCapture }) {
+  const who = actorName(mode, turn, humanSide);
+  const whose = who === 'You' ? 'Your' : who === 'The Spirit' ? "The Spirit's" : `${who}'`;
+  const must = mustCapture ? ` ${who} must capture.` : '';
+  return `${whose} turn.${must}`;
+}
+
+// The turn line above the board.
+export function turnLabel({ mode, turn, humanSide }) {
+  if (mode === 'single') return turn === humanSide ? 'Your Turn' : "Spirit's Turn";
+  return `${SIDE_NAMES[turn]}' Turn`;
+}
+
+// The guidance line under the board, for the player whose turn it is.
+// stage: 'choose-piece' | 'choose-square' | 'keep-jumping'
+export function guidance({ stage, mustCapture }) {
+  if (stage === 'keep-jumping') return 'Keep jumping: choose the next ring.';
+  // A picked-up piece can always be put back by choosing it again.
+  if (stage === 'choose-square') return mustCapture ? 'Choose a ring to jump to, or the piece to put it back.' : 'Choose a dot to move to, or the piece to put it back.';
+  return mustCapture ? 'You must capture: choose a ringed piece.' : 'Choose a piece to move.';
+}
+
+// The rule behind what is happening, for the match panel on wide screens.
+// Fixed sentences that name no square, so in Fog they can't give anything
+// away; the session picks one from what the viewer can see.
+export const RULE_NOTES = {
+  move: 'Pieces move one square diagonally forward onto an empty dark square; kings move both ways.',
+  capture: 'Captures are compulsory: when any of your pieces can jump, you must jump.',
+  chain: 'A jump that can go on must: the same piece keeps jumping until no jump is left.',
+  crowned: 'A piece that reaches the far row is crowned: kings move and jump diagonally both ways.',
+  blocked: 'That piece has no empty square and no jump on its diagonals, so it can\'t move now.',
+  destination: 'Only the marked squares are moves for the piece you picked up.',
+  fogMove: 'Fog of War: you see your own pieces and only the enemy pieces next to them.',
+  fogCapture: 'A capture may be hiding in the fog, so try a ringed piece first. A hidden piece can block it.',
+  fogBump: 'A hidden piece blocked that try. Now you know where it is: choose again.',
+};
+
+// phase: 'ready' | 'waiting' | 'over' | 'handoff'; stage as for guidance();
+// capture: a capture is (Classic) or may be (Fog) compulsory; outcome: the
+// last refused pick (turn.js choose()), if any; crowned: the last move, as
+// far as the viewer saw it, crowned a piece; spirit: the Spirit's level in
+// words, while it thinks.
+export function ruleNote({
+  variant, phase, stage, capture, outcome, crowned, spirit,
+}) {
+  const fog = variant === 'fog';
+  if (phase === 'over' || phase === 'handoff') return '';
+  if (crowned) return RULE_NOTES.crowned;
+  if (phase === 'waiting') return spirit ?? '';
+  if (outcome === 'bumped') return RULE_NOTES.fogBump;
+  if (outcome === 'must-capture') return fog ? RULE_NOTES.fogCapture : RULE_NOTES.capture;
+  if (outcome === 'blocked') return RULE_NOTES.blocked;
+  if (outcome === 'not-a-destination') return RULE_NOTES.destination;
+  if (outcome === 'must-continue' || stage === 'keep-jumping') return RULE_NOTES.chain;
+  if (capture) return fog ? RULE_NOTES.fogCapture : RULE_NOTES.capture;
+  return fog ? RULE_NOTES.fogMove : RULE_NOTES.move;
+}
+
+// What to say when a pick does nothing (see turn.js choose()).
+export const FEEDBACK = {
+  'must-capture': 'You must capture: choose a ringed piece instead.',
+  blocked: 'That piece has no move right now.',
+  'must-continue': 'Keep jumping with the same piece: choose a ring.',
+  'not-a-destination': "It can't go there. Choose a marked square or another piece.",
+};
+
+const RESULT_TITLES = {
+  win: 'Victory!',
+  loss: 'Wisdom Gained',
+  draw: 'Balance Achieved',
+  acorn: 'Acorns Win!',
+  leaf: 'Leaves Win!',
+};
+
+// outcome: 'win' | 'loss' | 'draw' against the Spirit (from the player's
+// side), 'acorn' | 'leaf' | 'draw' with two players.
+export function outcomeOf({ mode, result, humanSide }) {
+  if (result.winner === null) return 'draw';
+  if (mode === 'single') return result.winner === humanSide ? 'win' : 'loss';
+  return result.winner;
+}
+
+// { title, message } for the result dialog; the message says how it ended.
+export function resultText({ mode, result, humanSide }) {
+  const outcome = outcomeOf({ mode, result, humanSide });
+  const title = RESULT_TITLES[outcome];
+  if (result.winner === null) {
+    return { outcome, title, message: 'A draw: 40 moves each with no capture or ordinary move.' };
+  }
+  const loser = result.winner === 'acorn' ? 'leaf' : 'acorn';
+  const winnerName = actorName(mode, result.winner, humanSide);
+  const loserName = actorName(mode, loser, humanSide);
+  const message = result.reason === 'no-pieces'
+    ? `${winnerName} captured every ${ONE[loser]}.`
+    : `${loserName} ${loserName === 'You' || loserName.endsWith('s') ? 'have' : 'has'} no move left.`;
+  return { outcome, title, message };
+}
+
+// ------------------------------------------------------------ Fog of War
+// Fog text says only what the player can see (docs/fog-rules.md §4).
+
+const listNames = (names) => (names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names.join(''));
+
+// Guidance and refusals in Fog: a capture "may" be possible, never "must".
+export function fogGuidance({ stage, mayCapture }) {
+  if (stage === 'keep-jumping') return 'Keep jumping: try the next ring.';
+  if (stage === 'choose-square') return mayCapture ? 'Try a ring to jump to, or the piece to put it back.' : 'Choose a dot to move to, or the piece to put it back.';
+  return mayCapture ? 'A capture may be possible: try a ringed piece first.' : 'Choose a piece to move.';
+}
+
+export const FOG_FEEDBACK = {
+  ...FEEDBACK,
+  'must-capture': 'A capture may be possible: try a ringed piece first.',
+  'must-continue': 'Keep jumping with the same piece: try a ring.',
+};
+
+// A try blocked by a hidden piece (M5, M7).
+export function bumpText({ square, piece, ends, opened }) {
+  let text = `Blocked: a hidden ${pieceName(piece)} is on ${squareName(square)}.`;
+  if (ends) text += ' The jump ends here.';
+  else if (opened) text += ' No capture is left to try, so any move is open.';
+  else text += ' Choose again.';
+  return text;
+}
+
+// "Your turn. A capture may be possible." Never says what the opponent must do.
+export function fogTurnText({ mode, turn, humanSide, mayCapture }) {
+  const who = actorName(mode, turn, humanSide);
+  if (who === 'The Spirit') return "The Spirit's turn.";
+  const whose = who === 'You' ? 'Your' : `${who}'`;
+  return `${whose} turn.${mayCapture ? ' A capture may be possible.' : ''}`;
+}
+
+// The other side's move as the viewer sees it: that it moved, which of the
+// viewer's pieces it took, and which of its pieces came into or went out of
+// view. "The Spirit moved, capturing your acorn on d4. In view now: leaf on e5."
+export function fogMoveText({ who, captured = [], appeared = [], vanished = [] }) {
+  let text = `${who} moved`;
+  if (captured.length) {
+    const names = captured.map(({ square, piece }) => `${pieceName(piece)} on ${squareName(square)}`);
+    text += `, capturing your ${listNames(names)}`;
+  }
+  text += '.';
+  if (appeared.length) text += ` In view now: ${listNames(appeared.map(({ square, piece }) => `${pieceName(piece)} on ${squareName(square)}`))}.`;
+  if (vanished.length) text += ` Out of view: ${listNames(vanished.map(squareName))}.`;
+  return text;
+}
+
+// The handoff screen between two players in Fog.
+export function handoffText(side) {
+  const name = SIDE_NAMES[side];
+  return {
+    title: `${name}' turn`,
+    text: `Pass the device to the ${name} player. The board stays hidden until they are ready.`,
+    button: `Show the ${name}' board`,
+  };
+}

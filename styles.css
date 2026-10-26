@@ -1,22 +1,142 @@
-/* Native American Themed Tic Tac Toe Styles */
+/* Spirit of the Woods: a woodland tabletop collection. Tokens first, then
+   base, layout, controls, each game, Settings and Your Path. */
 
 :root {
-    /* Earth and Nature Colors */
-    --primary-brown: #8B4513;
-    --secondary-brown: #A0522D;
-    --light-brown: #DEB887;
-    --dark-brown: #654321;
+    /* ------------------------------------------------------------------
+       Design tokens. A woodland tabletop: forest greens around warm wood,
+       pearl shells, soft feathers, readable acorns and leaves, and a little
+       turquoise for what you can act on. Components use these, not raw
+       values, so the three screens families stay one collection.
+       ------------------------------------------------------------------ */
+
+    /* Palette: forest */
+    --forest-950: #0F2117;
+    --forest-900: #162D1F;
+    --forest-800: #1E3B29;
+    --forest-700: #2A4D34;
+    --moss-500: #5E7F4B;
+    --moss-200: #BDE8A8;
+    /* Palette: wood (tables, boards, frames, panels) */
+    --wood-950: #2B1B0E;
+    --wood-900: #3A2412;
+    --wood-800: #4A2E16;
+    --wood-700: #5A3A1E;
+    --wood-600: #6E4523;
+    --wood-500: #8A5A2E;
+    --wood-400: #B98652;
+    --wood-300: #C99A62;
+    --wood-200: #D9B27A;
+    --wood-100: #E8D3A9;
+    /* Palette: pieces and accents */
+    --pearl: #FFF8EE;
+    --feather-cream: #FFF8DC;
+    --sand-200: #F5DEB3;
     --turquoise: #40E0D0;
-    --feather-white: #FFF8DC;
-    --shell-pearl: #FFF5EE;
-    --forest-green: #228B22;
-    --sunset-orange: #FF6B35;
-    --sky-blue: #87CEEB;
-    --sand: #F5DEB3;
+    --teal-700: #1F6F66;
+    --teal-600: #237A70;
+    --teal-800: #1B6158;
+    --gold-500: #E9B526;
+    --gold-300: #FFD447;
+    --ember-500: #FF6B35;
+    --ember-100: #FFD9C9;
+
+    /* Text */
+    --ink: var(--wood-950);
+    --text: var(--feather-cream);
+    --text-muted: #EADFC8;
+    --text-accent: var(--sand-200);
+
+    /* Typography: display for titles, label for controls, body for reading */
+    --font-display: 'Uncial Antiqua', 'Cinzel', serif;
+    --font-label: 'Cinzel', Georgia, serif;
+    --font-body: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-md: 1.1rem;
+    --text-lg: 1.35rem;
+    --text-xl: clamp(1.7rem, 6.5vw, 2.5rem);
+    --text-2xl: clamp(2.1rem, 9vw, 4rem);
+    --leading-tight: 1.15;
+    --leading-body: 1.5;
+    --tracking-label: 0.04em;
+
+    /* Spacing (4px steps) */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+
+    /* Radii */
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-pill: 999px;
+
+    /* Surfaces. Panels are dark bark with a grain too faint to touch text
+       contrast; boards are warm wood and carry the strongest shadow, so the
+       board is always what the eye lands on. */
+    --surface-page: var(--forest-800);
+    --surface-panel: rgba(58, 36, 18, 0.92);
+    --surface-panel-soft: rgba(58, 36, 18, 0.78);
+    --surface-inset: rgba(43, 27, 14, 0.5);
+    --surface-raised: linear-gradient(160deg, #5A3A1E, #3A2411);
+    --surface-board-frame: linear-gradient(145deg, var(--wood-500), var(--wood-600));
+    --surface-board-light: linear-gradient(160deg, var(--wood-200), var(--wood-300));
+    --grain: repeating-linear-gradient(97deg, rgba(255, 236, 200, 0.022) 0 2px, transparent 2px 11px);
+
+    /* Borders */
+    --border-panel: 2px solid rgba(26, 16, 8, 0.9);
+    --border-subtle: 1.5px solid rgba(245, 222, 179, 0.3);
+    --border-strong: 2px solid var(--sand-200);
+    --border-board: 3px solid var(--wood-950);
+
+    /* Shadows */
     --shadow: rgba(0, 0, 0, 0.3);
-    --grass-green: #7CFC00;
-    --flower-pink: #FF69B4;
-    --flower-yellow: #FFD700;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 6px 14px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.38);
+    --shadow-board: 0 16px 36px rgba(5, 12, 8, 0.55), 0 3px 0 rgba(26, 16, 8, 0.6);
+    --highlight-top: inset 0 1px 0 rgba(255, 236, 200, 0.12);
+
+    /* Icons */
+    --icon-sm: 1.1em;
+    --icon-md: 1.5em;
+    --icon-lg: 2.4rem;
+    --icon-xl: 3.5rem;
+
+    /* Interaction states */
+    --state-hover: rgba(255, 248, 220, 0.08);
+    --state-press: rgba(26, 16, 8, 0.45);
+    --state-selected: var(--turquoise);
+    --state-disabled-opacity: 0.5;
+    --focus-ring: var(--feather-cream);
+    --focus-halo: rgba(30, 18, 8, 0.85);
+    --focus-shadow: 0 0 0 7px var(--focus-halo);
+
+    /* Earlier names, kept as aliases of the tokens above */
+    --feather-white: var(--feather-cream);
+    --shell-pearl: var(--pearl);
+    --forest-green: #2E7D3E;
+    --sunset-orange: var(--ember-500);
+    --sand: var(--sand-200);
+    --bark: var(--surface-panel);
+    --bark-soft: var(--surface-panel-soft);
+    --bark-edge: rgba(26, 16, 8, 0.9);
+    --teal: var(--teal-700);
+    --teal-button: var(--teal-600);
+    --teal-button-deep: var(--teal-800);
+    --gold: var(--gold-500);
+    --gold-soft: var(--gold-300);
+    --wood-light: var(--wood-200);
+
+    /* Motion: brief and gentle. Everything is switched off for reduced motion. */
+    --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+    --quick: 0.16s;
+    --gentle: 0.24s;
 }
 
 * {
@@ -25,52 +145,146 @@
     box-sizing: border-box;
 }
 
-body {
-    font-family: 'Cinzel', serif;
-    background: linear-gradient(135deg, #8B4513 0%, #DEB887 50%, #87CEEB 100%);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
+html {
+    -webkit-text-size-adjust: 100%;
 }
 
+body {
+    font-family: var(--font-label);
+    color: var(--text);
+    background: var(--surface-page);
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* The forest: canopy above, forest floor below, pinned to the screen so long
+   pages stay covered. */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100vh;
+    height: 100lvh;
+    background:
+        radial-gradient(ellipse 90% 55% at 50% -8%, rgba(255, 236, 190, 0.2), transparent 70%),
+        linear-gradient(176deg, var(--forest-900) 0%, var(--forest-800) 34%, #2E4A30 64%, #4A4128 88%, #5A4428 100%);
+}
+
+/* A faint scatter of leaves over it. Fixed, so it never makes the page
+   scrollable; under 7% opacity, so it never competes with text. */
 body::before {
     content: '';
-    position: absolute;
-    width: 200%;
-    height: 200%;
-    background-image: 
-        radial-gradient(circle at 20% 30%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(64, 224, 208, 0.1) 0%, transparent 50%);
-    animation: floatBackground 20s ease-in-out infinite;
-}
-
-@keyframes floatBackground {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    33% { transform: translate(-5%, -5%) rotate(120deg); }
-    66% { transform: translate(5%, -5%) rotate(240deg); }
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg transform='translate(30 40) rotate(-35) scale(1.1)'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='rgba(214,236,196,0.07)'/%3E%3Cpath d='M0-11V13' stroke='rgba(15,36,24,0.35)' stroke-width='1.2'/%3E%3C/g%3E%3Cg transform='translate(150 30) rotate(40) scale(0.8)'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='rgba(214,236,196,0.05)'/%3E%3Cpath d='M0-11V13' stroke='rgba(15,36,24,0.35)' stroke-width='1.2'/%3E%3C/g%3E%3Cg transform='translate(95 110) rotate(15) scale(1.3)'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='rgba(214,236,196,0.06)'/%3E%3Cpath d='M0-11V13' stroke='rgba(15,36,24,0.35)' stroke-width='1.2'/%3E%3C/g%3E%3Cg transform='translate(190 150) rotate(-60) scale(0.9)'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='rgba(214,236,196,0.05)'/%3E%3Cpath d='M0-11V13' stroke='rgba(15,36,24,0.35)' stroke-width='1.2'/%3E%3C/g%3E%3Cg transform='translate(40 175) rotate(70) scale(0.75)'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='rgba(214,236,196,0.06)'/%3E%3Cpath d='M0-11V13' stroke='rgba(15,36,24,0.35)' stroke-width='1.2'/%3E%3C/g%3E%3Cg transform='translate(130 195) rotate(-10) scale(0.6)'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='rgba(214,236,196,0.04)'/%3E%3Cpath d='M0-11V13' stroke='rgba(15,36,24,0.35)' stroke-width='1.2'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 220px 220px;
 }
 
 #game-container {
-    width: 100%;
-    max-width: 800px;
-    height: 100vh;
     position: relative;
     z-index: 1;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    /* Screens fade in from 8px lower; don't let that briefly make the page scroll. */
+    overflow: hidden;
+    overflow: clip;
 }
 
-/* Screens */
+/* A match uses the whole width of a wide screen (board and side panel). */
+#game-container:has(> .match-screen.active) {
+    max-width: 1680px;
+}
+
+a {
+    color: inherit;
+}
+
+/* Focus: a cream ring with a dark halo reads on light and dark backgrounds. */
+:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 7px var(--focus-halo);
+}
+
+h1[tabindex="-1"]:focus,
+h2[tabindex="-1"]:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Holds the SVG symbols the pieces are drawn from; takes no space. */
+.svg-sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+/* The shared surface: dark bark with a faint grain, one border, one shadow.
+   Every panel-like box uses it, so the screens read as one set. */
+.hub-header,
+.screen-header,
+.panel,
+.game-card,
+.game-header {
+    background: var(--grain), var(--surface-panel);
+    border: var(--border-panel);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md), var(--highlight-top);
+}
+
+/* Icons from the sprite: sized by tokens, drawn in the text color. */
+.icon {
+    flex: none;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    vertical-align: -0.2em;
+}
+
+.icon-lg {
+    width: var(--icon-lg);
+    height: var(--icon-lg);
+}
+
+.icon-xl {
+    width: var(--icon-xl);
+    height: var(--icon-xl);
+}
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Screens: one visible at a time; taller content scrolls the page. */
 .screen {
     display: none;
     width: 100%;
-    height: 100vh;
-    padding: 20px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding:
+        max(20px, env(safe-area-inset-top))
+        max(16px, env(safe-area-inset-right))
+        max(28px, env(safe-area-inset-bottom))
+        max(16px, env(safe-area-inset-left));
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    animation: fadeIn 0.5s ease;
+    gap: 20px;
+    animation: fadeIn var(--gentle) var(--ease-out);
 }
 
 .screen.active {
@@ -78,383 +292,900 @@ body::before {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Start Screen */
-.title-container {
-    text-align: center;
-    margin-bottom: 40px;
-}
-
+/* Headings */
 .game-title {
-    font-family: 'Uncial Antiqua', cursive;
-    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    line-height: 1.1;
     color: var(--feather-white);
-    text-shadow: 
-        3px 3px 6px var(--shadow),
-        0 0 20px rgba(64, 224, 208, 0.5);
-    margin-bottom: 10px;
-    animation: titleGlow 3s ease-in-out infinite;
+    text-shadow:
+        2px 2px 4px var(--shadow),
+        0 0 18px rgba(64, 224, 208, 0.35);
 }
 
-@keyframes titleGlow {
-    0%, 100% { text-shadow: 3px 3px 6px var(--shadow), 0 0 20px rgba(64, 224, 208, 0.5); }
-    50% { text-shadow: 3px 3px 6px var(--shadow), 0 0 30px rgba(64, 224, 208, 0.8); }
+.subtitle,
+.screen-subtitle {
+    font-size: clamp(1rem, 3vw, 1.2rem);
+    color: var(--text-muted);
+    margin-top: 6px;
 }
 
-.subtitle {
-    font-size: clamp(1rem, 3vw, 1.3rem);
-    color: var(--shell-pearl);
-    opacity: 0.9;
-}
-
-.menu-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+/* Titles sit on a bark plaque, the same width as the panels below, so they
+   read on every part of the gradient and head the screen clearly. */
+.hub-header,
+.screen-header {
     width: 100%;
-    max-width: 300px;
+    max-width: 560px;
+    padding: var(--space-3) var(--space-5) var(--space-4);
+    text-align: center;
 }
 
-.menu-btn, .back-btn, .control-btn, .modal-btn, .reset-stats-btn {
-    background: linear-gradient(145deg, var(--primary-brown), var(--secondary-brown));
+.hub-header {
+    max-width: 880px;
+    padding: var(--space-5) var(--space-5) var(--space-4);
+}
+
+.hub-header .decorative-border {
+    margin: 12px auto 0;
+}
+
+.screen-header h2 {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    line-height: var(--leading-tight);
     color: var(--feather-white);
-    border: 2px solid var(--dark-brown);
-    padding: 15px 30px;
-    font-size: 1.1rem;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 
-        0 4px 6px var(--shadow),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    font-family: 'Cinzel', serif;
+    text-shadow: 2px 2px 4px var(--shadow);
+}
+
+.eyebrow {
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+}
+
+.section-label {
+    padding: var(--space-1) var(--space-4);
+    background: rgba(22, 45, 31, 0.88);
+    border: 1px solid rgba(189, 232, 168, 0.25);
+    border-radius: var(--radius-pill);
+    font-size: 0.95rem;
     font-weight: 600;
-}
-
-.menu-btn:hover, .back-btn:hover, .control-btn:hover, .modal-btn:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 
-        0 6px 12px var(--shadow),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    background: linear-gradient(145deg, var(--secondary-brown), var(--primary-brown));
-}
-
-.btn-icon {
-    font-size: 1.3rem;
+    letter-spacing: 0.08em;
+    color: var(--feather-white);
 }
 
 .decorative-border {
-    position: absolute;
-    bottom: 20px;
     width: 80%;
+    max-width: 600px;
     height: 3px;
-    background: linear-gradient(90deg, 
-        transparent, 
-        var(--turquoise) 20%, 
-        var(--sunset-orange) 50%, 
-        var(--turquoise) 80%, 
+    background: linear-gradient(90deg,
+        transparent,
+        var(--turquoise) 20%,
+        var(--sunset-orange) 50%,
+        var(--turquoise) 80%,
         transparent);
     border-radius: 2px;
 }
 
-/* Game Mode Selection */
-.game-mode-container {
+/* Buttons. Hierarchy: primary (teal, filled) > default (brown, filled) >
+   secondary (outlined) > quiet. Every state has a visible change. */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 48px;
+    padding: var(--space-3) var(--space-6);
+    border: 2px solid var(--wood-950);
+    border-radius: var(--radius-pill);
+    background: linear-gradient(145deg, var(--wood-500), var(--wood-600));
+    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 236, 200, 0.22);
+    color: var(--feather-white);
+    font-family: var(--font-label);
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform var(--quick) ease, box-shadow var(--quick) ease, background var(--quick) ease, border-color var(--quick) ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.btn-primary {
+    background: linear-gradient(145deg, var(--teal-button), var(--teal));
+    border-color: var(--turquoise);
+}
+
+.btn-secondary {
+    background: rgba(255, 248, 220, 0.06);
+    border-color: var(--sand);
+    box-shadow: none;
+}
+
+.btn-quiet {
+    background: var(--bark-soft);
+    border-color: rgba(245, 222, 179, 0.4);
+    box-shadow: none;
+    font-size: 1rem;
+}
+
+.btn-danger {
+    background: transparent;
+    border-color: var(--sunset-orange);
+    color: #FFD9C9;
+    box-shadow: none;
+}
+
+/* Hover and pressed states. The enabled check sits in :where() so each
+   variant's own state below overrides the plain button's. */
+.btn:where(:not(:disabled):not([aria-disabled="true"])):active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px var(--shadow), inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(145deg, var(--wood-600), var(--wood-700));
+}
+
+.btn-primary:where(:not(:disabled):not([aria-disabled="true"])):active {
+    background: linear-gradient(145deg, var(--teal), var(--teal-button-deep));
+}
+
+.btn-secondary:where(:not(:disabled):not([aria-disabled="true"])):active,
+.btn-quiet:where(:not(:disabled):not([aria-disabled="true"])):active,
+.btn-danger:where(:not(:disabled):not([aria-disabled="true"])):active {
+    background: rgba(43, 27, 14, 0.55);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+    opacity: var(--state-disabled-opacity);
+    filter: grayscale(0.7);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+@media (hover: hover) {
+    .btn:where(:not(:disabled):not([aria-disabled="true"])):hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 236, 200, 0.3);
+        background: linear-gradient(145deg, #9A6634, #7A4E28);
+    }
+
+    .btn-primary:where(:not(:disabled):not([aria-disabled="true"])):hover {
+        background: linear-gradient(145deg, var(--teal), var(--teal-button-deep));
+        border-color: var(--feather-white);
+    }
+
+    .btn-secondary:where(:not(:disabled)):hover,
+    .btn-quiet:where(:not(:disabled)):hover {
+        background: rgba(43, 27, 14, 0.4);
+        border-color: var(--feather-white);
+    }
+
+    .btn-danger:where(:not(:disabled)):hover {
+        background: rgba(255, 107, 53, 0.2);
+    }
+}
+
+.back-link,
+.text-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--feather-white);
+    font-weight: 600;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.screen-top {
+    display: flex;
+    width: 100%;
+    max-width: 640px;
+}
+
+.back-link,
+.text-link {
+    padding: 8px 16px;
+    border: 1.5px solid rgba(245, 222, 179, 0.45);
+    border-radius: 999px;
+    background: var(--bark-soft);
+    transition: background var(--quick) ease, border-color var(--quick) ease;
+}
+
+.text-link {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.back-link:active,
+.text-link:active {
+    background: var(--bark-edge);
+}
+
+@media (hover: hover) {
+    .back-link:hover,
+    .text-link:hover {
+        background: var(--bark);
+        border-color: var(--feather-white);
+    }
+
+    .text-link:hover {
+        text-decoration-thickness: 2px;
+    }
+}
+
+/* Panels */
+.panel {
+    width: 100%;
+    max-width: 560px;
+    padding: var(--space-5) var(--space-6);
+}
+
+.panel-title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    margin-bottom: 14px;
+}
+
+.hint {
+    margin-top: 10px;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+/* Hub */
+.game-cards {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    width: 100%;
+    max-width: 880px;
+}
+
+@media (min-width: 720px) {
+    .game-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.game-card {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: var(--space-3);
+    padding: var(--space-5);
+}
+
+.card-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.card-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+}
+
+.card-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 5vw, 1.7rem);
+    line-height: 1.15;
+}
+
+.card-kind {
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+}
+
+.card-text {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: auto;
+}
+
+.card-actions .btn {
+    flex: 1 1 140px;
+}
+
+.badge {
+    display: inline-flex;
+    margin-top: 2px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+.badge-ready {
+    background: var(--turquoise);
+    color: var(--ink);
+}
+
+.hub-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.hub-links .btn {
+    min-width: 150px;
+}
+
+/* Small pictures on the game cards (decorative, not interactive) */
+.mini-board {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    width: 84px;
+    height: 84px;
+    padding: 6px;
+    background: var(--surface-board-frame);
+    border: 2px solid var(--wood-950);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.mini-piece {
+    width: 82%;
+    height: 82%;
+    filter: drop-shadow(0 1px 1px rgba(43, 27, 14, 0.5));
+}
+
+.mini-board span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-board-light);
+    border: 1px solid rgba(74, 46, 22, 0.6);
+    border-radius: 6px;
+}
+
+.checkers-mini {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 96px;
+    height: 96px;
+    border: 2px solid var(--wood-950);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.checkers-square {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+}
+
+.checkers-piece {
+    display: block;
+    width: 88%;
+    height: 88%;
+}
+
+.checkers-square.light {
+    background: #E8D3A9;
+}
+
+.checkers-square.dark {
+    background: #6B4A2B;
+}
+
+.checkers-mini-large {
+    width: min(100%, 320px);
+    height: auto;
+    aspect-ratio: 1;
+}
+
+.checkers-mini-large .checkers-square {
+    aspect-ratio: 1;
+}
+
+/* Shells & Feathers setup */
+.option-group {
+    min-width: 0;
+    margin: 0 0 18px;
+    padding: 0;
+    border: 0;
+}
+
+.option-group:last-child {
+    margin-bottom: 0;
+}
+
+.option-group legend {
+    margin-bottom: 10px;
+    padding: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.segmented {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.segment {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 88px;
+}
+
+/* The real radio covers the segment, so taps, clicks and keys all reach it. */
+.segment input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
     width: 100%;
-    max-width: 400px;
-    margin-bottom: 40px;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.segment span {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 48px;
+    padding: var(--space-2) var(--space-3);
+    background: var(--wood-700);
+    border: 2px solid var(--wood-500);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    transition: background var(--quick) ease, border-color var(--quick) ease, transform var(--quick) ease;
+}
+
+.segment input:checked + span {
+    background: linear-gradient(160deg, var(--pearl), var(--sand-200));
+    border-color: var(--state-selected);
+    color: var(--ink);
+    box-shadow: 0 0 0 2px rgba(64, 224, 208, 0.35), var(--shadow-sm);
+}
+
+/* Check badge on the selected option. Drawn as an image, not text, so it
+   isn't read out as part of the option's name. */
+.segment input:checked + span::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: -6px;
+    width: 22px;
+    height: 22px;
+    background: var(--feather-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%232B1B0E' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+}
+
+.segment input:focus-visible + span {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 7px var(--focus-halo);
+}
+
+@media (hover: hover) {
+    .segment input:not(:checked):hover + span {
+        border-color: var(--sand);
+        transform: translateY(-2px);
+    }
+}
+
+@media (max-width: 400px) {
+    .segmented-stack {
+        flex-direction: column;
+    }
+}
+
+.mode-choices {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    width: 100%;
+    max-width: 560px;
+}
+
+@media (min-width: 560px) {
+    .mode-choices {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 .mode-btn {
-    background: linear-gradient(145deg, rgba(139, 69, 19, 0.9), rgba(160, 82, 45, 0.9));
-    backdrop-filter: blur(10px);
-    border: 3px solid var(--dark-brown);
-    border-radius: 20px;
-    padding: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 5px 15px var(--shadow);
+    gap: var(--space-2);
+    padding: var(--space-5) var(--space-4);
+    background: var(--grain), linear-gradient(145deg, #7A4E28, var(--wood-700));
+    border: 3px solid var(--wood-950);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md), var(--highlight-top);
+    color: var(--feather-white);
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform var(--quick) ease, box-shadow var(--quick) ease, border-color var(--quick) ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
-.mode-btn:hover {
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: 0 8px 20px var(--shadow);
-    background: linear-gradient(145deg, var(--turquoise), rgba(64, 224, 208, 0.7));
+.mode-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px var(--shadow);
+    border-color: var(--sand);
+}
+
+@media (hover: hover) {
+    .mode-btn:hover {
+        transform: translateY(-2px);
+        border-color: var(--turquoise);
+        box-shadow: 0 8px 20px var(--shadow);
+    }
 }
 
 .mode-icon {
-    font-size: 2.5rem;
+    display: grid;
+    color: var(--text-accent);
 }
 
 .mode-title {
-    font-family: 'Uncial Antiqua', cursive;
-    font-size: 1.5rem;
-    color: var(--feather-white);
+    font-family: var(--font-display);
+    font-size: 1.4rem;
     text-shadow: 1px 1px 2px var(--shadow);
 }
 
 .mode-desc {
-    font-size: 0.9rem;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
     color: var(--shell-pearl);
-    opacity: 0.9;
 }
 
-/* Settings Screen */
-.screen-header {
-    text-align: center;
-    margin-bottom: 40px;
+/* Match screens, both games: header (match line, Menu, sides, turn), the
+   board, guidance, and Play Again once the game is over. The board gets all
+   the room the rest leaves: it sits in a "well", a size container whose
+   square is min(100cqw, 100cqh), so it fits whatever height the browser's
+   toolbars, the safe areas and the orientation leave, with no guessed
+   reserve. The screen is exactly the dynamic viewport height (100dvh) and
+   grows to fit its content when even the smallest board doesn't fit, so a
+   short screen scrolls instead of clipping. Empty 1fr rows above and below
+   center the group (they shrink to nothing first). */
+.match-screen {
+    --match-gap: 10px;
+    --board-gutter: 10px;
+    /* The board's smallest and largest size (its frame included). */
+    --board-min: min(100vw - 2 * var(--board-gutter), 240px);
+    --board-max: min(100vw - 2 * var(--board-gutter), 450px);
 }
 
-.screen-header h2 {
-    font-family: 'Uncial Antiqua', cursive;
-    font-size: clamp(2rem, 6vw, 3rem);
-    color: var(--feather-white);
-    text-shadow: 2px 2px 4px var(--shadow);
+.match-screen.active {
+    display: grid;
+    height: 100vh;
+    height: 100dvh;
+    min-height: fit-content;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto minmax(var(--board-min), var(--board-max)) auto auto minmax(0, 1fr);
+    grid-template-areas: "." "header" "board" "hint" "controls" ".";
+    justify-items: center;
+    align-items: start;
+    gap: 0;
+    padding:
+        max(8px, env(safe-area-inset-top))
+        max(var(--board-gutter), env(safe-area-inset-right))
+        max(12px, env(safe-area-inset-bottom))
+        max(var(--board-gutter), env(safe-area-inset-left));
 }
 
-.settings-container {
-    background: rgba(139, 69, 19, 0.3);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 30px;
-    border: 2px solid var(--dark-brown);
-    box-shadow: 0 8px 16px var(--shadow);
+.match-screen .game-header {
+    grid-area: header;
+    margin-bottom: var(--match-gap);
+}
+
+.match-screen .game-controls {
+    grid-area: controls;
+    margin-top: var(--match-gap);
+}
+
+.board-well {
+    grid-area: board;
+    align-self: stretch;
+    justify-self: stretch;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: 0;
+    container-type: size;
+}
+
+.board-well > * {
+    --board-size: min(100cqw, 100cqh, var(--board-max));
+}
+
+.game-header {
     width: 100%;
-    max-width: 400px;
-    margin-bottom: 30px;
+    max-width: 500px;
+    padding: 6px 10px 8px;
+    text-align: center;
 }
 
-.setting-item {
-    margin-bottom: 30px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+/* The header is a container, so its chips follow the room they actually
+   have (a 320px phone, the side column of a landscape phone). */
+.match-screen .game-header {
+    container: match-header / inline-size;
 }
 
-.setting-label {
-    font-size: 1.2rem;
-    color: var(--feather-white);
-    text-shadow: 1px 1px 2px var(--shadow);
+@container match-header (max-width: 330px) {
+    .side-chip {
+        gap: 6px;
+        padding: 6px 6px 3px;
+    }
+
+    .side-chip-glyph,
+    .al-side-piece {
+        width: 28px;
+        height: 28px;
+    }
+
+    .side-chip-text {
+        font-size: 0.95rem;
+    }
 }
 
-/* Toggle Switch */
-.toggle-container {
+/* Match line and the Menu button. */
+.match-bar {
     display: flex;
     align-items: center;
+    gap: 8px;
+    /* Room for the "To move" tag above the chips. */
+    margin-bottom: 12px;
 }
 
-.toggle-switch {
+.match-info {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-body);
+    font-size: 0.86rem;
+    line-height: 1.3;
+    text-align: left;
+    color: var(--text-muted);
+}
+
+/* Achievement notice: it takes the match line's own box for a few seconds,
+   so it never covers the board, the Menu button or the turn chips. */
+.match-info-slot {
     position: relative;
-    width: 60px;
-    height: 30px;
-    background: var(--dark-brown);
-    border-radius: 15px;
-    cursor: pointer;
-    transition: background 0.3s;
+    flex: 1;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    min-width: 0;
 }
 
-#audio-toggle, #music-toggle {
+.match-info-slot.is-noticing .match-info {
+    visibility: hidden;
+}
+
+.match-notice {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-family: var(--font-label);
+    font-size: 0.86rem;
+    font-weight: bold;
+    line-height: 1.2;
+    color: var(--gold-300);
+    pointer-events: none;
+    animation: noticeIn var(--gentle) var(--ease-out);
+}
+
+.match-notice[hidden] {
     display: none;
 }
 
-#audio-toggle:checked + .toggle-switch,
-#music-toggle:checked + .toggle-switch {
-    background: var(--forest-green);
+.match-notice-text {
+    display: -webkit-box;
+    min-width: 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
-.toggle-switch::after {
-    content: '';
-    position: absolute;
-    width: 26px;
-    height: 26px;
-    background: var(--feather-white);
-    border-radius: 50%;
-    top: 2px;
-    left: 2px;
-    transition: transform 0.3s;
-    box-shadow: 0 2px 4px var(--shadow);
-}
-
-#audio-toggle:checked + .toggle-switch::after,
-#music-toggle:checked + .toggle-switch::after {
-    transform: translateX(30px);
-}
-
-/* Difficulty and Symbol Selectors */
-.difficulty-selector, .symbol-selector {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.diff-btn, .symbol-btn {
-    flex: 1;
-    padding: 10px 15px;
-    background: var(--dark-brown);
-    color: var(--feather-white);
-    border: 2px solid var(--primary-brown);
-    border-radius: 15px;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-family: 'Cinzel', serif;
-    min-width: 80px;
-}
-
-.diff-btn.active, .symbol-btn.active {
-    background: var(--turquoise);
-    color: var(--dark-brown);
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px var(--shadow);
-}
-
-.diff-btn:hover, .symbol-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px var(--shadow);
-}
-
-/* Stats Screen - Fixed Layout */
-.stats-scroll-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 500px;
-    height: 100%;
-    overflow-y: auto;
-}
-
-.stats-container {
+.notice-medal {
+    flex: none;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 20px;
-    width: 100%;
-    margin-bottom: 30px;
-    background: rgba(139, 69, 19, 0.3);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 30px;
-    border: 2px solid var(--dark-brown);
-    box-shadow: 0 8px 16px var(--shadow);
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle at 35% 30%, var(--gold-300), var(--gold-500) 70%);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(255, 212, 71, 0.3);
+    color: var(--ink);
 }
 
-.stat-card {
-    background: linear-gradient(145deg, rgba(64, 224, 208, 0.2), rgba(255, 107, 53, 0.2));
-    border-radius: 15px;
-    padding: 20px;
-    text-align: center;
-    border: 2px solid var(--dark-brown);
-    transition: transform 0.3s;
+.notice-medal .icon {
+    width: 18px;
+    height: 18px;
 }
 
-.stat-card:hover {
-    transform: translateY(-5px);
+@keyframes noticeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.stat-card.full-width {
-    grid-column: 1 / -1;
-}
-
-.stat-icon {
-    font-size: 2rem;
-    margin-bottom: 10px;
-}
-
-.stat-value {
-    font-size: 2rem;
+.menu-btn {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 14px 0 12px;
+    background: linear-gradient(145deg, var(--wood-500), var(--wood-600));
+    border: var(--border-subtle);
+    border-radius: 999px;
     color: var(--feather-white);
-    font-weight: bold;
-    text-shadow: 2px 2px 4px var(--shadow);
+    font: 600 0.95rem var(--font-label);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--quick) ease, transform var(--quick) ease;
 }
 
-.stat-label {
-    font-size: 0.9rem;
-    color: var(--shell-pearl);
-    margin-top: 5px;
+.menu-btn:active {
+    transform: translateY(1px);
+    background: linear-gradient(145deg, var(--wood-600), var(--wood-700));
 }
 
-.stats-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 100%;
-    max-width: 300px;
-}
-
-.reset-stats-btn {
-    background: linear-gradient(145deg, var(--sunset-orange), #FF8C42);
-}
-
-/* Game Screen */
-.game-header {
-    background: rgba(139, 69, 19, 0.4);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 15px 25px;
-    margin-bottom: 30px;
-    border: 2px solid var(--dark-brown);
-    box-shadow: 0 4px 8px var(--shadow);
-    width: 100%;
-    max-width: 500px;
+@media (hover: hover) {
+    .menu-btn:hover {
+        background: linear-gradient(145deg, #9A6634, #7A4E28);
+    }
 }
 
 .score-display {
-    text-align: center;
     color: var(--feather-white);
-    font-size: 1.1rem;
-    margin-bottom: 10px;
+    font-size: 1.05rem;
 }
 
-.score-separator {
-    margin: 0 15px;
-    color: var(--turquoise);
+/* One chip per player or side: piece, name, count. The one to move gets a
+   bright edge and a "To move" tag; the winner a gold edge and "Winner". */
+.side-chips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 4px 0 6px;
 }
 
+.side-chip {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 6px 8px 3px;
+    background: rgba(43, 27, 14, 0.45);
+    border: 2px solid rgba(245, 222, 179, 0.25);
+    border-radius: 14px;
+    text-align: left;
+    transition: background var(--gentle) ease, border-color var(--gentle) ease;
+}
+
+.side-chip.is-active {
+    background: rgba(64, 224, 208, 0.16);
+    border-color: var(--turquoise);
+}
+
+.side-chip[data-player="2"].is-active {
+    background: rgba(255, 107, 53, 0.16);
+    border-color: var(--sunset-orange);
+}
+
+.side-chip.is-winner {
+    background: rgba(255, 212, 71, 0.18);
+    border-color: var(--gold-soft);
+}
+
+.side-chip-glyph {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    background: var(--surface-board-light);
+    border: 2px solid var(--wood-950);
+    border-radius: 50%;
+}
+
+.chip-piece {
+    width: 80%;
+    height: 80%;
+}
+
+/* The piece beside the turn line. */
+.turn-piece {
+    width: 1.3em;
+    height: 1.3em;
+    margin-left: 0.35em;
+    vertical-align: -0.3em;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+}
+
+.side-chip-text {
+    min-width: 0;
+    font-weight: 600;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.side-chip-tag {
+    position: absolute;
+    top: -10px;
+    right: 8px;
+    padding: 1px 8px;
+    background: var(--turquoise);
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.side-chip[data-player="2"].is-active .side-chip-tag {
+    background: var(--sunset-orange);
+}
+
+.side-chip.is-winner .side-chip-tag {
+    background: var(--gold-soft);
+}
+
+/* The turn line: steady (no pulsing), colored per player, and always worded. */
 .turn-indicator {
-    text-align: center;
     font-size: 1.2rem;
     color: var(--turquoise);
     font-weight: 600;
     text-shadow: 1px 1px 2px var(--shadow);
-    animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-/* Game Board */
+/* Game board: a solid wooden tray with lighter wooden squares, so pale
+   shells and brown feathers both stand out. Sized by its well (above). */
 .game-board {
     position: relative;
-    width: min(90vw, 450px);
-    height: min(90vw, 450px);
-    margin: 0 auto 30px;
-    background: radial-gradient(circle, rgba(222, 184, 135, 0.3), rgba(139, 69, 19, 0.3));
-    border-radius: 20px;
+    width: var(--board-size);
+    height: var(--board-size);
+    background: var(--grain), var(--surface-board-frame);
+    border-radius: var(--radius-lg);
     padding: 10px;
-    box-shadow: 
-        0 10px 30px var(--shadow),
-        inset 0 2px 5px rgba(255, 255, 255, 0.2);
-    border: 3px solid var(--dark-brown);
-}
-
-#game-canvas {
-    width: 100%;
-    height: 100%;
-    border-radius: 15px;
+    box-shadow:
+        var(--shadow-board),
+        inset 0 2px 4px rgba(255, 248, 220, 0.2),
+        inset 0 -3px 6px rgba(43, 27, 14, 0.35);
+    border: var(--border-board);
 }
 
 .board-overlay {
@@ -467,347 +1198,2085 @@ body::before {
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     gap: 10px;
-    pointer-events: all;
+    touch-action: manipulation;
 }
 
 .cell {
-    background: rgba(255, 248, 220, 0.1);
-    border: 2px solid rgba(139, 69, 19, 0.3);
-    border-radius: 15px;
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    line-height: 1;
+    background: var(--surface-board-light);
+    border: 2px solid rgba(74, 46, 22, 0.7);
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 2px 2px rgba(255, 248, 220, 0.35), inset 0 -2px 4px rgba(74, 46, 22, 0.3);
     cursor: pointer;
-    transition: all 0.3s ease;
+    /* Not "all": the focus ring and edges must appear instantly. */
+    transition: transform var(--quick) ease, background var(--quick) ease, box-shadow var(--quick) ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3rem;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.cell:hover:not(.occupied) {
-    background: rgba(64, 224, 208, 0.2);
-    transform: scale(1.05);
-    box-shadow: 0 5px 15px rgba(64, 224, 208, 0.3);
+/* Hover and press feedback only while the player can move. */
+@media (hover: hover) {
+    .board-overlay[data-state="ready"] .cell:hover:not(.occupied) {
+        background: linear-gradient(160deg, #E6C793, var(--wood-light));
+        box-shadow: inset 0 0 0 3px var(--teal);
+    }
+}
+
+.board-overlay[data-state="ready"] .cell:active:not(.occupied) {
+    transform: scale(0.97);
+    background: linear-gradient(160deg, var(--wood-300), var(--wood-400));
+    box-shadow: inset 0 0 0 3px var(--teal), inset 0 2px 4px rgba(43, 27, 14, 0.35);
+}
+
+/* The Spirit is thinking: empty squares wait. */
+.board-overlay[data-state="waiting"] .cell:not(.occupied) {
+    cursor: progress;
+}
+
+/* Round over: empty squares fade back so the result reads at a glance. */
+.board-overlay[data-state="over"] .cell {
+    cursor: default;
+}
+
+.board-overlay[data-state="over"] .cell:not(.occupied) {
+    background: rgba(201, 154, 98, 0.45);
+    border-style: dashed;
+    box-shadow: none;
+}
+
+/* Focus: a dark ring outside and a cream edge inside. Neither uses
+   box-shadow, so the winning glow can't hide it. */
+.cell:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 2px;
+    border-color: var(--feather-white);
+    box-shadow: none;
 }
 
 .cell.occupied {
     cursor: not-allowed;
-    animation: placeSymbol 0.5s ease;
 }
 
-@keyframes placeSymbol {
-    0% { transform: scale(0) rotate(0deg); }
-    50% { transform: scale(1.2) rotate(180deg); }
-    100% { transform: scale(1) rotate(360deg); }
+/* The pieces: outlined artwork with a soft shadow, so they read on the wood. */
+.sf-piece {
+    width: 76%;
+    height: 76%;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 2px rgba(43, 27, 14, 0.45));
 }
 
+/* Feedback animations (the feedback service adds the fx- classes; reduced
+   motion turns them all off). A piece placed drifts down and settles like a
+   leaf: a small grow, a slight sway, no spin. A taken square refused: one
+   soft ember pulse of its inner edge, so nothing moves under the finger. */
+.cell.fx-place .sf-piece {
+    animation: leafSettle 0.26s var(--ease-out);
+}
+
+.cell.fx-refuse {
+    animation: refusePulse 0.32s ease-out;
+}
+
+@keyframes leafSettle {
+    0% { transform: translateY(-10%) rotate(-7deg) scale(0.86); opacity: 0.5; }
+    60% { transform: translateY(1%) rotate(2deg) scale(1.02); opacity: 1; }
+    100% { transform: none; opacity: 1; }
+}
+
+@keyframes refusePulse {
+    40% { box-shadow: inset 0 0 0 4px rgba(255, 107, 53, 0.75), inset 0 2px 2px rgba(255, 248, 220, 0.35); }
+}
+
+/* Winning squares: gold, a solid edge (so the line doesn't rely on color
+   alone) and a soft glow that brightens twice, then stays. */
 .cell.winner {
-    animation: winnerGlow 1s ease infinite;
+    background: linear-gradient(160deg, #F6DC8E, #E2B653);
+    border: 3px solid var(--wood-950);
+    box-shadow: 0 0 14px rgba(255, 212, 71, 0.7), inset 0 2px 2px rgba(255, 248, 220, 0.5);
+    animation: winnerGlow 0.9s ease-in-out 2;
+}
+
+.cell.winner:focus-visible {
+    border-color: var(--feather-white);
 }
 
 @keyframes winnerGlow {
-    0%, 100% { 
-        background: rgba(255, 215, 0, 0.3);
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-    }
-    50% { 
-        background: rgba(255, 215, 0, 0.5);
-        box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
-    }
-}
-
-/* Celebration Container */
-.celebration-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    z-index: 100;
-}
-
-.grass-blade {
-    position: absolute;
-    bottom: 0;
-    width: 4px;
-    background: linear-gradient(to top, var(--forest-green), var(--grass-green));
-    border-radius: 2px 2px 0 0;
-    animation: growGrass 2s ease-out forwards;
-    transform-origin: bottom center;
-}
-
-@keyframes growGrass {
-    from { 
-        height: 0;
-        transform: scaleX(0);
-    }
-    to { 
-        height: 60px;
-        transform: scaleX(1) rotate(var(--rotation));
-    }
-}
-
-.flower {
-    position: absolute;
-    width: 30px;
-    height: 30px;
-    animation: bloomFlower 1.5s ease-out forwards;
-    transform: scale(0);
-}
-
-.flower::before {
-    content: '🌸';
-    font-size: 30px;
-    position: absolute;
-    animation: rotateFlower 3s linear infinite;
-}
-
-.flower.yellow::before {
-    content: '🌻';
-}
-
-.flower.red::before {
-    content: '🌺';
-}
-
-.flower.white::before {
-    content: '🌼';
-}
-
-@keyframes bloomFlower {
-    0% { 
-        transform: scale(0) rotate(0deg);
-    }
-    50% {
-        transform: scale(1.2) rotate(180deg);
-    }
-    100% { 
-        transform: scale(1) rotate(360deg);
-    }
-}
-
-@keyframes rotateFlower {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-.butterfly {
-    position: absolute;
-    font-size: 25px;
-    animation: flyButterfly 8s ease-in-out infinite;
-}
-
-@keyframes flyButterfly {
-    0%, 100% {
-        transform: translate(0, 0) rotate(0deg);
-    }
-    25% {
-        transform: translate(50px, -30px) rotate(10deg);
-    }
-    50% {
-        transform: translate(100px, 0) rotate(-10deg);
-    }
-    75% {
-        transform: translate(50px, 30px) rotate(5deg);
-    }
+    50% { box-shadow: 0 0 26px rgba(255, 212, 71, 0.95), inset 0 2px 2px rgba(255, 248, 220, 0.5); }
 }
 
 .game-controls {
     display: flex;
-    gap: 15px;
-    justify-content: center;
     flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+/* On a phone: only Play Again / Rematch, once the game is over (Restart and
+   Change Mode are in the menu). The panel notes and help are for wide
+   screens. */
+.match-screen:not([data-phase="over"]) .game-controls,
+.game-controls .desktop-only,
+.match-notes,
+.match-help {
+    display: none;
+}
+
+/* While the match menu is open the match is paused, animations included. */
+.match-screen.is-paused *,
+.match-screen.is-paused *::before,
+.match-screen.is-paused *::after {
+    animation-play-state: paused !important;
 }
 
 .control-btn {
-    padding: 12px 25px;
-    font-size: 1rem;
+    min-width: 160px;
 }
 
-/* Modal */
+/* Short landscape screens (phones on their side): the board takes the full
+   height on the left; header, guidance and Play Again stack beside it. Empty
+   columns on either side center the pair. */
+@media (orientation: landscape) and (max-height: 540px) {
+    .screen {
+        padding-top: max(12px, env(safe-area-inset-top));
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+
+    /* The board has first claim on the width: its smallest size is as big
+       as it can be while the side column keeps its minimum. */
+    .match-screen {
+        --board-max: min(100vh - 16px, 450px);
+        --side-min: 220px;
+        --board-side: minmax(var(--side-min), 330px);
+        --board-min: max(200px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--side-min) - 16px));
+    }
+
+    @supports (height: 100dvh) {
+        .match-screen {
+            --board-max: min(100dvh - 16px, 450px);
+        }
+    }
+
+    .match-screen.active {
+        grid-template-columns: minmax(0, 1fr) minmax(var(--board-min), var(--board-max)) var(--board-side) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+        grid-template-areas:
+            ". board . ."
+            ". board header ."
+            ". board hint ."
+            ". board controls ."
+            ". board . .";
+        padding-top: max(8px, env(safe-area-inset-top));
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+
+    .match-screen :is(.game-header, .match-hint, .game-controls) {
+        margin-left: 16px;
+    }
+
+    .match-screen .game-header {
+        width: auto;
+        justify-self: stretch;
+    }
+
+    .side-chip {
+        gap: 6px;
+        padding: 6px 6px 3px;
+    }
+
+    .side-chip-glyph,
+    .al-side-piece {
+        width: 28px;
+        height: 28px;
+    }
+
+    .side-chip-glyph {
+        font-size: 16px;
+    }
+
+    /* The side column has the height for one chip per row, so names and
+       counts stay on one line. */
+    .match-screen .side-chips {
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: 12px;
+    }
+}
+
+/* Wide screens (desktop, tablets on their side): the board, as big as the
+   height allows, with a side panel beside it: the header, the hint, the
+   panel notes (last move, the rule behind what is happening), Rules and
+   keys, and the match controls. The pair is centered; the board has first
+   claim on the width. Phones keep the layouts above. */
+@media (min-width: 900px) and (min-height: 541px) {
+    .match-screen {
+        --board-gutter: 24px;
+        --panel-gap: 28px;
+        --panel-min: 280px;
+        --panel-max: 24rem;
+        --board-max: min(100vh - 48px, 640px);
+        --board-min: max(260px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--panel-min) - var(--panel-gap)));
+    }
+
+    .match-screen.al-match-screen {
+        --board-max: min(100vh - 48px, 860px);
+        --board-min: max(304px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--panel-min) - var(--panel-gap)));
+    }
+
+    @supports (height: 100dvh) {
+        .match-screen {
+            --board-max: min(100dvh - 48px, 640px);
+        }
+
+        .match-screen.al-match-screen {
+            --board-max: min(100dvh - 48px, 860px);
+        }
+    }
+
+    .match-screen.active {
+        grid-template-columns: minmax(0, 1fr) minmax(var(--board-min), var(--board-max)) minmax(var(--panel-min), var(--panel-max)) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) auto auto auto auto auto minmax(0, 1fr);
+        grid-template-areas:
+            ". board . ."
+            ". board header ."
+            ". board hint ."
+            ". board notes ."
+            ". board help ."
+            ". board controls ."
+            ". board . .";
+        padding:
+            max(24px, env(safe-area-inset-top))
+            max(var(--board-gutter), env(safe-area-inset-right))
+            max(24px, env(safe-area-inset-bottom))
+            max(var(--board-gutter), env(safe-area-inset-left));
+    }
+
+    .match-screen :is(.game-header, .match-hint, .match-notes, .match-help, .game-controls) {
+        justify-self: stretch;
+        width: auto;
+        max-width: none;
+        margin-left: var(--panel-gap);
+    }
+
+    .match-screen .match-hint {
+        margin-top: 12px;
+        text-align: left;
+    }
+
+    .match-notes {
+        display: block;
+        grid-area: notes;
+        margin-top: 12px;
+        padding: 10px 14px;
+        background: var(--surface-panel-soft);
+        border: var(--border-panel);
+        border-radius: var(--radius-md);
+        font-family: var(--font-body);
+        font-size: 0.95rem;
+        line-height: 1.45;
+        color: var(--text-muted);
+    }
+
+    /* Nothing to say (Shells & Feathers once the round is over): no box. */
+    .match-notes:not(:has(.match-last)):has(.match-note:empty) {
+        display: none;
+    }
+
+    .match-last {
+        color: var(--text);
+    }
+
+    .match-last + .match-note:not(:empty) {
+        margin-top: 8px;
+    }
+
+    .match-note-label {
+        display: block;
+        font-family: var(--font-label);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: var(--tracking-label);
+        text-transform: uppercase;
+        color: var(--sand);
+    }
+
+    .match-help {
+        display: block;
+        grid-area: help;
+        margin-top: 12px;
+        background: var(--surface-panel-soft);
+        border: var(--border-panel);
+        border-radius: var(--radius-md);
+    }
+
+    .match-help summary {
+        display: flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 0 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .match-help summary:focus-visible {
+        outline-offset: -3px;
+        border-radius: var(--radius-md);
+    }
+
+    .match-help ul {
+        margin: 0;
+        padding: 0 14px 12px 30px;
+        font-family: var(--font-body);
+        font-size: 0.93rem;
+        line-height: 1.45;
+        color: var(--text-muted);
+    }
+
+    .match-help li + li {
+        margin-top: 4px;
+    }
+
+    .match-screen:not([data-variant="fog"]) .fog-only {
+        display: none;
+    }
+
+    .match-screen .game-controls,
+    .match-screen:not([data-phase="over"]) .game-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .game-controls .desktop-only {
+        display: inline-flex;
+    }
+
+    .game-controls .over-only {
+        grid-column: 1 / -1;
+    }
+
+    .match-screen:not([data-phase="over"]) .over-only {
+        display: none;
+    }
+
+    .match-screen .control-btn {
+        min-width: 0;
+    }
+
+    /* A narrow side panel: one chip per row, so names and counts stay on
+       one line. */
+    @container match-header (max-width: 300px) {
+        .side-chips {
+            grid-template-columns: minmax(0, 1fr);
+            row-gap: 12px;
+        }
+    }
+}
+
+/* Short wide windows: tighter spacing, so the panel fits beside the board. */
+@media (min-width: 900px) and (min-height: 541px) and (max-height: 700px) {
+    .match-screen.active {
+        padding-top: max(14px, env(safe-area-inset-top));
+        padding-bottom: max(14px, env(safe-area-inset-bottom));
+    }
+
+    .match-screen :is(.match-hint, .match-notes, .match-help) {
+        margin-top: 8px;
+    }
+
+    .match-screen .game-controls,
+    .match-screen:not([data-phase="over"]) .game-controls {
+        margin-top: 10px;
+    }
+
+    .match-notes {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Big screens: everything a little larger, so the panel's text and buttons
+   keep their proportion to the board. */
+@media (min-width: 1600px) and (min-height: 1000px) {
+    html {
+        font-size: 112.5%;
+    }
+}
+
+@media (min-width: 2200px) and (min-height: 1300px) {
+    html {
+        font-size: 125%;
+    }
+}
+
+kbd {
+    padding: 0 5px;
+    background: rgba(255, 248, 220, 0.1);
+    border: 1px solid rgba(245, 222, 179, 0.35);
+    border-radius: 4px;
+    font-family: var(--font-label);
+    font-size: 0.85em;
+    color: var(--text);
+}
+
+/* The match menu's Settings view: the sound and motion controls, compact. */
+.menu-settings {
+    margin: 0 0 var(--space-4);
+    text-align: left;
+}
+
+.menu-settings .option-group {
+    margin-top: var(--space-3);
+}
+
+/* Browsers without container queries (before Safari 16, Chrome 105): the
+   board's size is worked out from the viewport instead. */
+@supports not (container-type: size) {
+    .board-well > * {
+        --board-size: min(var(--board-max), max(var(--board-min), 100vh - 300px));
+    }
+
+    @media (orientation: landscape) and (max-height: 540px) {
+        .board-well > * {
+            --board-size: var(--board-max);
+        }
+    }
+}
+
+/* Result panel, the same in both games: the winning piece in a wooden
+   medallion (both pieces for a draw), the result, a summary line, then the
+   actions. A win gets one soft gold glow on the medallion; nothing loops. */
 .modal {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    inset: 0;
     z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.3s ease;
+    padding: 16px;
+    overflow-y: auto;
+    background: rgba(30, 18, 8, 0.72);
+    animation: fadeIn var(--gentle) var(--ease-out);
 }
 
 .modal.active {
     display: flex;
 }
 
+/* margin: auto centers the dialog, and lets it scroll from the top when it is
+   taller than a short screen. */
 .modal-content {
-    background: linear-gradient(145deg, var(--primary-brown), var(--secondary-brown));
-    border-radius: 25px;
-    padding: 40px;
+    width: 100%;
+    max-width: 440px;
+    margin: auto;
+    padding: var(--space-6) var(--space-5) var(--space-4);
+    background: var(--grain), var(--surface-raised);
+    border: var(--border-panel);
+    border-radius: calc(var(--radius-lg) + 4px);
+    box-shadow: var(--shadow-lg), inset 0 0 0 1px rgba(245, 222, 179, 0.18);
     text-align: center;
-    border: 3px solid var(--dark-brown);
-    box-shadow: 0 10px 40px var(--shadow);
-    max-width: 90%;
-    animation: modalSlide 0.5s ease;
+    animation: modalRise var(--gentle) var(--ease-out);
 }
 
-@keyframes modalSlide {
-    from { transform: translateY(-50px); opacity: 0; }
+@keyframes modalRise {
+    from { transform: translateY(12px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
 
-#modal-title {
-    font-family: 'Uncial Antiqua', cursive;
-    font-size: 2.5rem;
-    color: var(--turquoise);
-    margin-bottom: 15px;
+.modal-emblem {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.modal-emblem:empty {
+    display: none;
+}
+
+.emblem-piece {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    padding: 4px;
+    background: var(--surface-board-light);
+    border: 3px solid var(--wood-950);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(245, 222, 179, 0.35);
+}
+
+.emblem-art {
+    width: 86%;
+    height: 86%;
+    filter: drop-shadow(0 1px 2px rgba(43, 27, 14, 0.45));
+}
+
+.modal:is([data-outcome="win"], [data-outcome="player1"], [data-outcome="player2"], [data-outcome="acorn"], [data-outcome="leaf"]) .emblem-piece {
+    box-shadow: 0 0 0 3px var(--gold), 0 0 16px rgba(255, 212, 71, 0.45);
+    animation: emblemGlow 1.2s ease-out 1;
+}
+
+@keyframes emblemGlow {
+    from { box-shadow: 0 0 0 3px var(--gold), 0 0 0 rgba(255, 212, 71, 0); }
+    40% { box-shadow: 0 0 0 3px var(--gold), 0 0 28px rgba(255, 212, 71, 0.8); }
+}
+
+.modal-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 7vw, 2.3rem);
+    line-height: 1.15;
+    color: var(--feather-white);
+    margin-bottom: 8px;
     text-shadow: 2px 2px 4px var(--shadow);
 }
 
-#modal-message {
-    font-size: 1.2rem;
+.modal-message {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.modal-summary {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 4px 14px;
+    background: rgba(43, 27, 14, 0.6);
+    border: 1px solid rgba(245, 222, 179, 0.3);
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--sand);
+}
+
+.modal-summary:empty {
+    display: none;
+}
+
+/* Achievements a result unlocked. */
+.modal-achievements {
+    margin: -8px 0 18px;
+    font-weight: 600;
+    color: var(--gold-soft);
+}
+
+.modal-achievements:empty {
+    display: none;
+}
+
+/* Buttons and links styled as buttons stay hidden when marked hidden
+   (Switch Sides with two players, Resume with nothing to resume). */
+.btn[hidden] {
+    display: none;
+}
+
+/* A set's progress or result in the result dialog. */
+.modal-set {
+    margin: -6px 0 14px;
+    font-family: var(--font-label);
+    font-weight: bold;
+    color: var(--sand);
+}
+
+.modal-set:empty {
+    display: none;
+}
+
+/* A set's progress under the match line. */
+.match-set {
+    display: block;
+    font-family: var(--font-label);
+    font-weight: bold;
+    color: var(--gold-300);
+}
+
+.match-set:empty {
+    display: none;
+}
+
+/* Deleting saved data: what goes, what stays. */
+.confirm-content {
+    max-width: 480px;
+    text-align: left;
+}
+
+.confirm-title {
+    margin-bottom: 12px;
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 5.5vw, 1.8rem);
+    line-height: 1.2;
+    text-align: center;
+}
+
+.confirm-body {
+    font-family: var(--font-body);
+    line-height: 1.45;
+}
+
+.confirm-lead {
+    margin: 10px 0 4px;
+    font-family: var(--font-label);
+    font-weight: 600;
+    color: var(--sand);
+}
+
+.confirm-list {
+    padding-left: 1.2em;
+}
+
+.confirm-list li + li {
+    margin-top: 4px;
+}
+
+.confirm-deletes li::marker {
+    color: var(--sunset-orange);
+}
+
+.confirm-warning {
+    margin: 12px 0 18px;
+    font-weight: bold;
+    color: #FFD9C9;
+}
+
+.confirm-buttons .btn {
+    flex: 1 1 160px;
+}
+
+.confirm-buttons .btn-danger {
+    background: #8E2F12;
+    border-color: var(--sunset-orange);
     color: var(--feather-white);
-    margin-bottom: 30px;
+}
+
+@media (hover: hover) {
+    .confirm-buttons .btn-danger:where(:not(:disabled)):hover {
+        background: #A3381A;
+    }
 }
 
 .modal-buttons {
     display: flex;
-    gap: 20px;
-    justify-content: center;
     flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
 }
 
-.modal-btn {
-    min-width: 120px;
-    padding: 12px 20px;
+.modal-buttons .btn {
+    flex: 1 1 140px;
+}
+
+.modal-buttons .btn-primary {
+    flex-basis: 100%;
+}
+
+.modal-buttons .btn:not(.btn-primary) {
+    background: rgba(255, 248, 220, 0.06);
+    border-color: rgba(245, 222, 179, 0.7);
+    box-shadow: none;
+}
+
+.modal-buttons .btn:not(.btn-primary):active {
+    background: rgba(43, 27, 14, 0.55);
+}
+
+@media (hover: hover) {
+    .modal-buttons .btn:not(.btn-primary):hover {
+        background: rgba(43, 27, 14, 0.4);
+        border-color: var(--feather-white);
+    }
+}
+
+.view-board-btn {
+    min-height: 44px;
+    margin-top: 10px;
+    padding: 6px 16px;
+    background: none;
+    border: 1.5px solid transparent;
+    border-radius: 999px;
+    color: var(--feather-white);
+    font-family: var(--font-label);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+}
+
+.view-board-btn:active {
+    background: rgba(43, 27, 14, 0.55);
+}
+
+@media (hover: hover) {
+    .view-board-btn:hover {
+        border-color: rgba(245, 222, 179, 0.6);
+    }
+}
+
+/* Short landscape screens: a wider, flatter dialog that fits without
+   scrolling; the medallion sits beside the title. */
+@media (orientation: landscape) and (max-height: 540px) {
+    .modal-content {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: 16px;
+        align-items: center;
+        max-width: 600px;
+        padding: 14px 20px;
+    }
+
+    .modal-content > :not(.modal-emblem) {
+        grid-column: 1 / -1;
+    }
+
+    .modal-content > .modal-title {
+        grid-column: 2;
+        margin-bottom: 0;
+        text-align: left;
+    }
+
+    .modal-emblem {
+        margin-bottom: 0;
+    }
+
+    .emblem-piece {
+        width: 48px;
+        height: 48px;
+        font-size: 26px;
+    }
+
+    .modal-title {
+        font-size: 1.8rem;
+    }
+
+    .modal-message {
+        margin: 6px 0 6px;
+    }
+
+    .modal-summary,
+    .view-board-btn {
+        justify-self: center;
+    }
+
+    .modal-summary {
+        margin-bottom: 12px;
+    }
+
+    .modal-buttons .btn {
+        flex: 1 1 auto;
+        padding: 12px 18px;
+    }
+
+    .view-board-btn {
+        margin-top: 4px;
+    }
+}
+
+/* The match menu: the result panel's look, without the medallion. */
+.menu-content {
+    padding-top: var(--space-5);
+}
+
+.menu-info {
+    margin-bottom: var(--space-4);
+}
+
+.menu-note {
+    margin-top: var(--space-4);
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    line-height: 1.4;
+    color: var(--text-muted);
+}
+
+.menu-note[hidden] {
+    display: none;
+}
+
+/* Acorns & Leaves match: the shared match layout (above) with guidance
+   under the board. The smallest board keeps squares at 36px. */
+.al-match-screen {
+    --match-gap: 8px;
+    --board-min: min(100vw - 2 * var(--board-gutter), 304px);
+    --board-max: min(100vw - 2 * var(--board-gutter), 578px);
+}
+
+.al-match-screen .game-header {
+    max-width: 580px;
+}
+
+/* The two sides use the shared chips (.side-chip, above). */
+.al-sides {
+    margin-top: 0;
+}
+
+.al-side-piece {
+    flex: none;
+    width: 34px;
+    height: 34px;
+}
+
+.al-side-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+}
+
+.al-side-name {
+    overflow: hidden;
+    font-size: 0.92rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.al-side-stat {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.al-side-count {
+    font-weight: bold;
+    color: var(--feather-white);
+}
+
+.al-turn[data-side="acorn"] { color: var(--sand); }
+.al-turn[data-side="leaf"] { color: #BDE8A8; }
+.al-turn[data-side="draw"] { color: var(--turquoise); }
+
+/* The frame takes the size its well gives it (the shared match layout);
+   the board is what is left inside the frame (6px + 3px a side). */
+.al-board-frame {
+    --al-frame: 9px;
+    --al-board: calc(var(--board-size) - 2 * var(--al-frame));
+    width: var(--board-size);
+    height: var(--board-size);
+    padding: 6px;
+    background: var(--grain), var(--surface-board-frame);
+    border: var(--border-board);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-board), inset 0 1px 0 rgba(255, 236, 200, 0.25);
+}
+
+.al-board {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 6px;
+    /* No double-tap zoom on the board; scrolling and pinch zoom still work. */
+    touch-action: manipulation;
+}
+
+.al-square {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 0;
+}
+
+.al-square.light {
+    background: #E8D3A9;
+}
+
+.al-square.dark {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    padding: 0;
+    background: #6B4A2B;
+    border: 0;
+    border-radius: 0;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.al-piece {
+    position: relative;
+    z-index: 1;
+    width: 86%;
+    height: 86%;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45));
+    transition: transform var(--quick) ease, opacity var(--quick) ease;
+}
+
+/* Coordinates: ranks down the left edge, files along the bottom. */
+.al-rank,
+.al-file {
+    position: absolute;
+    z-index: 2;
+    font-family: var(--font-label);
+    font-size: max(9px, calc(var(--al-board) / 8 * 0.22));
+    font-weight: 600;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* Light squares hold the board's rounded corners (a8 and h1), so their
+   labels keep clear of the curve. */
+.al-rank { top: 2px; left: 3px; }
+.al-file { right: 3px; bottom: 2px; }
+.al-square.dark .al-rank { top: 1px; left: 1px; }
+.al-square.dark .al-file { right: 1px; bottom: 1px; }
+.al-square.light :is(.al-rank, .al-file) { color: #6B4A2B; }
+
+/* On dark squares a label can overlap a piece or a ring, so it sits on its
+   own small dark backing (light on the gold and misty squares). */
+.al-square.dark :is(.al-rank, .al-file) {
+    padding: 1px 2px;
+    background: rgba(43, 27, 14, 0.7);
+    border-radius: 3px;
+    color: var(--feather-white);
+}
+
+.al-square.dark:is(.is-selected, .is-fog) :is(.al-rank, .al-file) {
+    background: rgba(255, 248, 220, 0.7);
+    color: var(--ink);
+}
+
+/* The last move's route, and the route so far of an unfinished chain. */
+.al-square.dark.is-last { background: #8E6B3D; }
+.al-square.dark.is-trail { background: #2F6F66; }
+
+/* The piece picked up: gold square, piece lifted. */
+.al-square.dark.is-selected { background: #C99A2E; }
+
+.al-square.is-selected .al-piece {
+    transform: translateY(-6%) scale(1.06);
+    filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.55));
+}
+
+/* The picked-up piece also gets a round gold ring with a dark edge, in
+   place of any orange "must capture" ring, so the pick reads at a glance. It
+   differs from the keyboard focus (a square cream frame, below) in shape
+   and color, and both show when the focused square holds the pick. */
+.al-square.dark.is-selected::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    width: 96%;
+    height: 96%;
+    border: 4px solid #FFE08A;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--ink), 0 0 12px rgba(255, 212, 71, 0.85);
+}
+
+/* Where it can go: a dot for a move, a ring for a jump. */
+.al-square.is-destination::before {
+    content: '';
+    position: absolute;
+    width: 30%;
+    height: 30%;
+    background: var(--turquoise);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(255, 248, 220, 0.75);
+}
+
+.al-square.is-jump-target::before {
+    width: 64%;
+    height: 64%;
+    background: rgba(64, 224, 208, 0.18);
+    border: 4px solid var(--turquoise);
+    box-shadow: 0 0 0 2px var(--ink), inset 0 0 0 2px var(--ink);
+}
+
+/* Pieces that must capture: a steady orange ring with a dark edge. */
+.al-square.must-jump::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    width: 96%;
+    height: 96%;
+    border: 4px solid var(--sunset-orange);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px var(--ink), 0 0 8px rgba(255, 107, 53, 0.7);
+}
+
+/* A piece being jumped in an unfinished chain: faded, with a cross. A
+   faint cross marks squares emptied by the last move's captures. */
+.al-square.is-jumped .al-piece {
+    opacity: 0.5;
+}
+
+.al-square.is-jumped::after,
+.al-square.was-captured::after {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    width: 62%;
+    height: 62%;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 4L16 16M16 4L4 16' stroke='%232B1B0E' stroke-width='5.5' stroke-linecap='round'/%3E%3Cpath d='M4 4L16 16M16 4L4 16' stroke='%23FF6B35' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.al-square.was-captured::after {
+    width: 34%;
+    height: 34%;
+    opacity: 0.6;
+}
+
+/* Feedback animations (fx- classes from the feedback service; none under
+   reduced motion): a moved piece settles like a leaf; a capture settles a
+   little deeper; a crowned piece swells once with a gold glow; a refused
+   pick pulses the square's inner edge (nothing moves under the finger); a
+   hidden piece found by a blocked try gives a small shake. */
+.al-square.fx-land .al-piece {
+    animation: leafSettle 0.26s var(--ease-out);
+}
+
+.al-square.fx-capture .al-piece {
+    animation: leafSettle 0.32s var(--ease-out);
+}
+
+.al-square.fx-crown .al-piece {
+    animation: crownSwell 0.45s var(--ease-out);
+}
+
+.al-square.dark.fx-refuse {
+    animation: refusePulse 0.32s ease-out;
+}
+
+@keyframes crownSwell {
+    40% { transform: scale(1.14); filter: drop-shadow(0 0 8px rgba(255, 212, 71, 0.95)); }
+}
+
+@media (hover: hover) {
+    .al-board[data-state="ready"] .al-square.can-move:not(.is-selected):hover .al-piece {
+        transform: translateY(-4%) scale(1.04);
+    }
+
+    .al-board[data-state="ready"] .al-square.is-destination:hover {
+        background: #2F6F66;
+    }
+}
+
+.al-board[data-state="waiting"] .al-square.dark {
+    cursor: progress;
+}
+
+.al-board[data-state="over"] .al-square.dark {
+    cursor: default;
+}
+
+/* Focus: a cream edge with a dark band inside, drawn above the neighbours. */
+.al-square.dark:focus-visible {
+    z-index: 3;
+    outline: 3px solid var(--feather-white);
+    outline-offset: -3px;
+    box-shadow: inset 0 0 0 6px var(--ink);
+}
+
+/* Fog of War: unseen dark squares are misty (a hatched veil, so they differ
+   from plain squares by pattern as well as shade); their coordinates stay, in
+   dark ink. */
+.al-square.dark.is-fog {
+    background-image:
+        repeating-linear-gradient(135deg, rgba(255, 248, 220, 0.22) 0 3px, transparent 3px 8px),
+        linear-gradient(rgba(200, 194, 182, 0.72), rgba(170, 164, 152, 0.72));
+}
+
+/* A hidden piece found by a blocked jump: an orange frame, and a short
+   shake when it is found (fx-found, from the feedback service). */
+.al-square.is-found {
+    box-shadow: inset 0 0 0 3px var(--sunset-orange);
+}
+
+.al-square.fx-found .al-piece {
+    animation: alBump 0.3s ease;
+}
+
+@keyframes alBump {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4%); }
+    75% { transform: translateX(4%); }
+}
+
+/* Two players in Fog: the handoff screen covers everything between turns. */
+.handoff {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    display: flex;
+    padding: 16px;
+    overflow-y: auto;
+    background: linear-gradient(160deg, var(--forest-950), var(--wood-900) 55%, var(--forest-800));
+}
+
+.handoff[hidden] {
+    display: none;
+}
+
+.handoff-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 440px;
+    margin: auto;
+    text-align: center;
+}
+
+.handoff-icon {
+    color: var(--text-muted);
+}
+
+.handoff-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 7vw, 2.5rem);
+    color: var(--feather-white);
+}
+
+.handoff-text {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.handoff-btn {
+    width: 100%;
+}
+
+/* The hint under the board, both games ("Choose a piece to move."). */
+.match-hint {
+    grid-area: hint;
+    margin-top: var(--match-gap);
+    width: 100%;
+    max-width: 580px;
+    min-height: 2.3em;
+    padding: 6px var(--space-3);
+    background: rgba(22, 45, 31, 0.9);
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 0.98rem;
+    line-height: 1.35;
+    text-align: center;
+}
+
+.match-hint[data-tone="feedback"] {
+    border-color: var(--sunset-orange);
+    border-style: dashed;
+}
+
+/* Short landscape screens: the shared match layout puts the board on the
+   left; here the board's largest size follows the height alone. */
+@media (orientation: landscape) and (max-height: 540px) {
+    .al-match-screen {
+        --board-max: min(100vh - 16px, 578px);
+        --side-min: 224px;
+        --board-side: minmax(var(--side-min), 340px);
+        --board-min: max(200px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--side-min) - 16px));
+    }
+
+    @supports (height: 100dvh) {
+        .al-match-screen {
+            --board-max: min(100dvh - 16px, 578px);
+        }
+    }
+}
+
+/* The lowest landscape screens: the slimmer frame too, so squares stay 36px. */
+@media (orientation: landscape) and (max-height: 360px) {
+    .al-board-frame {
+        --al-frame: 5px;
+        padding: 3px;
+        border-width: 2px;
+    }
+}
+
+/* Narrow phones: a slimmer frame, smaller labels. */
+@media (max-width: 400px) {
+    .al-match-screen {
+        --board-gutter: 6px;
+    }
+
+    .al-board-frame {
+        --al-frame: 5px;
+        padding: 3px;
+        border-width: 2px;
+    }
+
+    .al-side-piece {
+        width: 28px;
+        height: 28px;
+    }
+
+    .al-side-name {
+        font-size: 0.85rem;
+    }
+
+    .al-match-screen .match-info {
+        font-size: 0.8rem;
+    }
+
+    .al-match-screen .turn-indicator {
+        font-size: 1.05rem;
+    }
+
+    .match-hint {
+        padding: 4px 10px;
+        font-size: 0.9rem;
+    }
+}
+
+/* How to Play */
+.prose {
+    font-family: var(--font-body);
+    font-size: 1.02rem;
+    line-height: 1.6;
+}
+
+.prose h3 {
+    margin: 18px 0 6px;
+    font-family: var(--font-label);
+    font-size: 1.1rem;
+    color: var(--sand);
+}
+
+.prose h3:first-child {
+    margin-top: 0;
+}
+
+.prose ul {
+    padding-left: 1.2em;
+}
+
+.prose li + li {
+    margin-top: 6px;
+}
+
+.checkers-figure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0;
+}
+
+.checkers-figure figcaption {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* Acorns & Leaves pieces in text: setup options, Your Path, the rules. */
+.icon-piece {
+    display: inline-block;
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: middle;
+}
+
+.eyebrow .icon-piece {
+    width: 1.3em;
+    height: 1.3em;
+}
+
+.piece-legend {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+    margin: 4px 0 8px;
+    padding: 0 !important;
+    list-style: none;
+}
+
+.piece-legend li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 !important;
+}
+
+.legend-piece {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 3px;
+    background: #6B4A2B;
+    border-radius: 6px;
+}
+
+/* Settings */
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 56px;
+    cursor: pointer;
+}
+
+.setting-label {
+    font-size: 1.15rem;
+}
+
+.switch {
+    position: relative;
+    flex: none;
+    width: 60px;
+    height: 32px;
+}
+
+.switch input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.toggle-switch {
+    position: absolute;
+    inset: 0;
+    background: var(--wood-700);
+    border: 2px solid rgba(245, 222, 179, 0.5);
+    border-radius: 16px;
+    transition: background 0.3s;
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 24px;
+    height: 24px;
+    background: var(--feather-white);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px var(--shadow);
+    transition: transform 0.3s;
+}
+
+.switch input:checked + .toggle-switch {
+    background: var(--forest-green);
+}
+
+.switch input:checked + .toggle-switch::after {
+    transform: translateX(28px);
+}
+
+/* Not available here (Haptics on a browser that can't vibrate): faded, and
+   the hint under it says why. */
+.switch input:disabled + .toggle-switch {
+    opacity: var(--state-disabled-opacity);
+    cursor: not-allowed;
+}
+
+.setting-row:has(input:disabled) {
+    cursor: not-allowed;
+}
+
+.switch input:focus-visible + .toggle-switch {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 7px var(--focus-halo);
+}
+
+/* Your Path */
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+@media (min-width: 560px) {
+    .stats-container {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.stat-card {
+    padding: var(--space-3) var(--space-2);
+    background: linear-gradient(160deg, rgba(42, 77, 52, 0.6), rgba(43, 27, 14, 0.6));
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px var(--shadow);
+}
+
+.stat-label {
+    margin-top: 4px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.path-panel h4 {
+    margin: 20px 0 8px;
+    font-size: 1.05rem;
+    color: var(--sand);
+}
+
+.path-panel > p {
+    font-family: var(--font-body);
+}
+
+.record-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-body);
+}
+
+.record-table th,
+.record-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid rgba(245, 222, 179, 0.25);
+    text-align: center;
+}
+
+.record-table thead th {
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.record-table tbody th {
+    font-family: var(--font-label);
+    text-align: left;
+}
+
+.danger-wide {
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Your Path: each game's achievement count, and the way to the journal. */
+.path-journal-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 14px;
+}
+
+.journal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    font-family: var(--font-label);
+    font-weight: bold;
+    color: var(--sand);
+}
+
+.journal-link .icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Achievement journal: four tabs (two by two on a phone), then one list per
+   part of each book: one column on a phone, two where there is room. */
+.journal-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto var(--space-3);
+}
+
+@media (min-width: 620px) {
+    .journal-tabs {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* Narrow phones: the names alone keep the tabs short. */
+@media (max-width: 419px) {
+    .journal-tab .icon,
+    .journal-tab .icon-piece {
+        display: none;
+    }
+}
+
+.journal-tab {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 2px 6px;
+    min-height: 48px;
+    padding: 6px 10px;
+    background: rgba(43, 27, 14, 0.72);
+    border: 2px solid rgba(245, 222, 179, 0.35);
+    border-radius: 12px;
+    font-family: var(--font-label);
+    font-size: 0.9rem;
+    font-weight: bold;
+    line-height: 1.2;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.journal-tab .icon,
+.journal-tab .icon-piece {
+    flex: none;
+    width: 20px;
+    height: 20px;
+}
+
+.journal-tab .tab-count {
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: normal;
+    color: var(--text-muted);
+}
+
+.journal-tab[aria-selected="true"] {
+    background: linear-gradient(145deg, var(--wood-500), var(--wood-600));
+    border-color: var(--gold-300);
+}
+
+@media (hover: hover) {
+    .journal-tab[aria-selected="false"]:hover {
+        border-color: var(--sand);
+    }
+}
+
+.journal-panel {
+    max-width: 760px;
+    padding: 14px;
+}
+
+@media (min-width: 600px) {
+    .journal-panel {
+        padding: 20px 24px;
+    }
+}
+
+.journal-book {
+    margin: 22px 0 2px;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+}
+
+.journal-book-count {
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.journal-section {
+    margin: 14px 0 8px;
+    font-family: var(--font-label);
+    font-size: 0.95rem;
+    color: var(--sand);
+}
+
+.journal-panel > :first-child {
+    margin-top: 0;
+}
+
+.journal-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    list-style: none;
+}
+
+@media (min-width: 720px) {
+    .journal-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.journal-entry {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(43, 27, 14, 0.45);
+    border: 1.5px solid rgba(245, 222, 179, 0.28);
+    border-radius: 12px;
+    font-family: var(--font-body);
+}
+
+.medal {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.medal-icon {
+    width: 24px;
+    height: 24px;
+}
+
+@media (min-width: 600px) {
+    .journal-entry {
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 12px;
+        padding: 10px 12px;
+    }
+
+    .medal {
+        width: 44px;
+        height: 44px;
+    }
+
+    .medal-icon {
+        width: 26px;
+        height: 26px;
+    }
+}
+
+.entry-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* The title, and the state beside it (under it when there is no room). */
+.entry-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 10px;
+}
+
+.entry-title {
+    font-family: var(--font-label);
     font-size: 1rem;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .screen {
-        padding: 15px;
-    }
-    
-    .game-title {
-        font-size: 2.5rem;
-    }
-    
-    .subtitle {
-        font-size: 1rem;
-    }
-    
-    .menu-btn, .back-btn {
-        padding: 12px 25px;
-        font-size: 1rem;
-    }
-    
-    .settings-container, .stats-container {
-        padding: 20px;
-    }
-    
-    .game-board {
-        width: 85vw;
-        height: 85vw;
-    }
-    
-    .cell {
-        font-size: 2.5rem;
-    }
-    
-    .modal-content {
-        padding: 30px 20px;
-    }
-    
-    #modal-title {
-        font-size: 2rem;
-    }
-    
-    .mode-btn {
-        padding: 20px;
-    }
-    
-    .mode-title {
-        font-size: 1.3rem;
-    }
-    
-    .mode-icon {
-        font-size: 2rem;
+.entry-desc {
+    font-size: 0.9rem;
+    line-height: 1.32;
+}
+
+.entry-note {
+    font-size: 0.84rem;
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+.entry-state {
+    margin-left: auto;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.journal-entry.is-unlocked {
+    background: linear-gradient(160deg, rgba(233, 181, 38, 0.16), rgba(43, 27, 14, 0.5));
+    border-color: rgba(255, 212, 71, 0.55);
+}
+
+.journal-entry.is-unlocked .medal {
+    background: radial-gradient(circle at 35% 30%, var(--gold-300), var(--gold-500) 70%);
+    box-shadow: inset 0 -2px 0 rgba(43, 27, 14, 0.25), 0 0 0 2px rgba(255, 212, 71, 0.3);
+    color: var(--ink);
+}
+
+.journal-entry.is-unlocked .entry-state {
+    color: var(--gold-300);
+}
+
+.journal-entry.is-locked .medal {
+    border: 2px dashed rgba(245, 222, 179, 0.55);
+    color: var(--text-muted);
+}
+
+.journal-entry.is-locked .medal-icon {
+    opacity: 0.75;
+}
+
+.entry-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+    font-size: 0.84rem;
+    color: var(--text-muted);
+}
+
+.progress-bar {
+    flex: 1;
+    max-width: 160px;
+    height: 6px;
+    overflow: hidden;
+    background: rgba(245, 222, 179, 0.2);
+    border-radius: 3px;
+}
+
+.progress-fill {
+    display: block;
+    height: 100%;
+    background: var(--moss-200);
+    border-radius: 3px;
+}
+
+.entry-parts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    margin-top: 2px;
+}
+
+.entry-part {
+    padding: 2px 8px;
+    border: 1px solid rgba(245, 222, 179, 0.35);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.entry-part.is-done {
+    border-color: var(--moss-200);
+    color: var(--moss-200);
+}
+
+.journal-hint {
+    max-width: 760px;
+    margin: var(--space-3) auto 0;
+}
+
+.path-panel h5 {
+    margin: 10px 0 4px;
+    font-family: var(--font-label);
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+/* Classic and Fog of War tables side by side when there is room. */
+.record-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px 18px;
+}
+
+@media (min-width: 600px) {
+    .record-pair {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
+/* Volume sliders: a full-width track with a 44px-tall touch area. */
+.volume-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "label value" "slider slider";
+    align-items: center;
+    column-gap: 12px;
+    margin: -4px 0 8px;
+}
+
+.volume-label {
+    grid-area: label;
+    font-family: var(--font-body);
+    color: var(--text-muted);
+}
+
+.volume-value {
+    grid-area: value;
+    min-width: 3.5em;
+    font-weight: 600;
+    text-align: right;
+}
+
+.volume-slider {
+    grid-area: slider;
+    width: 100%;
+    height: 44px;
+    margin: 0;
+    accent-color: var(--turquoise);
+    cursor: pointer;
+    touch-action: pan-y;
+}
+
+.volume-slider:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 7px var(--focus-halo);
+    border-radius: 8px;
+}
+
+.settings-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.settings-links .btn {
+    flex: 1 1 200px;
+}
+
+/* Storage is blocked or full: progress isn't being kept. */
+.storage-note {
+    width: 100%;
+    max-width: 560px;
+    padding: 10px 14px;
+    background: rgba(43, 27, 14, 0.9);
+    border: 2px dashed var(--sunset-orange);
+    border-radius: 14px;
+    font-family: var(--font-body);
+    line-height: 1.4;
+}
+
+/* Narrow phones */
 @media (max-width: 480px) {
-    .game-title {
-        font-size: 2rem;
+    .panel,
+    .game-card {
+        padding: 18px 16px;
     }
-    
-    .screen-header h2 {
-        font-size: 1.8rem;
-    }
-    
-    .diff-btn, .symbol-btn {
-        min-width: 70px;
-        font-size: 0.9rem;
-        padding: 8px 10px;
-    }
-    
-    .game-header {
-        padding: 12px 20px;
-    }
-    
+
     .score-display {
         font-size: 1rem;
     }
-    
+
     .turn-indicator {
         font-size: 1.1rem;
     }
-    
-    .cell {
-        font-size: 2rem;
+}
+
+@media (max-width: 360px) {
+    .card-top {
+        gap: 12px;
     }
-    
+
+    /* Keep Restart / Change Mode on one row so the whole match fits. */
+    .game-controls {
+        flex-wrap: nowrap;
+        width: 100%;
+    }
+
     .control-btn {
-        padding: 10px 20px;
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 10px 10px;
         font-size: 0.9rem;
     }
-    
-    .stats-scroll-container {
-        padding: 10px;
+
+    .mini-board {
+        width: 72px;
+        height: 72px;
     }
-    
-    .stat-card {
-        padding: 15px;
+
+    .checkers-mini:not(.checkers-mini-large) {
+        width: 80px;
+        height: 80px;
     }
-    
-    .stat-icon {
-        font-size: 1.5rem;
-    }
-    
-    .stat-value {
-        font-size: 1.5rem;
+
+    .segment {
+        min-width: 76px;
     }
 }
 
-/* Loading Animation */
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+/* Less motion: no fades, slides, glows or eased state changes. Every state
+   still shows at once (no animation keeps its end state; the end state is
+   the element's own style). "none" rather than a tiny duration, which would
+   give every property a one-frame transition.
+   Settings > Motion sets <html data-motion>: "system" follows the device's
+   prefers-reduced-motion, "reduce" always applies this, "full" never does. */
+@media (prefers-reduced-motion: reduce) {
+    :root:not([data-motion="full"]) *,
+    :root:not([data-motion="full"]) *::before,
+    :root:not([data-motion="full"]) *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
 }
 
-/* Touch feedback for mobile */
-@media (hover: none) {
-    .menu-btn:active, .back-btn:active, 
-    .control-btn:active, .modal-btn:active,
-    .diff-btn:active, .symbol-btn:active,
-    .mode-btn:active {
-        transform: scale(0.95);
-    }
-    
-    .cell:active:not(.occupied) {
-        transform: scale(0.95);
-        background: rgba(64, 224, 208, 0.3);
-    }
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+}
+
+/* Setup screens: an unfinished match, and the tutorial offered once. */
+.resume-panel,
+.tutorial-card {
+    max-width: 560px;
+    margin-bottom: var(--space-3);
+    padding: var(--space-4);
+    font-family: var(--font-body);
+    text-align: left;
+}
+
+.resume-panel {
+    border-color: var(--gold-300);
+}
+
+.resume-title {
+    margin-bottom: 6px;
+    font-family: var(--font-label);
+    font-size: 1.05rem;
+    color: var(--sand);
+}
+
+.resume-text {
+    margin-bottom: 10px;
+}
+
+.resume-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.resume-actions .btn {
+    flex: 1 1 140px;
+}
+
+.setup-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 22px;
+}
+
+/* Tutorial: a practice board, square, as wide as the panel allows. */
+.tutorial-panel {
+    max-width: 560px;
+    font-family: var(--font-body);
+}
+
+.tutorial-lesson {
+    margin-bottom: 12px;
+    font-size: 1.02rem;
+    line-height: 1.4;
+}
+
+.practice-board {
+    --size: 8;
+    display: grid;
+    grid-template-columns: repeat(var(--size), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--size), minmax(0, 1fr));
+    width: min(100%, 420px, 58dvh);
+    margin: 0 auto;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 6px solid var(--wood-700);
+    border-radius: 10px;
+    box-shadow: 0 6px 16px var(--shadow);
+}
+
+.practice-board[data-game="shellsFeathers"] {
+    gap: 6px;
+    width: min(100%, 300px);
+    padding: 6px;
+    background: var(--wood-800);
+}
+
+.practice-board button {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+.practice-cell {
+    background: linear-gradient(160deg, var(--wood-200), var(--wood-300));
+    border-radius: 8px;
+}
+
+.practice-square.light {
+    background: var(--wood-100);
+    cursor: default;
+}
+
+.practice-square.dark {
+    background: var(--wood-600);
+}
+
+.practice-piece {
+    width: 82%;
+    height: 82%;
+    pointer-events: none;
+}
+
+.practice-square.is-fog {
+    background: repeating-linear-gradient(135deg, #5d6b62 0 6px, #66756b 6px 12px);
+}
+
+.practice-square.can-move::after,
+.practice-board .is-target::after {
+    content: "";
+    position: absolute;
+    inset: 12%;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.practice-square.can-move::after {
+    border: 3px solid var(--turquoise);
+}
+
+.practice-board .is-target::after {
+    background: rgba(255, 212, 71, 0.4);
+    border: 3px solid var(--gold-300);
+}
+
+.practice-square.is-selected {
+    background: var(--gold-500);
+}
+
+.tutorial-hint {
+    min-height: 2.8em;
+    margin: 12px 0 8px;
+    font-weight: 600;
+    color: var(--gold-300);
+}
+
+.tutorial-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.tutorial-actions .btn {
+    flex: 0 1 180px;
+}
+
+/* Your Path: finished sets, one per line. */
+.set-records {
+    display: grid;
+    gap: 4px;
+    padding-left: 1.2em;
+    font-family: var(--font-body);
 }
