@@ -6,6 +6,10 @@ Two peaceful board games from the forest, played in the browser: **Shells & Feat
 
 **Play:** https://officialinspire.github.io/SHELLS-FEATHERS/
 
+**Install:** On a compatible mobile or desktop browser, use its Install/Add to Home Screen action. The app uses an acorn icon and a standalone window. Its game code, boards, and short effects are available offline after the service worker finishes installing; the long music track and INSPIRE intro video use the network. The game remains playable if those optional media files are unavailable.
+
+**Share preview:** The social card is `assets/spirit-of-the-woods-social.jpg`. Open Graph and Twitter metadata in `index.html` use its absolute GitHub Pages URL so link previews resolve the image.
+
 The link serves whatever is on the `main` branch. Changes on a feature branch appear there only after they are merged.
 
 It works on phones, tablets and desktop, by touch, mouse or keyboard. There is nothing to install and no account. Progress is kept in your browser.
@@ -127,6 +131,7 @@ GitHub Pages caches every file for ten minutes and can't be told otherwise. The 
 | Path | What |
 |---|---|
 | `index.html`, `styles.css` | All screens and styles |
+| `manifest.webmanifest`, `sw.js`, `assets/acorn-icon*` | Install metadata, offline application shell, and acorn icons |
 | `src/main.js`, `src/app/` | The hub: routing, screens, Settings, Your Path, dialogs |
 | `src/games/shells-feathers/` | Tic-tac-toe rules, the Spirit, the match session and view |
 | `src/games/acorns-leaves/` | Checkers engine, the Spirit's search, Fog of War, session and view |

@@ -16,6 +16,9 @@ const TYPES = {
   '.css': 'text/css; charset=utf-8',
   '.mp3': 'audio/mpeg',
   '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.webmanifest': 'application/manifest+json',
 };
 
 export function serveRepo() {

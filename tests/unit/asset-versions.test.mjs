@@ -54,7 +54,7 @@ test('every file the page and stylesheet reference exists, under that exact name
   const refs = [
     ...html.matchAll(/(?:src|href)="([^"#][^"]*)"/g),
     ...css.matchAll(/url\("?(?!data:)([^")]+)"?\)/g),
-  ].map((m) => m[1]).filter((ref) => !/^https:\/\/fonts\.(googleapis|gstatic)\.com/.test(ref));
+  ].map((m) => m[1]).filter((ref) => !/^https:\/\/(?:fonts\.(?:googleapis|gstatic)\.com|officialinspire\.github\.io)(?:\/|$)/.test(ref));
   assert.ok(refs.length > 15);
   for (const ref of refs) {
     assert.ok(!/^(\/|https?:)/.test(ref), `${ref} must be relative (the site lives in a sub-folder on GitHub Pages)`);
