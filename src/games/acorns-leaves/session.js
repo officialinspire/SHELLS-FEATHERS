@@ -33,12 +33,16 @@
 // two or more pieces by the player against the Spirit is reported through
 // `notify` as it happens. Two-player games unlock only "Shared Board".
 //
-// Sounds: a wooden tap for each move (a lower one for the other side), a
-// capture, a crowning, a revealed hidden piece, and the result. In Fog they
-// never tell anyone what they couldn't see (docs/fog-rules.md §4): with two
-// players in the room every move makes the same tap and nothing else sounds;
-// against the Spirit its move is a tap, or a capture when it took one of
-// your pieces, and its crowning is silent.
+// Feedback (sound, optional vibration, animation) goes through the shared
+// feedback service as cues (src/shared/feedback.js): a shell click when a
+// piece is picked up, a wooden tap for each move (a lower one for the other
+// side), a capture, a chirp after a multi-jump, a bell for a crowning, a
+// leaf rustle for a refused pick, a revealed hidden piece, and the result.
+// Only the player's own moves vibrate. In Fog the cues never tell anyone
+// what they couldn't see (docs/fog-rules.md §4): with two players in the
+// room every move makes the same tap and nothing else sounds, vibrates or
+// animates; against the Spirit its move is a tap, or a capture when it took
+// one of your pieces, with no square animated, and its crowning is silent.
 import { createInitialState, applyMove, analyze, isDarkSquare, SIDES } from './engine.js';
 import { chooseMove as spiritChoice, describeLevel } from './ai.js';
 import { chooseFogStep as fogSpiritChoice, describeFogLevel } from './fog-ai.js';
@@ -51,6 +55,7 @@ import {
   fogGuidance, FOG_FEEDBACK, bumpText, fogTurnText, fogMoveText, handoffText,
 } from './text.js';
 import { createTimerScope } from '../../shared/timers.js';
+import { createFeedback } from '../../shared/feedback.js';
 
 export const DELAYS = { spiritThink: 500, spiritStep: 400, resultModal: 900, musicRestart: 300 };
 
@@ -66,7 +71,7 @@ const FOG_RULES = {
 
 export function createSession({
   view, audio, profile, notify = () => {},
-  clock = globalThis, rng = Math.random, delays = DELAYS,
+  clock = globalThis, rng = Math.random, delays = DELAYS, feedback = createFeedback({ audio, clock }),
   chooseMove = spiritChoice, chooseFogStep = fogSpiritChoice, initialState = createInitialState,
 }) {
   let mode = null;
@@ -76,6 +81,7 @@ export function createSession({
   let timers = null;
   let spiritActing = false;
   let scoredMatch = null;
+  let matchCount = 0;
   const holds = new Set();
 
   const fogged = () => variant === 'fog';
@@ -84,8 +90,8 @@ export function createSession({
     mode = newMode;
     variant = newVariant === 'fog' ? 'fog' : 'classic';
     rules = fogged() ? FOG_RULES : CLASSIC_RULES;
-    audio.playSfx('newgame-sound');
     startMatch();
+    feedback.cue('newGame', { key: matchCount });
   }
 
   function leave() {
@@ -100,13 +106,14 @@ export function createSession({
   function playAgain() {
     if (!mode) return;
     audio.stopMusic();
-    audio.playSfx('newgame-sound');
     startMatch();
+    feedback.cue('newGame', { key: matchCount });
     timers.after(delays.musicRestart, () => audio.startMusic());
   }
 
   function startMatch() {
     teardownMatch();
+    matchCount += 1;
     const { difficulty, side } = profile.acornsLeavesSettings();
     match = {
       state: initialState(),
@@ -145,7 +152,7 @@ export function createSession({
     view.hideResult();
     view.hideMenu();
     view.hideHandoff();
-    audio.stopSfx('victory-sound');
+    feedback.cancel(); // queued effects, the victory theme, vibration, animations
   }
 
   const isSpiritTurn = () => mode === 'single' && match.state.turn !== match.humanSide;
@@ -196,6 +203,15 @@ export function createSession({
     view.focusBoard();
   }
 
+  // Feedback for the player's own pick, on their own square: none at all
+  // with two players sharing the device in Fog, where even a rustle could
+  // tell the other player something.
+  function cueTap(name, square) {
+    if (sharedFog()) return;
+    const at = square === null ? null : { game: 'al', square };
+    feedback.cue(name, { at, key: `${match.played}:${match.turn.path.join('-')}:${square}` });
+  }
+
   // A square picked by the player (click, tap or Enter/Space).
   function selectSquare(square) {
     if (!match || match.result || match.handoff || spiritActing || isSpiritTurn() || timers.paused) return;
@@ -208,7 +224,9 @@ export function createSession({
       const text = bumpText({
         square: found, piece: match.state.board[found], ends: Boolean(move), opened: fog.mayCapture(before) && !fog.mayCapture(turn),
       });
-      if (!sharedFog()) audio.playSfx('reveal-sound');
+      // The blocker shakes only if the turn goes on with it in view; if
+      // the block ends the move, the board goes back to fog at once.
+      cueTap('reveal', move ? null : found);
       if (move) {
         play(move, text);
         return;
@@ -222,7 +240,10 @@ export function createSession({
       play(move);
       return;
     }
-    if (outcome === 'jump' && !sharedFog()) audio.playSfx('capture-sound');
+    if (outcome === 'jump') cueTap('jump', square);
+    else if (outcome === 'select') cueTap('select', null);
+    else if (outcome === 'deselect') cueTap('putBack', null);
+    else if (match.feedback) cueTap('invalid', square);
     render();
     const next = rules.destinations(turn);
     if (outcome === 'select') {
@@ -245,6 +266,7 @@ export function createSession({
     if (rules.inChain(match.turn)) {
       match.feedback = rules.feedback['must-continue'];
       match.refused = 'must-continue';
+      cueTap('invalid', null);
       render();
       view.announce(match.feedback);
       return;
@@ -313,8 +335,7 @@ export function createSession({
     match.lastMove = {
       by: piece.side, path: move.path, captures: move.captures, crowned: Boolean(move.crowned), taken,
     };
-    const byPlayer = mode === 'two' ? piece.side === 'acorn' : piece.side === match.humanSide;
-    for (const id of moveSounds({ byPlayer, move })) audio.playSfx(id);
+    cueMove(piece, move);
     if (mode === 'single' && piece.side === match.humanSide) {
       const unlocked = [
         ...(move.captures.length >= 2 ? profile.recordMoment({ game: 'acornsLeaves', moment: 'multi-jump', mode }) : []),
@@ -345,15 +366,30 @@ export function createSession({
     beginTurn(piece.side === match.humanSide ? said : match.told);
   }
 
-  // Two players sharing the device in Fog: sounds must not tell either of
+  // Two players sharing the device in Fog: feedback must not tell either of
   // them anything about the other's move.
   const sharedFog = () => fogged() && mode === 'two';
 
-  function moveSounds({ byPlayer, move }) {
-    if (sharedFog()) return ['piece-move'];
-    const sounds = [move.captures.length ? 'capture-sound' : byPlayer ? 'piece-move' : 'piece-move-other'];
-    if (move.crowned && (byPlayer || !fogged())) sounds.push('crown-sound');
-    return sounds;
+  // A played move: a tap (the second side's lower), or a capture; a bell
+  // when a piece is crowned in view; a chirp after the player's own
+  // multi-jump. Only moves a person made vibrate (not the Spirit's), and a
+  // crowning vibrates instead of the move. The landing square animates only
+  // where the player can see it.
+  function cueMove(piece, move) {
+    const key = match.played;
+    if (sharedFog()) {
+      feedback.cue('shared', { key });
+      return;
+    }
+    const byPlayer = mode === 'two' ? piece.side === 'acorn' : piece.side === match.humanSide;
+    const own = mode === 'two' || piece.side === match.humanSide;
+    const seen = !fogged() || piece.side === match.humanSide;
+    const at = seen ? { game: 'al', square: move.to } : null;
+    const crowned = move.crowned && (byPlayer || !fogged());
+    const name = move.captures.length ? 'capture' : byPlayer ? 'move' : 'moveOther';
+    feedback.cue(name, { at, key, felt: own && !crowned });
+    if (crowned) feedback.cue('crown', { at, key, felt: own });
+    if (own && move.captures.length >= 2) feedback.cue('multi', { key });
   }
 
   function finish(result, said) {
@@ -367,12 +403,12 @@ export function createSession({
     match.resultText = text;
     const unlocked = profile.recordAcornsLeavesResult({ mode, difficulty: match.difficulty, outcome: text.outcome, variant }) ?? [];
     if (text.outcome === 'loss') {
-      audio.playSfx('loss-sound');
+      feedback.cue('loss', { key: matchCount });
     } else if (text.outcome === 'draw') {
-      audio.playSfx('draw-sound');
+      feedback.cue('draw', { key: matchCount });
     } else {
       audio.stopMusic();
-      audio.playSfx('victory-sound');
+      feedback.cue('win', { key: matchCount });
     }
     render();
     // The game is over, so the fog lifts and the last move can be told in full.
@@ -521,10 +557,12 @@ export function createSession({
   function pause(reason = 'menu') {
     holds.add(reason);
     timers?.pause();
+    feedback.hold(reason);
   }
 
   function resume(reason = 'menu') {
     holds.delete(reason);
+    feedback.release(reason);
     if (!holds.size) timers?.resume();
   }
 

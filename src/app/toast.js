@@ -4,7 +4,7 @@
 // live region, and goes away by itself. Several notices queue.
 const SHOW_MS = 4500;
 
-export function createToast({ doc, clock = globalThis, audio }) {
+export function createToast({ doc, clock = globalThis, feedback }) {
   const region = doc.getElementById('toast-region');
   const card = doc.getElementById('toast');
   const text = doc.getElementById('toast-text');
@@ -31,7 +31,7 @@ export function createToast({ doc, clock = globalThis, audio }) {
     achievements(list) {
       if (!list.length) return;
       for (const { title, description } of list) queue.push(`Achievement unlocked: ${title}. ${description}`);
-      audio?.playSfx('achievement-sound');
+      feedback?.cue('achievement', { key: list.map((a) => a.title).join() });
       if (timer === null) next();
     },
     clear() {

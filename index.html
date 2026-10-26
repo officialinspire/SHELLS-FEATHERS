@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#654321" />
   <meta name="description" content="Spirit of the Woods: peaceful forest games. Play Shells &amp; Feathers (tic-tac-toe) and Acorns &amp; Leaves (checkers) against the forest Spirit or a friend." />
   <title>Spirit of the Woods</title>
-  <link rel="stylesheet" href="styles.css?v=db461db6dc" />
+  <link rel="stylesheet" href="styles.css?v=e76330f745" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
@@ -532,6 +532,11 @@
           <output class="volume-value" id="sfx-volume-value" for="sfx-volume" data-setting-value="sfxVolume">50%</output>
         </div>
         <p class="hint">Sound starts after your first tap, click or key press, and pauses while the page is hidden.</p>
+        <label class="setting-row" for="haptics-toggle">
+          <span class="setting-label">Haptics (vibration)</span>
+          <span class="switch"><input type="checkbox" id="haptics-toggle" role="switch" data-setting="haptics" aria-describedby="haptics-hint" /><span class="toggle-switch" aria-hidden="true"></span></span>
+        </label>
+        <p class="hint" id="haptics-hint" data-setting-hint="haptics"></p>
       </div>
 
       <div class="panel">
@@ -700,6 +705,11 @@
               <input type="range" class="volume-slider" id="sf-menu-sfx-volume" data-setting="sfxVolume" min="0" max="100" step="5" value="50" />
               <output class="volume-value" for="sf-menu-sfx-volume" data-setting-value="sfxVolume">50%</output>
             </div>
+            <label class="setting-row" for="sf-menu-haptics">
+              <span class="setting-label">Haptics (vibration)</span>
+              <span class="switch"><input type="checkbox" id="sf-menu-haptics" role="switch" data-setting="haptics" aria-describedby="sf-menu-haptics-hint" /><span class="toggle-switch" aria-hidden="true"></span></span>
+            </label>
+            <p class="hint" id="sf-menu-haptics-hint" data-setting-hint="haptics"></p>
             <fieldset class="option-group">
               <legend>Motion</legend>
               <div class="segmented">
@@ -771,6 +781,11 @@
               <input type="range" class="volume-slider" id="al-menu-sfx-volume" data-setting="sfxVolume" min="0" max="100" step="5" value="50" />
               <output class="volume-value" for="al-menu-sfx-volume" data-setting-value="sfxVolume">50%</output>
             </div>
+            <label class="setting-row" for="al-menu-haptics">
+              <span class="setting-label">Haptics (vibration)</span>
+              <span class="switch"><input type="checkbox" id="al-menu-haptics" role="switch" data-setting="haptics" aria-describedby="al-menu-haptics-hint" /><span class="toggle-switch" aria-hidden="true"></span></span>
+            </label>
+            <p class="hint" id="al-menu-haptics-hint" data-setting-hint="haptics"></p>
             <fieldset class="option-group">
               <legend>Motion</legend>
               <div class="segmented">
@@ -842,44 +857,49 @@
   <audio id="draw-sound" preload="auto"><source src="sounds/result-draw.wav" type="audio/wav" /></audio>
   <audio id="loss-sound" preload="auto"><source src="sounds/result-loss.wav" type="audio/wav" /></audio>
   <audio id="achievement-sound" preload="auto"><source src="sounds/achievement.wav" type="audio/wav" /></audio>
+  <audio id="select-sound" preload="auto"><source src="sounds/select.wav" type="audio/wav" /></audio>
+  <audio id="invalid-sound" preload="auto"><source src="sounds/invalid.wav" type="audio/wav" /></audio>
+  <audio id="multi-sound" preload="auto"><source src="sounds/multi.wav" type="audio/wav" /></audio>
 
   <!-- asset versions (tools/stamp-assets.mjs) -->
   <script type="importmap">
   {
     "imports": {
-      "./src/app/app.js": "./src/app/app.js?v=63f22ae8e5",
+      "./src/app/app.js": "./src/app/app.js?v=4eb873f246",
       "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
       "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
       "./src/app/navigation.js": "./src/app/navigation.js?v=df1ca271ed",
-      "./src/app/path-screen.js": "./src/app/path-screen.js?v=96702974d7",
+      "./src/app/path-screen.js": "./src/app/path-screen.js?v=e2064d6e0c",
       "./src/app/router.js": "./src/app/router.js?v=1707f9f2ce",
-      "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=81c7b2624e",
-      "./src/app/sound-motion.js": "./src/app/sound-motion.js?v=9aa88402af",
-      "./src/app/toast.js": "./src/app/toast.js?v=dd91f8d7e8",
+      "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=e15ae585c7",
+      "./src/app/sound-motion.js": "./src/app/sound-motion.js?v=f7e46a67c0",
+      "./src/app/toast.js": "./src/app/toast.js?v=eb8d890f48",
       "./src/games/acorns-leaves/ai.js": "./src/games/acorns-leaves/ai.js?v=ec51e2bd96",
       "./src/games/acorns-leaves/engine.js": "./src/games/acorns-leaves/engine.js?v=f4ae64291c",
       "./src/games/acorns-leaves/fog-ai.js": "./src/games/acorns-leaves/fog-ai.js?v=9792d8c2f9",
       "./src/games/acorns-leaves/fog.js": "./src/games/acorns-leaves/fog.js?v=c6a4aaa2c2",
       "./src/games/acorns-leaves/pieces.js": "./src/games/acorns-leaves/pieces.js?v=778ba9533a",
-      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=bf0808efe3",
-      "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=9e8a476f8f",
+      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=50a375d78a",
+      "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=66ff37c370",
       "./src/games/acorns-leaves/text.js": "./src/games/acorns-leaves/text.js?v=5229e61624",
       "./src/games/acorns-leaves/turn.js": "./src/games/acorns-leaves/turn.js?v=4c32d00fbb",
-      "./src/games/acorns-leaves/view.js": "./src/games/acorns-leaves/view.js?v=818d078e2c",
+      "./src/games/acorns-leaves/view.js": "./src/games/acorns-leaves/view.js?v=884b257ce7",
       "./src/games/shells-feathers/ai.js": "./src/games/shells-feathers/ai.js?v=50536a19f8",
       "./src/games/shells-feathers/match.js": "./src/games/shells-feathers/match.js?v=dd264e8ee4",
       "./src/games/shells-feathers/rules.js": "./src/games/shells-feathers/rules.js?v=6f838579f5",
-      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=46412f2a1e",
-      "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=b2a7ee3fd9",
-      "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=c297258ce9",
+      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=09f4500b76",
+      "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=04f2defdb3",
+      "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=6dc8ec7704",
       "./src/main.js": "./src/main.js?v=b0d0ca161a",
       "./src/shared/achievements.js": "./src/shared/achievements.js?v=8ea8ab6102",
-      "./src/shared/audio.js": "./src/shared/audio.js?v=7d60edf7a0",
+      "./src/shared/audio.js": "./src/shared/audio.js?v=43e08821a5",
       "./src/shared/board-taps.js": "./src/shared/board-taps.js?v=0d80361510",
+      "./src/shared/feedback.js": "./src/shared/feedback.js?v=b7f605d3e9",
+      "./src/shared/haptics.js": "./src/shared/haptics.js?v=28c182c91c",
       "./src/shared/icons.js": "./src/shared/icons.js?v=6688127809",
       "./src/shared/match-menu.js": "./src/shared/match-menu.js?v=5240555d5f",
       "./src/shared/profile.js": "./src/shared/profile.js?v=74e5693fb0",
-      "./src/shared/save-data.js": "./src/shared/save-data.js?v=3c16c6a91b",
+      "./src/shared/save-data.js": "./src/shared/save-data.js?v=c42ee2d1aa",
       "./src/shared/storage.js": "./src/shared/storage.js?v=40ebff7603",
       "./src/shared/timers.js": "./src/shared/timers.js?v=22efd36a1d"
     }

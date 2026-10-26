@@ -66,7 +66,7 @@ test('leaving during the Spirit\'s turn cancels its move; no result, stats or so
   assert.deepEqual(view.resultsShown, []);
   assert.equal(view.result, null);
   assert.equal(profile.statsSummary().totalGames, 0, 'no loss recorded');
-  assert.deepEqual(audio.calls.slice(audioBefore), ['stop:victory-sound'], 'only teardown audio');
+  assert.ok(audio.calls.slice(audioBefore).every((c) => c.startsWith('stop:')), 'only teardown audio: the match\'s effects are stopped');
 
   // Selecting a cell after leaving does nothing.
   session.selectCell(5);
@@ -112,10 +112,13 @@ test('"Play Again" (v1: New Game) stops the victory sound, keeps the session sco
   assert.equal(view.result, null);
   assert.equal(view.pieces, 0);
   assert.deepEqual(view.scores, { player1: 1, player2: 0 });
-  assert.deepEqual(audio.calls, ['music:stop', 'sfx:newgame-sound', 'stop:victory-sound']);
+  assert.equal(audio.calls[0], 'music:stop');
+  assert.ok(audio.calls.includes('stop:victory-sound'));
+  assert.equal(audio.calls.at(-1), 'sfx:newgame-sound', 'the old effects stop first, then the new game begins');
+  const mark = audio.calls.length;
 
   clock.tick(DELAYS.musicRestart);
-  assert.deepEqual(audio.calls.slice(3), ['music:start']);
+  assert.deepEqual(audio.calls.slice(mark), ['music:start']);
 });
 
 test('a "Play Again" music restart is cancelled if the match is restarted first', () => {

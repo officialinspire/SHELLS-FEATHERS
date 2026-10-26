@@ -1199,7 +1199,6 @@ h2[tabindex="-1"]:focus {
 
 .cell.occupied {
     cursor: not-allowed;
-    animation: placeSymbol var(--gentle) var(--ease-out);
 }
 
 /* The pieces: outlined artwork with a soft shadow, so they read on the wood. */
@@ -1210,10 +1209,26 @@ h2[tabindex="-1"]:focus {
     filter: drop-shadow(0 2px 2px rgba(43, 27, 14, 0.45));
 }
 
-/* A piece settles into place: a small grow and fade-in, no spin. */
-@keyframes placeSymbol {
-    from { transform: scale(0.82); opacity: 0.4; }
-    to { transform: scale(1); opacity: 1; }
+/* Feedback animations (the feedback service adds the fx- classes; reduced
+   motion turns them all off). A piece placed drifts down and settles like a
+   leaf: a small grow, a slight sway, no spin. A taken square refused: one
+   soft ember pulse of its inner edge, so nothing moves under the finger. */
+.cell.fx-place .sf-piece {
+    animation: leafSettle 0.26s var(--ease-out);
+}
+
+.cell.fx-refuse {
+    animation: refusePulse 0.32s ease-out;
+}
+
+@keyframes leafSettle {
+    0% { transform: translateY(-10%) rotate(-7deg) scale(0.86); opacity: 0.5; }
+    60% { transform: translateY(1%) rotate(2deg) scale(1.02); opacity: 1; }
+    100% { transform: none; opacity: 1; }
+}
+
+@keyframes refusePulse {
+    40% { box-shadow: inset 0 0 0 4px rgba(255, 107, 53, 0.75), inset 0 2px 2px rgba(255, 248, 220, 0.35); }
 }
 
 /* Winning squares: gold, a solid edge (so the line doesn't rely on color
@@ -2172,13 +2187,29 @@ kbd {
     opacity: 0.6;
 }
 
-.al-square.is-last-to .al-piece {
-    animation: alLand var(--gentle) var(--ease-out);
+/* Feedback animations (fx- classes from the feedback service; none under
+   reduced motion): a moved piece settles like a leaf; a capture settles a
+   little deeper; a crowned piece swells once with a gold glow; a refused
+   pick pulses the square's inner edge (nothing moves under the finger); a
+   hidden piece found by a blocked try gives a small shake. */
+.al-square.fx-land .al-piece {
+    animation: leafSettle 0.26s var(--ease-out);
 }
 
-@keyframes alLand {
-    from { transform: scale(0.85); }
-    to { transform: scale(1); }
+.al-square.fx-capture .al-piece {
+    animation: leafSettle 0.32s var(--ease-out);
+}
+
+.al-square.fx-crown .al-piece {
+    animation: crownSwell 0.45s var(--ease-out);
+}
+
+.al-square.dark.fx-refuse {
+    animation: refusePulse 0.32s ease-out;
+}
+
+@keyframes crownSwell {
+    40% { transform: scale(1.14); filter: drop-shadow(0 0 8px rgba(255, 212, 71, 0.95)); }
 }
 
 @media (hover: hover) {
@@ -2217,12 +2248,12 @@ kbd {
 }
 
 /* A hidden piece found by a blocked jump: an orange frame, and a short
-   shake when it is found. */
+   shake when it is found (fx-found, from the feedback service). */
 .al-square.is-found {
     box-shadow: inset 0 0 0 3px var(--sunset-orange);
 }
 
-.al-square.is-found .al-piece {
+.al-square.fx-found .al-piece {
     animation: alBump 0.3s ease;
 }
 
@@ -2506,6 +2537,17 @@ kbd {
 
 .switch input:checked + .toggle-switch::after {
     transform: translateX(28px);
+}
+
+/* Not available here (Haptics on a browser that can't vibrate): faded, and
+   the hint under it says why. */
+.switch input:disabled + .toggle-switch {
+    opacity: var(--state-disabled-opacity);
+    cursor: not-allowed;
+}
+
+.setting-row:has(input:disabled) {
+    cursor: not-allowed;
 }
 
 .switch input:focus-visible + .toggle-switch {

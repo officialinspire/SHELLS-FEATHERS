@@ -19,7 +19,7 @@ const totals = (single, levels) => {
   return { ...t, games: t.wins + t.draws + t.losses };
 };
 
-export function createPathScreen({ doc, profile, audio, confirmDialog, dateText = (ms) => new Date(ms).toLocaleDateString() }) {
+export function createPathScreen({ doc, profile, feedback, confirmDialog, dateText = (ms) => new Date(ms).toLocaleDateString() }) {
   const byId = (id) => doc.getElementById(id);
   const make = (tag, props = {}, children = [], attrs = {}) => {
     const el = Object.assign(doc.createElement(tag), props);
@@ -97,7 +97,7 @@ export function createPathScreen({ doc, profile, audio, confirmDialog, dateText 
     if (!await confirmDialog.ask({ title, deletes, keeps, confirmLabel })) return false;
     run();
     render();
-    audio.playSfx('button-select');
+    feedback.cue('button');
     return true;
   }
 

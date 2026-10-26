@@ -46,6 +46,10 @@ import { createPieceIcon } from './pieces.js';
 import { achievementLine } from '../shells-feathers/view.js';
 import { createBoardTaps } from '../../shared/board-taps.js';
 import { createMatchMenu } from '../../shared/match-menu.js';
+import { flashClass } from '../../shared/feedback.js';
+
+// The feedback service's animations, as classes on a square (styles.css).
+const FX = ['land', 'capture', 'crown', 'refuse', 'found'];
 
 const LAST = SIZE * SIZE - 1;
 // Screen position of a square (index = row * 8 + col on screen). Turning the
@@ -218,7 +222,6 @@ export function createAcornsLeavesView(doc) {
       el.classList.toggle('is-trail', marks.trail);
       el.classList.toggle('is-last', marks.onLastMove);
       el.classList.toggle('was-captured', marks.capturedLastMove);
-      el.classList.toggle('is-last-to', model.lastMove?.path.at(-1) === square && Boolean(piece));
       if (model.phase === 'ready') el.removeAttribute('aria-disabled');
       else el.setAttribute('aria-disabled', 'true');
       el.setAttribute('aria-label', squareLabel({ square, piece, capture: model.capture, mayCapture: inFog, ...marks }));
@@ -361,6 +364,17 @@ export function createAcornsLeavesView(doc) {
     dismissResult,
     hideMenu() {
       menu?.close();
+    },
+    // For the feedback service: animate a square the session named (only
+    // squares the player can see), or clear every animation.
+    animator: {
+      play(motion, { square }) {
+        if (!FX.includes(motion) || !squares[square]) return;
+        flashClass(squares[square], `fx-${motion}`, doc.defaultView);
+      },
+      clear() {
+        for (const el of squares) el.classList.remove(...FX.map((m) => `fx-${m}`));
+      },
     },
   };
 }

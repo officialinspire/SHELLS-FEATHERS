@@ -146,6 +146,26 @@ def main():
     loss = place(bell(440.0, 0.9, 0.4), 0, length) + place(bell(329.63, 1.0, 0.5, 0.9), 0.22, length)
     write('result-loss', finish(loss, 0.28))
 
+    # Picking up a piece: a light shell click (short, high, quiet).
+    length = 0.09
+    click = biquad(noise(0.004), 'band', 3400, 1.6)
+    shell = (resonance(1980, length, 0.012)
+             + resonance(2970, length, 0.008, 0.45)
+             + resonance(4100, length, 0.005, 0.2))
+    write('select', finish(place(click * 2, 0, length) + shell, 0.26))
+
+    # A refused move: a soft rustle of leaves, quiet and brief, never an alarm.
+    length = 0.2
+    rustle = biquad(noise(length), 'band', 2600, 0.9)
+    t = np.arange(len(rustle)) / SR
+    env = np.minimum(1, t / 0.015) * np.exp(-t / 0.06) * (0.75 + 0.25 * np.sin(2 * np.pi * 38 * t))
+    write('invalid', finish(rustle * env, 0.16))
+
+    # A multi-jump finished: a short two-note chirp (G5, D6), like a bird.
+    length = 0.36
+    chirp = place(bell(783.99, 0.22, 0.07), 0, length) + place(bell(1174.66, 0.26, 0.08, 0.85), 0.07, length)
+    write('multi', finish(chirp, 0.24))
+
     # An achievement: two quick bright notes (E5, B5).
     length = 0.8
     achievement = place(bell(659.25, 0.6, 0.25), 0, length) + place(bell(987.77, 0.65, 0.3), 0.09, length)

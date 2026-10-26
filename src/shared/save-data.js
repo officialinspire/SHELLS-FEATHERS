@@ -11,6 +11,7 @@
 // Also added within v2, each with a default for older v2 saves:
 // - settings.sfxVolume and settings.musicVolume (0–100) and settings.motion
 //   ('system' follows the device, 'reduce' or 'full' override it);
+// - settings.haptics (vibration, off unless turned on);
 // - <game>.achievements: { [id]: { at } }, each achievement unlocked once,
 //   `at` being when (ms since 1970), or null for one found in the records of
 //   a save made before achievements were kept (see achievements.js). A save
@@ -31,7 +32,9 @@ const TWO_PLAYER_FIELDS = ['player1Wins', 'player2Wins', 'draws'];
 const AL_TWO_PLAYER_FIELDS = ['acornWins', 'leafWins', 'draws'];
 const AL_VARIANTS = ['classic', 'fog'];
 export const MOTION_CHOICES = ['system', 'reduce', 'full'];
-export const DEFAULT_SETTINGS = { sfx: true, music: true, sfxVolume: 50, musicVolume: 30, motion: 'system' };
+export const DEFAULT_SETTINGS = {
+  sfx: true, music: true, sfxVolume: 50, musicVolume: 30, motion: 'system', haptics: false,
+};
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const objectOr = (value) => (isObject(value) ? value : {});
@@ -132,6 +135,7 @@ export function normalizeSave(raw) {
       sfxVolume: percentOr(settings.sfxVolume, DEFAULT_SETTINGS.sfxVolume),
       musicVolume: percentOr(settings.musicVolume, DEFAULT_SETTINGS.musicVolume),
       motion: oneOf(settings.motion, MOTION_CHOICES, DEFAULT_SETTINGS.motion),
+      haptics: boolOr(settings.haptics, DEFAULT_SETTINGS.haptics),
     },
     shellsFeathers: {
       ...game,
@@ -240,7 +244,7 @@ export function clearStats(save) {
 }
 
 export function applySettings(save, patch) {
-  for (const key of ['sfx', 'music']) {
+  for (const key of ['sfx', 'music', 'haptics']) {
     if (typeof patch[key] === 'boolean') save.settings[key] = patch[key];
   }
   for (const key of ['sfxVolume', 'musicVolume']) save.settings[key] = percentOr(patch[key], save.settings[key]);

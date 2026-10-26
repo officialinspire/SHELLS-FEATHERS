@@ -99,14 +99,16 @@ test('a corrupt v2 save is copied aside and rebuilt from v1', () => {
 test('a v2 save with bad fields is repaired field by field', () => {
   const raw = {
     version: 2,
-    settings: { sfx: 'yes', music: false, sfxVolume: 140, musicVolume: '20', motion: 'wild' },
+    settings: { sfx: 'yes', music: false, sfxVolume: 140, musicVolume: '20', motion: 'wild', haptics: 'buzz' },
     shellsFeathers: {
       settings: { difficulty: 'impossible', player1Symbol: 'feather' },
       stats: { single: { easy: { wins: '2', losses: -1 }, hard: 'x' }, twoPlayer: null, legacy: { wins: 1 } },
     },
   };
   const save = normalizeSave(raw);
-  assert.deepEqual(save.settings, { sfx: true, music: false, sfxVolume: 50, musicVolume: 30, motion: 'system' });
+  assert.deepEqual(save.settings, {
+    sfx: true, music: false, sfxVolume: 50, musicVolume: 30, motion: 'system', haptics: false,
+  });
   assert.deepEqual(save.shellsFeathers.settings, { difficulty: 'easy', player1Symbol: 'feather' });
   assert.deepEqual(save.shellsFeathers.stats.single.easy, { wins: 2, losses: 0, draws: 0 });
   assert.deepEqual(save.shellsFeathers.stats.single.hard, { wins: 0, losses: 0, draws: 0 });
@@ -158,11 +160,13 @@ test('settings are validated and saved', () => {
   const area = createMemoryStorage();
   const profile = createProfile(openStorage(() => area));
   profile.updateSettings({ music: false, sfx: 'nope' });
-  profile.updateSettings({ sfxVolume: 35, musicVolume: 72.6, motion: 'reduce' });
-  profile.updateSettings({ sfxVolume: -5, musicVolume: NaN, motion: 'fast' }); // ignored
+  profile.updateSettings({ sfxVolume: 35, musicVolume: 72.6, motion: 'reduce', haptics: true });
+  profile.updateSettings({ sfxVolume: -5, musicVolume: NaN, motion: 'fast', haptics: 'yes' }); // ignored
   profile.updateGameSettings({ difficulty: 'medium', player1Symbol: 'dragon' });
   const reloaded = createProfile(openStorage(() => area));
-  assert.deepEqual(reloaded.settings(), { sfx: true, music: false, sfxVolume: 35, musicVolume: 73, motion: 'reduce' });
+  assert.deepEqual(reloaded.settings(), {
+    sfx: true, music: false, sfxVolume: 35, musicVolume: 73, motion: 'reduce', haptics: true,
+  });
   assert.deepEqual(reloaded.gameSettings(), { difficulty: 'medium', player1Symbol: 'shell' });
 });
 

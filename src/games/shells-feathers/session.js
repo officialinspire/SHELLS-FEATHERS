@@ -14,22 +14,29 @@
 // that is restarted or left before it ends is not recorded. Achievements the
 // result unlocks are shown in the result dialog.
 //
-// Sounds: each placement; at the end the victory theme for a win (yours, or
-// either player's with two players; the music pauses for it), a gentle
-// falling pair of notes for a loss and a settling chord for a draw.
+// Feedback (sound, optional vibration, animation) goes through the shared
+// feedback service (src/shared/feedback.js): each placement (the piece
+// settles in; only a person's placement vibrates, not the Spirit's), a leaf
+// rustle for a taken square, and at the end the victory theme for a win
+// (yours, or either player's with two players; the music pauses for it), a
+// gentle falling pair of notes for a loss and a settling chord for a draw.
 import { createMatch } from './match.js';
 import { chooseMove, LEVEL_WORDS } from './ai.js';
 import { hintText, RULE_NOTE } from './view.js';
 import { createTimerScope } from '../../shared/timers.js';
+import { createFeedback } from '../../shared/feedback.js';
 
 export const DELAYS = { spiritMove: 800, resultModal: 800, musicRestart: 300 };
 
-export function createSession({ view, audio, profile, clock = globalThis, rng = Math.random, delays = DELAYS }) {
+export function createSession({
+  view, audio, profile, clock = globalThis, rng = Math.random, delays = DELAYS, feedback = createFeedback({ audio, clock }),
+}) {
   let mode = null;
   let match = null;
   let timers = null;
   let spiritThinking = false;
   let scoredMatch = null;
+  let matchCount = 0;
   const holds = new Set();
   const scores = { player1: 0, player2: 0 };
 
@@ -38,8 +45,8 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
     scores.player1 = 0;
     scores.player2 = 0;
     view.showScores(mode, scores);
-    audio.playSfx('newgame-sound');
     startMatch();
+    feedback.cue('newGame', { key: matchCount });
   }
 
   function leave() {
@@ -54,13 +61,14 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
   function playAgain() {
     if (!mode) return;
     audio.stopMusic();
-    audio.playSfx('newgame-sound');
     startMatch();
+    feedback.cue('newGame', { key: matchCount });
     timers.after(delays.musicRestart, () => audio.startMusic());
   }
 
   function startMatch() {
     teardownMatch();
+    matchCount += 1;
     const { difficulty, player1Symbol } = profile.gameSettings();
     match = createMatch({ mode, player1Symbol, difficulty });
     timers = createTimerScope(clock);
@@ -78,7 +86,7 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
     spiritThinking = false;
     view.hideResult();
     view.hideMenu();
-    audio.stopSfx('victory-sound');
+    feedback.cancel(); // queued effects, the victory theme, vibration, animations
   }
 
   function selectCell(index) {
@@ -91,13 +99,18 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
     const move = match.play(index);
     if (!move) {
       // A taken square: say so (the turn goes on).
-      if (match.board[index] !== null) showHint({ taken: true });
+      if (match.board[index] !== null) {
+        showHint({ taken: true });
+        feedback.cue('invalid', { at: { game: 'sf', index }, key: index });
+      }
       return;
     }
     const byPlayer1 = move.symbol === match.player1Symbol;
     const actor = mode === 'single' ? (byPlayer1 ? 'you' : 'spirit') : (byPlayer1 ? 'player1' : 'player2');
     view.placePiece(move.index, move.symbol, actor);
-    audio.playSfx(byPlayer1 ? 'player-select' : 'opponent-select');
+    feedback.cue(byPlayer1 ? 'place' : 'placeOther', {
+      at: { game: 'sf', index: move.index }, key: `${matchCount}:${move.index}`, felt: mode === 'two' || byPlayer1,
+    });
     if (match.result) {
       finish();
       return;
@@ -136,12 +149,12 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
       view.highlight(line);
     }
     if (outcome === 'loss') {
-      audio.playSfx('loss-sound');
+      feedback.cue('loss', { key: matchCount });
     } else if (outcome === 'draw') {
-      audio.playSfx('draw-sound');
+      feedback.cue('draw', { key: matchCount });
     } else {
       audio.stopMusic();
-      audio.playSfx('victory-sound');
+      feedback.cue('win', { key: matchCount });
     }
     view.showScores(mode, scores);
     view.showFinalTurn(outcome, winner, line);
@@ -174,10 +187,12 @@ export function createSession({ view, audio, profile, clock = globalThis, rng = 
   function pause(reason = 'menu') {
     holds.add(reason);
     timers?.pause();
+    feedback.hold(reason);
   }
 
   function resume(reason = 'menu') {
     holds.delete(reason);
+    feedback.release(reason);
     if (!holds.size) timers?.resume();
   }
 

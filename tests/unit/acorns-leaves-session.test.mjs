@@ -252,7 +252,11 @@ test('the last capture wins: recorded once, announced, the dialog follows after 
   session.playAgain();
   assert.equal(view.result, null);
   assert.equal(view.model.phase, 'ready');
-  assert.deepEqual(audio.calls.slice(before), ['music:stop', 'sfx:newgame-sound', 'stop:victory-sound']);
+  const rematch = audio.calls.slice(before);
+  assert.equal(rematch[0], 'music:stop');
+  assert.ok(rematch.includes('stop:victory-sound'), 'the old game\'s effects stop, the victory theme among them');
+  assert.ok(rematch.slice(1, -1).every((c) => c.startsWith('stop:')), 'and nothing of the old game plays');
+  assert.equal(rematch.at(-1), 'sfx:newgame-sound', 'then the new game begins');
   clock.tick(DELAYS.musicRestart);
   assert.equal(audio.calls.at(-1), 'music:start');
   assert.equal(total(), 1, 'the rematch scored nothing yet');

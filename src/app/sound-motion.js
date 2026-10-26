@@ -7,10 +7,20 @@
 //                                outputs showing the percentage
 //   motion                       radios: system | reduce | full, with a
 //                                [data-setting-hint="motion"] line
+//   haptics                      switch, with a [data-setting-hint="haptics"]
+//                                line saying honestly whether this browser
+//                                can vibrate (the switch is disabled where it
+//                                can't)
 // Every change applies at once and is saved. show() reads the saved settings
 // back into the controls (each set shows the latest, whichever set changed
 // them). Motion is applied as <html data-motion="system|reduce|full">, which
 // styles.css reads.
+export const HAPTICS_HINTS = {
+  unsupported: 'Not available here: this browser can’t vibrate (Safari on iPhone and iPad, and most desktop browsers, have no vibration). The games play the same without it.',
+  available: 'Short, gentle taps for your own moves, captures, crowning, a refused move, results and achievements. Only devices with a vibration motor can be felt, and the device’s own settings can still turn it off.',
+  refused: 'The browser declined to vibrate just now (it may need a tap on the page first, or vibration is off on this device). The games play the same without it.',
+};
+
 const MOTION_HINTS = {
   reduce: 'Reduce: no animations or eased changes in any game.',
   full: 'Full: gentle animations even if your device asks for less motion.',
@@ -21,7 +31,7 @@ export function applyMotion(doc, motion) {
 }
 
 export function createSoundMotion({
-  doc, root, win, profile, audio, onSaved = () => {},
+  doc, root, win, profile, audio, haptics = null, feedback = null, onSaved = () => {},
 }) {
   const find = (name) => root.querySelector(`[data-setting="${name}"]`);
   const sfxToggle = find('sfx');
@@ -30,6 +40,8 @@ export function createSoundMotion({
   const musicVolume = find('musicVolume');
   const motionInputs = [...root.querySelectorAll('[data-setting="motion"]')];
   const motionHint = root.querySelector('[data-setting-hint="motion"]');
+  const hapticsToggle = find('haptics');
+  const hapticsHint = root.querySelector('[data-setting-hint="haptics"]');
   const deviceQuery = win.matchMedia?.('(prefers-reduced-motion: reduce)');
 
   const showPercent = (input) => {
@@ -43,8 +55,18 @@ export function createSoundMotion({
       : MOTION_HINTS[motion];
   }
 
+  function showHaptics() {
+    if (!hapticsToggle) return;
+    const supported = Boolean(haptics?.supported);
+    hapticsToggle.disabled = !supported;
+    hapticsToggle.checked = supported && profile.settings().haptics;
+    hapticsHint.textContent = !supported ? HAPTICS_HINTS.unsupported
+      : haptics.status === 'refused' ? HAPTICS_HINTS.refused : HAPTICS_HINTS.available;
+  }
+
   function show() {
     const settings = profile.settings();
+    showHaptics();
     sfxToggle.checked = settings.sfx;
     musicToggle.checked = settings.music;
     sfxVolume.value = String(settings.sfxVolume);
@@ -60,6 +82,17 @@ export function createSoundMotion({
     profile.updateSettings({ sfx: sfxToggle.checked });
     audio.setSfxEnabled(sfxToggle.checked);
     if (sfxToggle.checked) audio.playSfx('button-select');
+    else feedback?.cancel(); // muted: nothing queued plays later
+    onSaved();
+  });
+
+  // Turning vibration on gives one short sample (this is a tap, so the
+  // browser allows it), and the hint says if the browser declined.
+  hapticsToggle?.addEventListener('change', () => {
+    profile.updateSettings({ haptics: hapticsToggle.checked });
+    haptics?.setEnabled(hapticsToggle.checked);
+    if (hapticsToggle.checked) haptics?.pulse(12);
+    showHaptics();
     onSaved();
   });
 
@@ -85,7 +118,8 @@ export function createSoundMotion({
   });
   sfxVolume.addEventListener('change', () => {
     profile.updateSettings({ sfxVolume: Number(sfxVolume.value) });
-    audio.playSfx('button-select');
+    if (Number(sfxVolume.value) === 0) feedback?.cancel();
+    else audio.playSfx('button-select');
     onSaved();
   });
 

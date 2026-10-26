@@ -18,7 +18,7 @@ const TWO_PLAYER_DESC = {
   fog: 'Pass the device between turns; the board hides in between',
 };
 
-export function initAcornsLeavesSetup({ doc, profile, audio }) {
+export function initAcornsLeavesSetup({ doc, profile, feedback }) {
   const variantInputs = [...doc.querySelectorAll('input[name="al-variant"]')];
   const sideInputs = [...doc.querySelectorAll('input[name="al-side"]')];
   const difficultyInputs = [...doc.querySelectorAll('input[name="al-difficulty"]')];
@@ -46,21 +46,21 @@ export function initAcornsLeavesSetup({ doc, profile, audio }) {
     input.addEventListener('change', () => {
       profile.updateAcornsLeavesSettings({ variant: input.value });
       showVariant(input.value);
-      audio.playSfx('button-select');
+      feedback.cue('button');
     });
   }
 
   for (const input of sideInputs) {
     input.addEventListener('change', () => {
       profile.updateAcornsLeavesSettings({ side: input.value });
-      audio.playSfx('button-select');
+      feedback.cue('button');
     });
   }
   for (const input of difficultyInputs) {
     input.addEventListener('change', () => {
       profile.updateAcornsLeavesSettings({ difficulty: input.value });
       hint.textContent = levelWords(profile.acornsLeavesSettings().variant, input.value);
-      audio.playSfx('button-select');
+      feedback.cue('button');
     });
   }
 }

@@ -100,7 +100,9 @@ test('settings and progress', { timeout: 300_000 }, async (t) => {
     await page.mouse.click(5, 5);
     await game.waitForMusicPlaying(0.4);
     const saved = JSON.parse(await game.storageItem(V2_KEY)).settings;
-    assert.deepEqual(saved, { sfx: true, music: true, sfxVolume: 20, musicVolume: 40, motion: 'reduce' });
+    assert.deepEqual(saved, {
+      sfx: true, music: true, sfxVolume: 20, musicVolume: 40, motion: 'reduce', haptics: false,
+    });
     assert.deepEqual(game.pageErrors, []);
   });
 

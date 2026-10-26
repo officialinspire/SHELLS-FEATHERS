@@ -1,4 +1,6 @@
-// Composes the app: shared services (storage, profile, audio), the router and
+// Composes the app: shared services (storage, profile, audio, haptics and
+// the feedback service that drives sounds, vibration and animations), the
+// router and
 // screens, and one session per game (Shells & Feathers, Acorns & Leaves).
 //
 // Navigation uses real links (href="#/..."). A click on one is routed in-page
@@ -19,6 +21,8 @@
 import { openStorage } from '../shared/storage.js';
 import { createProfile } from '../shared/profile.js';
 import { createAudio } from '../shared/audio.js';
+import { createHaptics } from '../shared/haptics.js';
+import { createFeedback } from '../shared/feedback.js';
 import { createNavigator } from './navigation.js';
 import { createRouter, documentTitle } from './router.js';
 import { initSettingsScreen, applyMotion } from './settings-screen.js';
@@ -49,15 +53,30 @@ export function createApp({ doc, win }) {
     sfxVolume: settings.sfxVolume,
     musicVolume: settings.musicVolume,
   });
-  const toast = createToast({ doc, clock: win, audio });
+  const haptics = createHaptics({
+    nav: win.navigator, doc, clock: win, enabled: settings.haptics,
+  });
+  // Animations follow Settings > Motion (and the device, for "Match device").
+  const reducedMotion = () => {
+    const motion = doc.documentElement.dataset.motion;
+    return motion === 'reduce' || (motion !== 'full' && Boolean(win.matchMedia?.('(prefers-reduced-motion: reduce)').matches));
+  };
+  const feedback = createFeedback({
+    audio, haptics, clock: win, reducedMotion,
+  });
+  const toast = createToast({ doc, clock: win, feedback });
   const confirmDialog = createConfirmDialog(doc);
   const view = createShellsFeathersView(doc);
-  const session = createSession({ view, audio, profile, clock: win });
+  const session = createSession({
+    view, audio, feedback, profile, clock: win,
+  });
   const checkersView = createAcornsLeavesView(doc);
   const checkers = createAcornsLeavesSession({
-    view: checkersView, audio, profile, clock: win, notify: (achievements) => toast.achievements(achievements),
+    view: checkersView, audio, feedback, profile, clock: win, notify: (achievements) => toast.achievements(achievements),
   });
-  const path = createPathScreen({ doc, profile, audio, confirmDialog });
+  const path = createPathScreen({
+    doc, profile, feedback, confirmDialog,
+  });
   let settingsScreen = null;
   let firstRoute = true;
 
@@ -139,7 +158,7 @@ export function createApp({ doc, win }) {
     // Let the browser handle new-tab/new-window clicks.
     if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
-    audio.playSfx('button-select');
+    feedback.cue('button');
     const target = link.getAttribute('href').slice(1);
     if (link.hasAttribute('data-back')) router.back(target);
     else if (link.hasAttribute('data-up')) router.up(target);
@@ -151,7 +170,7 @@ export function createApp({ doc, win }) {
     installDialogFocus(doc);
     // Each match menu has its own sound and motion controls.
     const menuSettings = (id) => createSoundMotion({
-      doc, root: doc.getElementById(id).querySelector('[data-menu-view="settings"]'), win, profile, audio,
+      doc, root: doc.getElementById(id).querySelector('[data-menu-view="settings"]'), win, profile, audio, haptics, feedback,
     });
     const sfSettings = menuSettings('sf-menu');
     const alSettings = menuSettings('al-menu');
@@ -169,9 +188,13 @@ export function createApp({ doc, win }) {
     });
     openHelpWhereItFits();
     rescueFocusOnResize();
-    initShellsFeathersSetup({ doc, profile, audio });
-    initAcornsLeavesSetup({ doc, profile, audio });
-    settingsScreen = initSettingsScreen({ doc, win, profile, audio, confirmDialog, onDeletedAll: deletedAll });
+    initShellsFeathersSetup({ doc, profile, feedback });
+    initAcornsLeavesSetup({ doc, profile, feedback });
+    settingsScreen = initSettingsScreen({
+      doc, win, profile, audio, haptics, feedback, confirmDialog, onDeletedAll: deletedAll,
+    });
+    feedback.setAnimator('sf', view.animator);
+    feedback.setAnimator('al', checkersView.animator);
     for (const board of doc.querySelectorAll('[data-checkers-board]')) renderMiniBoard(board, createInitialState().board);
     path.render();
     // Browsers only allow audio after a user gesture; music waits for it.

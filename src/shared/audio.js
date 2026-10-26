@@ -14,8 +14,8 @@
 // - Volumes are 0–100 (the saved settings); 0 means silent, and music at 0
 //   is paused rather than played silently.
 // - Turning effects off stops any that are playing (the victory theme lasts
-//   half a minute). suspend()/resume() pause the music while the page is
-//   hidden.
+//   half a minute); turning music off stops it at once, cancelling any fade.
+//   suspend()/resume() pause the music while the page is hidden.
 const FADE_MS = 1000;
 const FADE_STEP_MS = 50;
 
@@ -154,10 +154,11 @@ export function createAudio({
       sfxOn = on;
       if (!on) stopEffects();
     },
+    // Muting is immediate: any fade in progress is cancelled.
     setMusicEnabled(on) {
       musicOn = on;
       if (!on) {
-        quietMusic();
+        quietMusic({ immediately: true });
         return;
       }
       musicWanted = true; // turning music on asks for it now

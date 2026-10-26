@@ -223,7 +223,8 @@ test('the achievement notice: read out politely, one at a time, with one chime p
   const nodes = { 'toast-region': el(), toast: el(), 'toast-text': el() };
   const clock = createFakeClock();
   const audio = createFakeAudio();
-  const toast = createToast({ doc: { getElementById: (id) => nodes[id] }, clock, audio });
+  const { createFeedback } = await import('../../src/shared/feedback.js');
+  const toast = createToast({ doc: { getElementById: (id) => nodes[id] }, clock, feedback: createFeedback({ audio, clock }) });
   toast.achievements([]);
   assert.deepEqual(audio.calls, [], 'nothing to say, no chime');
   toast.achievements([{ title: 'Crowned', description: 'Crown one of your pieces against the Spirit.' }, { title: 'Double Jump', description: 'Capture two or more pieces in one move against the Spirit.' }]);

@@ -16,7 +16,8 @@
 | Stage 9: end-to-end QA, Pages caching, README, changelog | `6970194` |
 | Stage 10: visual identity (design tokens, woodland palette, original SVG pieces and icons) | `dfb332d` |
 | Stage 11: phone play (board-first layout, match menu, dependable taps) | `7970d9f` |
-| Stage 12: desktop play (side panel, keyboard and focus, gameplay text, pause and settings) | the commit that adds §0.1 |
+| Stage 12: desktop play (side panel, keyboard and focus, gameplay text, pause and settings) | `7a03766` |
+| Stage 13: interaction feedback (one feedback service, optional haptics, restrained sounds and motion) | the commit that adds §0.1 |
 | Live site | https://officialinspire.github.io/SHELLS-FEATHERS/ still serves v1 from `main`. Nothing from this branch is merged or deployed. |
 
 The existing Shells & Feathers tic-tac-toe game must stay playable at every step of the upgrade. Each stage ends with every test green and the game deployable as is.
@@ -27,7 +28,53 @@ Sections 1–3 are the audit of v1 and stay as they were written, as a record of
 
 ## 0. Status
 
-### 0.1 Stage 12: desktop play
+### 0.1 Stage 13: interaction feedback
+
+The rules of both games are unchanged. Feedback only reports what has already happened: it never decides a move, delays one, or shows anything the player couldn't see.
+
+**One feedback service** (`src/shared/feedback.js`). Each session reports an event once, as a named cue. The cue table says what that event plays, vibrates and animates, so no event has a second listener of its own:
+
+| Cue | Sound | Vibration (ms) | Animation |
+|---|---|---|---|
+| Pick up a piece | shell click (`select`, new) | 6 | — |
+| Put it back | shell click | — | — |
+| Shells & Feathers placement | the existing placement sounds | 10 | the piece settles like a falling leaf |
+| Checkers move | the existing move sounds | 10 | the piece settles on its square |
+| Each jump of a chain | the capture sound | 12 | the piece settles |
+| A capture move | the capture sound | 16 | the piece settles |
+| Two or more captures in one move | a short G–D chirp (`multi`, new), 150 ms later | — | — |
+| Crowning | the crown sound | 10, 40 off, 16 | the crown swells once |
+| A refused tap | a soft leaf rustle (`invalid`, new), at most every 250 ms | 8, at most every 900 ms | a brief ember glow inside the square |
+| Fog: a try finds a hidden piece | the reveal sound | 8 | the found piece bumps |
+| Win / loss / draw | the existing result sounds | 18, 60 off, 24 / 14 / 14 | — |
+| Achievement | the achievement chime | 10, 40 off, 10 | — |
+
+- **Once only:** the same cue for the same event within 60 ms is dropped, whatever reported it twice. Each move carries its own key, so the next move always plays.
+- **Short:** the new sounds are 0.09–0.36 s, synthesized by `tools/make-sounds.py` like the Stage 8 sounds; the existing files are byte-identical. Animations last 0.26–0.45 s and never hold the board: the next move can be made during one.
+- **Volumes:** effects follow the effects switch and volume; music has its own and is untouched. Turning effects off, or their volume to 0, cancels anything queued (the multi-jump chirp). Turning music off now also cancels a fade in progress.
+- **Reduced motion:** with Reduce (or Match device on a device asking for less motion) no animation class is added at all. Sounds and vibration are unaffected.
+- **Sound still starts only from the player's first tap** (Stage 8).
+
+**Haptics** (`src/shared/haptics.js`), a new **Haptics** setting on the Settings screen and in each match menu's Settings view:
+- **Off by default**, and remembered (`settings.haptics` in the save; older saves read as off).
+- **Feature-detected:** no `navigator.vibrate`, or a permissions policy that forbids it, and the switch is disabled with an honest note: this browser can't vibrate (Safari on iPhone and iPad and most desktop browsers have none), and the games play the same. Chromium answers `false` to `allowsFeature('vibrate')` even where vibration works, because it doesn't list vibrate as a policy feature. The policy only counts when the browser lists it.
+- **Turning it on** gives one 12 ms sample. That is a tap, so the browser allows it. If the browser declines (`vibrate()` returns false or throws, for example before any tap, or with vibration off on the device), nothing breaks and the note says so.
+- **Short and rate limited:** no pattern totals more than 120 ms of vibration, pulses closer than 90 ms to the last are dropped (never queued), and a refused tap buzzes at most every 900 ms, so tapping a blocked piece repeatedly is one buzz, not a buzzing.
+- **Only the player's own actions:** picks, moves, captures, crowning, refusals, results and achievements. Never hovering, ambient effects, or the Spirit's moves (each of which still sounds). With two players on one device, both players' moves vibrate.
+
+**Cancelling.** Pausing (the menu or a hidden page) holds the service: nothing sounds or vibrates, and a vibration in progress is stopped. Restart, Play Again, Rematch, Change Mode and leaving cancel the queued chirp, stop the match's playing effects and vibration, and clear the animations. Button clicks and achievement chimes aren't match effects and aren't cut off.
+
+**Fog stays private.**
+- **Two players:** every move, either side's, is the same single move sound and vibration, with no animation. Picks and refusals give nothing, so the other player can't hear or feel what was tried.
+- **Against the Spirit:** its moves animate no square, and its crowning is silent. A found piece bumps only when the player's turn goes on; a try that ends the move animates nothing. Everything animated is on a square in the player's view.
+
+**Verification.**
+- **Bug found by the new browser test:** Chromium's policy answer, described above. The first version trusted it, so real Android Chrome would have shown "can't vibrate".
+- **Mutation check:** with the Spirit's moves made to vibrate, the browser test failed.
+- **New tests:** `tests/unit/feedback.test.mjs`, `tests/unit/feedback-sessions.test.mjs` and `tests/browser/feedback.test.mjs` (§6.1).
+- **Suite:** the full suite, twice.
+
+### 0.2 Stage 12: desktop play
 
 The rules of both games and the phone layouts are unchanged.
 
@@ -100,7 +147,7 @@ Board sizes measured:
 - **New tests:** `tests/browser/desktop.test.mjs` (§6.1); unit tests for the hint and note text, the level descriptions, Escape mid-chain and pause holds; Fog leak checks for the panel.
 - **Suite:** the full suite, twice.
 
-### 0.2 Stage 11: phone play
+### 0.3 Stage 11: phone play
 
 The rules of both games are unchanged.
 
@@ -159,7 +206,7 @@ Board size before and after (the Safari and Chrome sizes are the visible area wi
 - **New tests:** `tests/browser/mobile.test.mjs` (§6.1), plus unit tests for pausing timers and both sessions.
 - **Suite:** the full suite, twice.
 
-### 0.3 Stage 10: visual identity
+### 0.4 Stage 10: visual identity
 
 **Direction.** A woodland tabletop:
 - the boards are warm wooden trays and frames on a forest-green page, which fades from canopy to forest floor;
@@ -198,7 +245,7 @@ Panel-like boxes share one surface rule. Old variable names remain as aliases; t
 - **Contrast audit:** 0 of 1,754 text runs below AA, no touch-size problems, no clipped text. The focus rings on the volume sliders were checked directly.
 - **Tests:** unit and browser suites, twice.
 
-### 0.4 Stage 9: end-to-end QA before the playtest
+### 0.5 Stage 9: end-to-end QA before the playtest
 
 **Scripted play.** The site was served under `/SHELLS-FEATHERS/`, as Pages does, so a root-relative path would fail. Every move was made through the page:
 
@@ -224,7 +271,7 @@ Panel-like boxes share one surface rule. Old variable names remain as aliases; t
 
 **Analytics.** The repository has no analytics or event-tracking code and no INSPIRE convention to follow, so none was added. The PR asks which convention, if any, to adopt.
 
-### 0.5 Stage 8: settings, sound, Your Path and achievements
+### 0.6 Stage 8: settings, sound, Your Path and achievements
 
 **Settings.**
 - Settings holds only what every game shares:
@@ -305,7 +352,7 @@ Panel-like boxes share one surface rule. Old variable names remain as aliases; t
   - volume outside 0–1.
 - **Audio and Fog safeguards:** three more deliberate bugs (the stale-refusal guard, and the two Fog sound rules) were also caught.
 
-### 0.6 Stage 7: one Spirit of the Woods look
+### 0.7 Stage 7: one Spirit of the Woods look
 
 The hub and both games now share one look, polished as one collection. The palette (browns, sand, cream, turquoise and sunset orange on the brown-to-sky gradient), the Uncial Antiqua and Cinzel type, and the Shells & Feathers pieces and wording are kept. Nothing about play, rules, routes or saves changed. Assets and their sources are listed in [`assets.md`](assets.md).
 
@@ -388,7 +435,7 @@ How contrast was measured: each text run was compared with the pixels actually r
 
 No ceremonial or cultural imagery was added.
 
-### 0.7 Stage 6: Fog of War for Acorns & Leaves
+### 0.8 Stage 6: Fog of War for Acorns & Leaves
 
 Fog of War is a separate Acorns & Leaves mode, chosen with "Rules: Classic / Fog of War" on the setup screen. It has its own routes (`#/acorns-leaves/fog/single`, `…/fog/two`) and its own records. **Classic is unchanged:** same rules, full visibility, and its tests pass as before. The exact rules are in [`fog-rules.md`](fog-rules.md), written before the code.
 
@@ -445,7 +492,7 @@ Each game was recorded once in the Fog records. The match fitted the screen, the
 - the board after a handoff;
 - the result, and the revealed final board.
 
-### 0.8 Stage 5: Acorns & Leaves is playable
+### 0.9 Stage 5: Acorns & Leaves is playable
 
 The checkers engine from Stage 4 now drives a real game in the hub. The hub card says "Ready to play" and leads to a setup screen (side and Spirit difficulty), then a match for two players on one device or against the Spirit, then a result dialog with Rematch, Change Mode, All Games and View Board. Records appear in Your Path. Shells & Feathers is unchanged, and there is no Fog of War.
 
@@ -543,7 +590,7 @@ Each game was recorded exactly once, in the right bucket. No page errors in any 
 
 The 320 px draw run found guidance and result text wrapping to three lines and pushing the controls off screen, and side names being cut short. Fixed: shorter wording, a tighter header, "You"/"Spirit" names with the side spoken, and a fit check with the longest guidance.
 
-### 0.9 Stage 4: the Acorns & Leaves rules engine
+### 0.10 Stage 4: the Acorns & Leaves rules engine
 
 `src/games/acorns-leaves/engine.js` is a pure Classic Checkers engine (American checkers / English draughts), separate from any user interface. The full rules and every rule choice are in [`docs/acorns-leaves-rules.md`](acorns-leaves-rules.md).
 
@@ -569,7 +616,7 @@ The 320 px draw run found guidance and result text wrapping to three lines and p
 
 **Still a preview (until Stage 5).** The hub card, preview notice and rules page said the rules were ready but the board wasn't, and stated the forward-only captures, the free choice between captures, crowning ending the move and the draw rule. Shells & Feathers was unchanged. Fog of War was not part of this stage.
 
-### 0.10 Stage 3: Shells & Feathers inside the hub
+### 0.11 Stage 3: Shells & Feathers inside the hub
 
 The game keeps everything it had:
 - Shell 🐚 and Feather 🪶 pieces;
@@ -608,7 +655,7 @@ On all three: no errors, no sideways scrolling, and exactly two games recorded. 
 
 **Known limit (unchanged).** Two tabs playing at once each keep their own copy of the records, and the last one saved wins. Nothing is double-counted, but one tab's games can be overwritten.
 
-### 0.11 Stage 2: the game hub
+### 0.12 Stage 2: the game hub
 
 The opening screen is now a hub for Spirit of the Woods games.
 
@@ -652,7 +699,7 @@ Settings (sound, music) and Your Path (totals, records per difficulty and two-pl
 | P3 (CSS) | **Fixed.** The unused celebration styles are removed. The unused PNGs remain. |
 | ST1 | **Fixed.** Your Path shows the per-mode breakdown next to the v1-style totals. |
 
-### 0.12 Stage 1: modules, lifecycle, save migration
+### 0.13 Stage 1: modules, lifecycle, save migration
 
 **Done in Stage 1.**
 - `index.js` is split into ES modules under `src/` (§4), with explicit lifecycles for screens, matches, timers and music fades.
@@ -1082,8 +1129,8 @@ npm test                          # = npm run test:unit && npm run test:browser
 | `acorns-leaves-fog-ai.test.mjs` | **The Spirit in Fog:** imagined boards fit its view; only offered steps; not omniscient (the same view gives the same step); bounds; sensible play; Wise beats Gentle. |
 | `acorns-leaves-fog-session.test.mjs` | **Fog session:** every drawn model leak-free; the Spirit handed only its view, deciding at once and moving unseen after a fixed pause; blocked tries; the fog lifting; Fog records; the two-player handoff; restarts; Classic unchanged; whole game against the real Spirit. |
 | `sounds-achievements.test.mjs` | **Sounds and achievements in play (Stage 8):**<ul><li>**Results:** a win plays the victory theme (the music pauses); a loss and a draw have gentle sounds of their own and the music continues.</li><li>**Achievements:** the result dialog lists the new ones once; your double jump and crowning are reported at once, and once; nothing from two-player moments.</li><li>**Fog:** in a whole two-player game every move makes the same tap and nothing else; the Spirit's crowning is heard in Classic, never in Fog; in a whole game against the Spirit its turns never sound a crowning or reveal.</li><li>**Achievement notice:** queues, one chime per batch, then clears.</li></ul> |
-| `desktop.test.mjs` | **Desktop play (Stage 12):**<ul><li>**Layout:** at seven window sizes (900×600 to 1920×1080) both games fit with no scrolling; the board is square and as big as the height allows (up to its cap); board and panel are centered together; the panel holds the hint, notes, help and controls; controls are at least 44px and text at least 13.5px.</li><li>**Mouse:** both games played by clicking, with the pick and its destinations drawn without hovering.</li><li>**Keyboard only:** a checkers capture line by arrows, Enter and Space; Escape puts a piece back, and mid-chain is refused with a reason; the focus ring and the pick are distinct and shown together; Menu, Settings and Escape stepping back; the panel's Restart puts focus on the board. In Shells & Feathers: View Board, then Play Again from the panel, then the first square.</li><li>**Resizing mid-match:** desktop → phone → landscape → desktop keeps the board and the pick; focus on a control that disappears moves to Menu.</li><li>**Pause:** Settings inside the menu (a change saved at once) and a hidden page each hold the Spirit and the animations; the menu closing doesn't release a hidden page.</li><li>**Cancelling:** Restart and Change Mode during the Spirit's turn leave no move and no animation.</li><li>**Text:** the Spirit thinking with its level, a taken square, and the last move; difficulty descriptions on both setup screens, Classic and Fog, equal the Spirit's own.</li></ul> |
-| `mobile.test.mjs` | **Phone play (Stage 11):**<ul><li>**Layout:** at nine phone sizes in portrait and landscape (320×568 to 932×430, including Safari and Chrome sizes with their toolbars shown), both games fit with no sideways scroll; the board, Menu, chips, turn line and guidance are on screen; the board takes at least 85% of the width (portrait) or height (landscape); and the header sits beside the board in landscape.</li><li>**Short screen:** 320×460 scrolls instead of clipping (the top is not cut off, squares stay 36px), a drag on the board scrolls the page and moves nothing, and play continues scrolled.</li><li>**Toolbars and rotation:** mid-match, with a piece picked up, through taller, landscape and back. The board, the pick and the open menu are kept and fit, and the move completes.</li><li>**Menu:** pauses the Spirit in both games and resumes; the screen is inert; Escape and the backdrop close it, with focus back on Menu; browser Back closes it. After the game: Play Again under the board, and no "unrecorded" note.</li><li>**Taps:** a rapid second tap after a move is ignored, then the next tap counts; a bounce on a piece keeps it picked up, and a later tap puts it back; another piece takes over the pick; slides and two fingers pick nothing; a mouse drag is no move; the keyboard is never slowed.</li><li>**Hit areas:** each square answers just inside its edges and nowhere else, marks included, and the gaps belong to no square.</li><li>**Fog:** rotation keeps the handoff covering a pieceless board, fogged squares hold and name nothing through the menu and rotation, and Restart goes back to the handoff.</li></ul> |
+| `feedback.test.mjs` | **Feedback service and haptics (Stage 13):**<ul><li>**Haptics:** no `vibrate()` or a policy forbidding it is unsupported (and Chromium's unlisted policy is not); off until turned on; patterns over 120 ms never asked for; the 90 ms gap and a refusal's own 900 ms gap; a refusal or an exception caught and reported; held while paused, stopping a vibration in progress.</li><li>**Cues:** each plays its sound, vibration and animation; the Spirit's moves not felt; the same event twice counts once; rapid refusals rustle at most every 250 ms; the queued chirp waits its delay, and cancel and hold drop it and stop what plays; reduced motion skips animations only; no haptics, everything else the same.</li></ul> |
+| `feedback-sessions.test.mjs` | **Both games through the real service (Stage 13):** pick, refusal, each jump, a multi-jump's chirp and crowning; the Spirit's moves never vibrate; Fog against the Spirit animates no hidden square and its crowning stays silent; two-player Fog gives one identical tap per move and nothing for picks and refusals; pausing holds, and Restart and leaving cancel; Shells & Feathers placements, the Spirit's unfelt, a taken square refused. |
 | `asset-versions.test.mjs` | **The site as Pages serves it (Stage 9):** the asset stamp is current; every referenced file and module import is relative and exists under that exact name; `.nojekyll` is present. |
 | `hub-content.test.mjs` | **Achievements (Stage 8), both games:**<ul><li>all locked at first;</li><li>each record achievement from its record;</li><li>two-player wins never count as yours;</li><li>v1 games count toward First Game and Ten Games only;</li><li>each unlocks once, across reloads, keeping its time;</li><li>moments only in games against the Spirit;</li><li>older saves backfilled once, and cleared ones never;</li><li>malformed entries repaired, a newer build's ids kept;</li><li>clearing one game leaves the other and the settings;</li><li>Delete all removes exactly the game's keys, the v1 one included;</li><li>blocked storage works for the session and is reported once.</li></ul> |
 
@@ -1099,6 +1146,9 @@ npm test                          # = npm run test:unit && npm run test:browser
 | `match-flows.test.mjs` | **First move and the Spirit's turn:** the board is busy, taps are ignored, and both moves are announced. **Win and draw:** the board locks, winning squares are named and edged, the result and line are announced, and a draw adds to neither score. **Scoring once:** the winning square is clicked twice in one task and pressed with Enter three times; then View Board, taps after the end, Restart, Back/Forward and reload. Exactly one game is recorded. **Cancelling the Spirit's move:** Restart, switching to an Acorns & Leaves match, and going home during its turn; nothing scored, no stale move. **Keyboard:** arrows, Home/End, Enter/Space, taken squares refuse, and a dark focus ring on empty, taken and winning squares. **Phone (320×568, touch):** pinch zoom allowed; a touch drag scrolls the setup screen; no `touchmove` is blocked anywhere; no page-wide overscroll setting; only the board uses `touch-action: manipulation`; squares are 60 px or more; a swipe across the board is not a move; a touch game plays to a result. |
 | `acorns-leaves.test.mjs` | **Board and pieces:** the engine's starting position as drawn, 32 dark-square buttons, separate acorn and leaf drawings (rim and emblem), kings with a crown. **Picking and moving:** selection, destinations, square names, announcements, refusals. **Capture sequence:** compulsory capture with both capturing pieces ringed, a double jump square by square (piece moves on, jumped leaf marked, route tinted, other picks and Escape refused), captured counts, the recapture. **Whole games:** two players to a result with every move checked against the engine, the result panel (the winner's piece, or both for a draw, and the captured counts), the board locked after the end, Restart, one record, Your Path; against the Spirit (Playwright's clock) to a result, with stray clicks and Escape ignored during its turn and every one of its moves matched to a legal move, then Rematch. **Cancelling:** Restart, Change Mode, Back, going home and switching to Shells & Feathers during the Spirit's turn. **Turned board:** playing the Leaves puts h8 bottom-left, the Spirit opens, keys follow the screen. **Keyboard only:** Tab to the game, arrows, Enter/Space, Escape, focus ring above neighbours. **Layout:** at 320×568 (touch), 360×560 (Android, touch), 390×844, 640×360 (Android landscape, touch), 750×340 and 1280×800 the whole match fits with the longest guidance, squares are at least 36 px, and the capture line plays. **Phone gestures:** a swipe is not a move, nothing blocks touch. **Your Path:** records shown and cleared apart from Shells & Feathers; saved side and difficulty preselected. |
 | `acorns-leaves-fog.test.mjs` | **Fog of War in the page** (the side panel too, Stage 12: empty behind the handoff, the last move exactly as announced, rule notes naming no square): the rules choice and its routes; a whole two-player game checked square by square against each player's view (pieces, drawn pieces, fog, names), with every handoff covering the screen, holding no piece or mark, and resetting the keyboard stop; a whole game against the Spirit with leak checks every turn; a blocked try revealing exactly one square; Restart during the Spirit's turn; Classic still showing everything; phone and landscape layout. |
+| `feedback.test.mjs` | **Feedback in the page (Stage 13):**<ul><li>**No vibration in the browser:** the Haptics switch is disabled with the honest note, on the Settings screen and in the match menu, even with a save that had it on; a whole game plays with its sounds.</li><li>**Vibration:** nothing until Haptics is turned on; one sample when it is; remembered after a reload; picks and moves vibrate, hovering and the Spirit's moves don't; eight quick refused taps give one buzz and one rustle.</li><li>**A browser that refuses:** the note says so and the game plays on.</li><li>**Mute and rapid input:** with effects off nothing plays, while vibration keeps its own setting; a double click is one move with one sound.</li><li>**Pause, hidden page, leaving:** opening the menu or leaving right after a multi-jump drops its chirp and stops the vibration; a hidden page plays and vibrates nothing, its tap isn't a move, and feedback returns when it is shown.</li><li>**Animations:** settles where the moves landed, made in quick succession without waiting; a refusal's glow; the classes come off; none at all under Reduce; Fog against the Spirit never animates a square still hidden.</li></ul> |
+| `desktop.test.mjs` | **Desktop play (Stage 12):**<ul><li>**Layout:** at seven window sizes (900×600 to 1920×1080) both games fit with no scrolling; the board is square and as big as the height allows (up to its cap); board and panel are centered together; the panel holds the hint, notes, help and controls; controls are at least 44px and text at least 13.5px.</li><li>**Mouse:** both games played by clicking, with the pick and its destinations drawn without hovering.</li><li>**Keyboard only:** a checkers capture line by arrows, Enter and Space; Escape puts a piece back, and mid-chain is refused with a reason; the focus ring and the pick are distinct and shown together; Menu, Settings and Escape stepping back; the panel's Restart puts focus on the board. In Shells & Feathers: View Board, then Play Again from the panel, then the first square.</li><li>**Resizing mid-match:** desktop → phone → landscape → desktop keeps the board and the pick; focus on a control that disappears moves to Menu.</li><li>**Pause:** Settings inside the menu (a change saved at once) and a hidden page each hold the Spirit and the animations; the menu closing doesn't release a hidden page.</li><li>**Cancelling:** Restart and Change Mode during the Spirit's turn leave no move and no animation.</li><li>**Text:** the Spirit thinking with its level, a taken square, and the last move; difficulty descriptions on both setup screens, Classic and Fog, equal the Spirit's own.</li></ul> |
+| `mobile.test.mjs` | **Phone play (Stage 11):**<ul><li>**Layout:** at nine phone sizes in portrait and landscape (320×568 to 932×430, including Safari and Chrome sizes with their toolbars shown), both games fit with no sideways scroll; the board, Menu, chips, turn line and guidance are on screen; the board takes at least 85% of the width (portrait) or height (landscape); and the header sits beside the board in landscape.</li><li>**Short screen:** 320×460 scrolls instead of clipping (the top is not cut off, squares stay 36px), a drag on the board scrolls the page and moves nothing, and play continues scrolled.</li><li>**Toolbars and rotation:** mid-match, with a piece picked up, through taller, landscape and back. The board, the pick and the open menu are kept and fit, and the move completes.</li><li>**Menu:** pauses the Spirit in both games and resumes; the screen is inert; Escape and the backdrop close it, with focus back on Menu; browser Back closes it. After the game: Play Again under the board, and no "unrecorded" note.</li><li>**Taps:** a rapid second tap after a move is ignored, then the next tap counts; a bounce on a piece keeps it picked up, and a later tap puts it back; another piece takes over the pick; slides and two fingers pick nothing; a mouse drag is no move; the keyboard is never slowed.</li><li>**Hit areas:** each square answers just inside its edges and nowhere else, marks included, and the gaps belong to no square.</li><li>**Fog:** rotation keeps the handoff covering a pieceless board, fogged squares hold and name nothing through the menu and rotation, and Restart goes back to the handoff.</li></ul> |
 | `polish.test.mjs` | **The shared look (Stage 7).** Shells & Feathers chips: "To move" follows the turn, "Winner" marks the winner and clears on the next round, nothing after a draw; the scores and labels are unchanged. **Result panel:** the winning piece, both pieces for a draw, and the session score, read with the result. **Motion:** every animation seen on the hub, the match, a piece placed, the winning line, the result panel and a capture to make is finite and done within 2 s; the test fails if any loops. **Reduced motion:** nothing animates and buttons change state at once, while the winning line still shows gold and edged. |
 | `hub.test.mjs` | **Hub:** both cards are ready to play, with Play and How to Play; the checkers card shows the starting position with the game's pieces; both How to Play pages (the checkers one covers every rule choice and the board marks). **Full trip:** hub → setup → match → result → Play Again → Change Mode → other mode → All Games → Settings → Your Path achievements. **History:** Back/Forward (fresh match on Forward; "Change Mode" adds no history entry), reload, deep links, unknown links. **Keyboard only:** Tab to the game, arrow keys and Enter/Space to win, the dialog takes and keeps focus, Escape shows the board. **Devices:** narrow phone 320×568 with touch, and desktop 1280×800, each playing both modes to a result with the match fitting on screen. **Reachability:** at 320×568, 360×560 (a short Android screen), 360×640, 640×360, 750×340 and 1280×800, every link, button and input on every screen (and in both result dialogs) can be scrolled into view, is not covered, and is at least 44×44 px (checkers squares at least 36×36), including the Fog handoff screen, the Fog match and the delete-all dialog; no sideways scrolling. |
 
@@ -1106,7 +1156,7 @@ npm test                          # = npm run test:unit && npm run test:browser
 
 **Stage 1.**
 - **AI:** v1's `index.js` (from `main`) was loaded in a Node VM and compared with `src/games/shells-feathers/ai.js` on every AI-to-move position, for both symbol assignments, every difficulty and five seeded random sources. 62,910 comparisons, 0 differences.
-- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.12.
+- **Visual parity:** screenshots of start, modes, settings, stats, a game in progress, a win, and a single-player reply, on `main` and on the branch. Desktop 1280×800 and Pixel 5, with animations disabled and scroll reset. Identical except the phone board-border anti-aliasing noted in §0.13.
 - **Mutation check:** key safeguards were removed one at a time (timer disposal on teardown, fade cancellation, the storage guards, the v1 migration). The suite failed each time.
 
 **Stage 2.**
@@ -1121,7 +1171,7 @@ npm test                          # = npm run test:unit && npm run test:browser
   - saving the difficulty choice.
 
 **Stage 3.**
-- **Match-flow audit** in Chromium before and after the fixes (§0.10), and the **phone smoke test** on three emulated phones (§0.10).
+- **Match-flow audit** in Chromium before and after the fixes (§0.11), and the **phone smoke test** on three emulated phones (§0.11).
 - **Mutation check:** each of these was removed one at a time, and the suite failed each time:
   - the waiting and locked board states;
   - turn announcements;
@@ -1136,10 +1186,10 @@ npm test                          # = npm run test:unit && npm run test:browser
 
   Removing one or two layers changes nothing observable. With all three removed, the score-once test fails.
 
-**Stage 4.** Nine rule bugs were put into the engine one at a time; the engine tests failed for each (§0.9).
+**Stage 4.** Nine rule bugs were put into the engine one at a time; the engine tests failed for each (§0.10).
 
 **Stage 5.**
-- **Scripted playtests** on emulated desktop and phones, with long-task measurement and screenshots (§0.8).
+- **Scripted playtests** on emulated desktop and phones, with long-task measurement and screenshots (§0.9).
 - **Mutation check:** each of these was introduced one at a time, and the suite failed each time:
   - the board taking picks while the Spirit acts;
   - a teardown that keeps the old timers;
@@ -1163,7 +1213,7 @@ npm test                          # = npm run test:unit && npm run test:browser
 - **Redundant layer:** removing only the "score once" guard is not observable. As in Shells & Feathers, the rules already refuse moves after the end, and the session ignores picks once there is a result.
 
 **Stage 6.**
-- **Scripted Fog playtests** on emulated desktop and phones. The scripted player saw only the page; screenshots and long tasks were reviewed (§0.7).
+- **Scripted Fog playtests** on emulated desktop and phones. The scripted player saw only the page; screenshots and long tasks were reviewed (§0.8).
 - **Leak and rule check:** each of these was introduced one at a time, and the suite failed every time (16 of 16):
   - drawing the real board on the player's turn, or during the Spirit's turn;
   - handing the Spirit the real board;
@@ -1181,31 +1231,36 @@ npm test                          # = npm run test:unit && npm run test:browser
 
 **Stage 7.**
 - **Before and after screenshots** of the same 14 screens and overlays at four sizes, made with the same script on Stage 6 (`69852ea`) and on this commit, and reviewed side by side: hub, both setups, both matches, both result panels, a capture chain, the final board, Fog, the handoff, How to Play, Settings and Your Path.
-- **Audit script:** contrast against the rendered pixels, touch-target size, focus rings and clipped text, on every screen and overlay (§0.6).
+- **Audit script:** contrast against the rendered pixels, touch-target size, focus rings and clipped text, on every screen and overlay (§0.7).
 - **Mutation check:** an endless pulse was put back on the turn line, and `polish.test.mjs` failed.
 
 **Stage 8.**
-- **Mutation check:** ten safeguards were removed one at a time (§0.5), with the unit suite passing first. Each was caught by a named test.
+- **Mutation check:** ten safeguards were removed one at a time (§0.6), with the unit suite passing first. Each was caught by a named test.
 - **Sound timing:** every effect was measured. Each now starts within about 10 ms of being played (before, the select sounds started 0.32–0.51 s late), and `tools/make-sounds.py` gives byte-identical files on every run.
 - **Screenshots** of Settings, Your Path, both delete dialogs, a result with a new achievement, and the in-play notice, at 360×640, 360×560 and 1280×800, reviewed by eye.
 - **Stage 7 audit** re-run with the new screens: contrast clean, touch sizes clean, no clipped text. Focus rings were checked on the volume sliders directly, because the audit's sibling probe for inputs doesn't fit range inputs.
 
 **Stage 9.**
-- **Scripted play:** the end-to-end playthroughs in §0.4 (scratch scripts, not part of the suite).
+- **Scripted play:** the end-to-end playthroughs in §0.5 (scratch scripts, not part of the suite).
 - **Dialog focus:** the new dialog-focus test was shown to fail without its fix.
 - **Asset stamp:** the stale-stamp test was shown to fail after a one-character stylesheet change.
 
 **Stage 11.**
-- **Layout script** at 16 viewports, before and after, and screenshots of every match state and overlay at small and large phone sizes, in both orientations (§0.2).
+- **Layout script** at 16 viewports, before and after, and screenshots of every match state and overlay at small and large phone sizes, in both orientations (§0.3).
 - **Stage 7 audit** re-run with the match menus.
 - **Test fixes:** the new tap tests first failed for real reasons, and the code was changed, not the tests:
   - entering a match started the stray-tap pause, so the pause now follows only real moves;
   - squares on a 568×320 landscape phone were 35px, so the frame and padding are now slimmer there.
 
 **Stage 12.**
-- **Layout script** at 11 desktop sizes and screenshots of every panel and menu state (§0.1).
+- **Layout script** at 11 desktop sizes and screenshots of every panel and menu state (§0.2).
 - **Test helper:** `settle()` now skips animations paused by the menu. Before, it waited forever, which made the first full run hang.
 - **Focus race:** a full run caught focus being lost when a resize hid the focused control. Chrome had already moved focus to the page, so the rescue saw nothing to do. It now uses the last control focused. A test covers the case where focus has already dropped to the page, and it fails with the old logic.
+
+**Stage 13.**
+- **A real bug from the browser test:** Chromium's `allowsFeature('vibrate')` is false although vibration works, so Haptics would have been shown as unavailable on Android Chrome (§0.1). The policy now counts only where the browser lists the feature, with a unit test for each case.
+- **Mutation check:** with the Spirit's moves made to vibrate, the browser test failed, then passed again on the real code.
+- **Test fixes, not code:** the test's class observer first counted each animation twice (two records in one batch both saw the class), and a tap on a hidden page was rightly ignored by the paused match.
 
 ### 6.3 Remaining automated checks to add
 
@@ -1225,6 +1280,9 @@ npm test                          # = npm run test:unit && npm run test:browser
 - [ ] Browser Back/Forward and the system back gesture on Android move between hub, setup and match as expected.
 - [ ] A screen reader (VoiceOver, TalkBack) announces squares, turns and results, and the dialog; on the checkers board also picks, chains of jumps, the Spirit's moves and crowning.
 - [ ] Acorns & Leaves on a real small phone: squares easy to hit, a whole game by touch in both modes, the board turned round when playing the Leaves, and no lag when the Spirit moves.
+- [ ] Haptics on a real Android phone: the switch is available and its sample is felt; moves, captures, crowning, a refused tap and results are short and gentle; the Spirit's moves and hovering are never felt; rapid refused taps give one buzz; nothing after the menu opens, the screen locks or the match is left.
+- [ ] Haptics on an iPhone or iPad (Safari): the switch is disabled with the note, and the games play the same.
+- [ ] Sounds on a real device: the new click, rustle and chirp are soft beside the music at default volumes, never harsh, and don't slow quick play.
 - [ ] Private or incognito window: game playable; stats behave sensibly.
 - [ ] Upgrade path: a browser with real v1 stats keeps its totals after deploy, and they appear in "Your Path".
 - [ ] Throttled 3G: time to first playable board.

@@ -4,7 +4,7 @@
 // ai.js's own description of each level.
 import { LEVEL_WORDS as HINTS } from './ai.js';
 
-export function initShellsFeathersSetup({ doc, profile, audio }) {
+export function initShellsFeathersSetup({ doc, profile, feedback }) {
   const symbolInputs = [...doc.querySelectorAll('input[name="sf-symbol"]')];
   const difficultyInputs = [...doc.querySelectorAll('input[name="sf-difficulty"]')];
   const hint = doc.getElementById('sf-difficulty-hint');
@@ -17,14 +17,14 @@ export function initShellsFeathersSetup({ doc, profile, audio }) {
   for (const input of symbolInputs) {
     input.addEventListener('change', () => {
       profile.updateGameSettings({ player1Symbol: input.value });
-      audio.playSfx('button-select');
+      feedback.cue('button');
     });
   }
   for (const input of difficultyInputs) {
     input.addEventListener('change', () => {
       profile.updateGameSettings({ difficulty: input.value });
       hint.textContent = HINTS[input.value];
-      audio.playSfx('button-select');
+      feedback.cue('button');
     });
   }
 }

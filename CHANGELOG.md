@@ -16,6 +16,12 @@ The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two 
   - **13 achievements**, each unlocked once and dated.
 - **Clearing data:** clearing a game's progress or deleting all saved data lists exactly what will be deleted first.
 - **Sounds:** new original sounds for moves, captures, crowning, Fog reveals, draws, losses and achievements.
+- **Feedback:** one shared feedback service plays each event's sound, optional vibration and animation exactly once:
+  - new soft sounds for picking up a piece (a shell click), a refused tap (a leaf rustle) and multi-jumps (a short chirp);
+  - a leaf-like settle where a piece lands, a crown that swells once, and a brief glow on a refused square, all skipped under reduced motion;
+  - nothing queued plays after muting, pausing, hiding the page or leaving a match;
+  - in Fog nothing gives away a hidden piece, and with two players every move sounds and feels the same.
+- **Haptics setting:** optional short vibrations for your own actions (never the Spirit's moves or hovering), rate limited, off by default, and shown as unavailable, with the reason, where the browser can't vibrate.
 
 ### Changed
 - **Visual identity:**

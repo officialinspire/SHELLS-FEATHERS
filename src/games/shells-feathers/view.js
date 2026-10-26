@@ -31,6 +31,7 @@ import { DIFFICULTY_NAMES } from './ai.js';
 import { svgIcon } from '../../shared/icons.js';
 import { createBoardTaps } from '../../shared/board-taps.js';
 import { createMatchMenu } from '../../shared/match-menu.js';
+import { flashClass } from '../../shared/feedback.js';
 
 // The pieces are drawn from the SVG sprite (#sf-shell, #sf-feather).
 const piece = (doc, symbol, className) => svgIcon(doc, `#sf-${symbol}`, className);
@@ -317,6 +318,17 @@ export function createShellsFeathersView(doc) {
     dismissResult,
     hideMenu() {
       menu?.close();
+    },
+    // For the feedback service: a placed piece settles, a taken square
+    // refuses; clear() stops them all.
+    animator: {
+      play(motion, { index }) {
+        if (!['place', 'refuse'].includes(motion) || !cells[index]) return;
+        flashClass(cells[index], `fx-${motion}`, doc.defaultView);
+      },
+      clear() {
+        for (const cell of cells) cell.classList.remove('fx-place', 'fx-refuse');
+      },
     },
   };
 }

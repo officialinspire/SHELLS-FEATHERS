@@ -9,13 +9,15 @@ import { createSoundMotion, applyMotion } from './sound-motion.js';
 
 export { applyMotion };
 
-export function initSettingsScreen({ doc, win, profile, audio, confirmDialog, onDeletedAll }) {
+export function initSettingsScreen({
+  doc, win, profile, audio, haptics, feedback, confirmDialog, onDeletedAll,
+}) {
   const byId = (id) => doc.getElementById(id);
   const showStorage = () => {
     byId('settings-storage-note').hidden = !profile.saveFailing();
   };
   const controls = createSoundMotion({
-    doc, root: byId('settings-screen'), win, profile, audio, onSaved: showStorage,
+    doc, root: byId('settings-screen'), win, profile, audio, haptics, feedback, onSaved: showStorage,
   });
 
   function show() {

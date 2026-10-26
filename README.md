@@ -74,6 +74,7 @@ On a wide screen a side panel beside the board shows whose turn it is, what to d
 - **Settings** are shared by both games:
   - **Music** and **Sound effects**, each with a switch and its own volume.
   - **Motion:** follow the device's "reduce motion" setting, or force Reduce or Full.
+  - **Haptics:** short, gentle vibrations for your own moves, captures, crowning, a refused move, results and achievements. Off until you turn it on, and only where the browser can vibrate (Android Chrome can; Safari on iPhone and iPad and most desktop browsers can't, and Settings says so). The Spirit's moves and hovering never vibrate.
   - Sound starts only after your first tap, click or key press, and pauses while the page is hidden.
   - Each game's own options (pieces, side, rules, difficulty) are on that game's screen.
 - **Your Path** shows each game's records:
