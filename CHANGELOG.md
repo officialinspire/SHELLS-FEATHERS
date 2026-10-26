@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.1: Social preview and installable app
+
+- New wide social banner shows both games and the INSPIRE wordmark. The game's Open Graph and Twitter metadata point to its absolute GitHub Pages image URL.
+- Acorn favicon and 180/192/512 px app icons, web manifest, and standalone install metadata.
+- Service worker caches the stamped game shell and short effects for offline play after installation. Long music and intro video remain optional network media.
+- Added a browser offline-play check and unit checks for the preview, icon dimensions, precache dependencies, and offline navigation fallback.
+
 ## 2.0.0: Spirit of the Woods (unreleased; branch `claude/hopeful-hawking-ummjv2`)
 
 The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two games.

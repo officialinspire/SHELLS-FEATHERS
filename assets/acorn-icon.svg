@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Spirit of the Woods acorn</title>
+  <rect width="512" height="512" fill="#173d29"/>
+  <circle cx="256" cy="256" r="190" fill="#244d34" stroke="#d8b976" stroke-width="8"/>
+  <path d="M171 236h170c-3 76-31 132-85 166-54-34-82-90-85-166Z" fill="#bd7839" stroke="#422714" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M195 273c4 48 19 77 42 93" fill="none" stroke="#e5a866" stroke-width="11" stroke-linecap="round"/>
+  <path d="M141 239c0-66 47-104 115-104s115 38 115 104Z" fill="#69401f" stroke="#422714" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M162 212q16-19 32 0 16-19 32 0 16-19 32 0 16-19 32 0 16-19 32 0 16-19 32 0M177 186q16-17 32 0 16-17 32 0 16-17 32 0 16-17 32 0 16-17 32 0" fill="none" stroke="#aa7543" stroke-width="9" stroke-linecap="round"/>
+  <path d="M256 135c0-26 12-43 32-51" fill="none" stroke="#422714" stroke-width="17" stroke-linecap="round"/>
+</svg>
