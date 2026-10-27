@@ -12,7 +12,7 @@ Two peaceful board games from the forest, played in the browser: **Shells & Feat
 
 The link serves whatever is on the `main` branch. Changes on a feature branch appear there only after they are merged.
 
-It works on phones, tablets and desktop, by touch, mouse or keyboard. There is nothing to install and no account. Progress is kept in your browser.
+It works on phones, tablets and desktop, by touch, mouse or keyboard. The phone home screen shows one game at a time: use the two game buttons to switch, then Play, How to Play or Resume. Settings, Your Path and Journal stay at the bottom. On wider screens both game cards appear together. There is nothing to install and no account. Progress is kept in your browser.
 
 ---
 

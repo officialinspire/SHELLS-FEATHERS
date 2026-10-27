@@ -32,6 +32,7 @@ import { createSoundMotion } from './sound-motion.js';
 import { createPathScreen } from './path-screen.js';
 import { createJournalScreen, TAB_PATHS } from './journal-screen.js';
 import { createResumeUi } from './resume-ui.js';
+import { initHubChooser } from './hub-chooser.js';
 import { createTutorial, SETUP_PATHS } from './tutorial.js';
 import { createResumeStore } from '../shared/resume.js';
 import { createStartGate } from './start-gate.js';
@@ -272,6 +273,7 @@ export function createApp({ doc, win }) {
 
   function init() {
     doc.addEventListener('click', onClick);
+    initHubChooser(doc, win, () => feedback.cue('button'));
     installDialogFocus(doc);
     // Each match menu has its own sound and motion controls.
     const menuSettings = (id) => createSoundMotion({

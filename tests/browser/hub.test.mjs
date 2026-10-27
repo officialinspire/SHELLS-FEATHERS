@@ -27,6 +27,7 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     const al = page.locator('article', { has: page.locator('#al-card-title') });
     assert.equal(await al.locator('.badge').textContent(), 'Ready to play');
     assert.doesNotMatch(await al.textContent(), /preview|can't be played/i);
+    await page.locator('[data-hub-game="al"]').click();
     assert.deepEqual(await names(al.getByRole('link')), ['Play Acorns & Leaves', 'How to Play Acorns & Leaves']);
     assert.equal(await al.getByRole('link', { name: 'Play Acorns & Leaves', exact: true }).getAttribute('href'), '#/acorns-leaves');
     assert.equal(await al.locator('.btn-primary').count(), 1);
@@ -62,6 +63,7 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     await game.waitForScreen('sf-setup-screen');
 
     await game.goHome();
+    await page.locator('[data-hub-game="al"]').click();
     await game.press('How to Play Acorns & Leaves');
     await game.waitForScreen('al-howto-screen');
     const screen = page.locator('#al-howto-screen');

@@ -265,6 +265,9 @@ export class GamePage {
 
   // Hub -> Acorns & Leaves setup screen.
   async openAcornsLeaves() {
+    if (await this.page.locator('.hub-chooser').isVisible()) {
+      await this.page.locator('[data-hub-game="al"]').click();
+    }
     await this.press('Play Acorns & Leaves', { exact: true });
     await this.waitForScreen('al-setup-screen');
   }

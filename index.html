@@ -27,7 +27,7 @@
   <meta name="twitter:title" content="Spirit of the Woods | Two woodland games" />
   <meta name="twitter:description" content="Shells & Feathers tic-tac-toe and Acorns & Leaves checkers, including Fog of War." />
   <meta name="twitter:image" content="https://officialinspire.github.io/SHELLS-FEATHERS/assets/spirit-of-the-woods-social.jpg" />
-  <link rel="stylesheet" href="styles.css?v=010782ac1c" />
+  <link rel="stylesheet" href="styles.css?v=270457f69e" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
@@ -249,7 +249,7 @@
 
   <main id="game-container">
     <!-- Hub: choose a game -->
-    <section id="hub-screen" class="screen active" aria-labelledby="hub-title">
+    <section id="hub-screen" class="screen active" data-game="sf" aria-labelledby="hub-title">
       <header class="hub-header">
         <h1 id="hub-title" class="game-title" tabindex="-1">Spirit of the Woods</h1>
         <p class="subtitle">Peaceful games from the forest</p>
@@ -257,8 +257,12 @@
       </header>
 
       <h2 class="section-label">Choose a game</h2>
+      <div class="hub-chooser" role="group" aria-label="Choose a game">
+        <button type="button" class="hub-choice" data-hub-game="sf" aria-pressed="true">Shells &amp; Feathers <span>Tic-Tac-Toe</span></button>
+        <button type="button" class="hub-choice" data-hub-game="al" aria-pressed="false">Acorns &amp; Leaves <span>Checkers</span></button>
+      </div>
       <div class="game-cards">
-        <article class="game-card" aria-labelledby="sf-card-title">
+        <article class="game-card" id="sf-hub-card" aria-labelledby="sf-card-title">
           <div class="card-top">
             <div class="card-art mini-board" aria-hidden="true">
               <span><svg class="mini-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg></span><span></span><span><svg class="mini-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg></span>
@@ -279,7 +283,7 @@
           </div>
         </article>
 
-        <article class="game-card" aria-labelledby="al-card-title">
+        <article class="game-card" id="al-hub-card" aria-labelledby="al-card-title">
           <div class="card-top">
             <div class="card-art checkers-mini" data-checkers-board aria-hidden="true"></div>
             <div class="card-heading">
@@ -1074,9 +1078,10 @@
   <script type="importmap">
   {
     "imports": {
-      "./src/app/app.js": "./src/app/app.js?v=76b4980e54",
+      "./src/app/app.js": "./src/app/app.js?v=788bb92353",
       "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
       "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
+      "./src/app/hub-chooser.js": "./src/app/hub-chooser.js?v=911a709cf1",
       "./src/app/intro.js": "./src/app/intro.js?v=5e46ddd3ac",
       "./src/app/journal-screen.js": "./src/app/journal-screen.js?v=e49f865d11",
       "./src/app/navigation.js": "./src/app/navigation.js?v=df1ca271ed",
@@ -1123,9 +1128,10 @@
     }
   }
   </script>
-  <link rel="modulepreload" href="src/app/app.js?v=76b4980e54" />
+  <link rel="modulepreload" href="src/app/app.js?v=788bb92353" />
   <link rel="modulepreload" href="src/app/confirm-dialog.js?v=fba3c17fca" />
   <link rel="modulepreload" href="src/app/dialog-focus.js?v=77ccee0736" />
+  <link rel="modulepreload" href="src/app/hub-chooser.js?v=911a709cf1" />
   <link rel="modulepreload" href="src/app/intro.js?v=5e46ddd3ac" />
   <link rel="modulepreload" href="src/app/journal-screen.js?v=e49f865d11" />
   <link rel="modulepreload" href="src/app/navigation.js?v=df1ca271ed" />
