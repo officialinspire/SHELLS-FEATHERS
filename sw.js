@@ -1,6 +1,6 @@
 // The application shell is cached on install, while large music and the intro
 // video remain network resources. Bump this name when changing the offline shell.
-const CACHE_NAME = 'spirit-woods-shell-v1';
+const CACHE_NAME = 'spirit-woods-shell-v2';
 const SCOPE = self.registration.scope;
 const url = (path) => new URL(path, SCOPE).href;
 const SHELL = [
