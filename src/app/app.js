@@ -38,6 +38,7 @@ import { createResumeStore } from '../shared/resume.js';
 import { createStartGate } from './start-gate.js';
 import { createHubLeaves } from './hub-leaves.js';
 import { createUpdatePrompt } from './update-prompt.js';
+import { createPagers } from './pager.js';
 import { createConfirmDialog } from './confirm-dialog.js';
 import { createToast } from './toast.js';
 import { installDialogFocus } from './dialog-focus.js';
@@ -336,6 +337,9 @@ export function createApp({ doc, win }) {
       },
       onSettings: () => alSettings.show(),
     });
+    // Screens and dialogs taller than the window page through instead of
+    // scrolling (src/app/pager.js).
+    createPagers({ doc, win });
     openHelpWhereItFits();
     rescueFocusOnResize();
     sfSetup = initShellsFeathersSetup({ doc, profile, feedback });

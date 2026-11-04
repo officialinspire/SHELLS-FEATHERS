@@ -79,7 +79,8 @@ export function createJournalScreen({
     const sections = [...new Set(entries.map((e) => e.section))];
     return sections.flatMap((section) => [
       make(`h${level}`, { className: 'journal-section', textContent: SECTIONS[section] }),
-      make('ul', { className: 'journal-list' }, entries.filter((e) => e.section === section).map((e) => entryItem(book, e))),
+      // Each entry is an item of the screen's pages (src/app/pager.js).
+      make('ul', { className: 'journal-list' }, entries.filter((e) => e.section === section).map((e) => entryItem(book, e)), { 'data-page-split': '' }),
     ]);
   }
 

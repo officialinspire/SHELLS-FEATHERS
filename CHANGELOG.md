@@ -1,5 +1,31 @@
 # Changelog
 
+## 2.0.4: Every screen fits; achievements audited (unreleased)
+
+- **No scrolling:** every screen and dialog now fits the window: a 320×568 phone, the same phone on its side (568×320), and a desktop.
+  - **Pages:** long screens page with Previous and Next ("Page 2 of 5") instead of scrolling. This covers both setup screens, both How to Play pages, Settings, Your Path, every journal tab, the confirm dialogs, the match menu (its pause view and its Settings) and both results dialogs (`src/app/pager.js`).
+  - **Breaks:** pages break between whole items (paragraphs, option groups, settings rows, achievement cards) and never after a heading. A paragraph too long for any page pages by its sentences. Nothing is clipped or hidden by overflow.
+  - **Always visible:** Back, Play the Spirit, Two Players, Play, Resume, Cancel/Delete and "This can't be undone." stay on every page.
+  - **Resizing and rotating:** pages are worked out again on resize and rotation, keeping the focused control (or the first item that was showing) on screen. A screen opened again starts at page 1.
+  - **Narrow screens:** Previous and Next show only their arrows, and are still named Previous and Next.
+  - **A phone on its side:** paged screens have two columns, with the title, the journal's tabs and Play on the left and the pages on the right.
+  - **Tutorial:** fits like a match. The board shrinks to the room left, with squares at least 30px on a 320×568 phone, and sits beside the text on a phone on its side. Next and Skip share a row, and its "Practice only" note now sits beside the step count.
+  - **Matches:** a finished match fits on the smallest phones in both orientations. On a desktop window too short to open "Rules and keys" in the side panel, the panel links to How to Play instead.
+  - **No hidden overflow:** the page no longer hides overflow (`#game-container`), and screens fade in from slightly above instead of below.
+- **Achievements (set 3):** every existing ID and unlock date is kept. Five new achievements, each worked out once from saved records for existing players (shown as "unlocked before dates were kept"):
+  - Shells & Feathers: **Best of the Set** (win a best-of-three or best-of-five match against the Spirit).
+  - Acorns & Leaves: **Ten Games**, **Classic Win** (Classic only), **Wise in the Mist** (the Wise Spirit in Fog of War) and **Best of the Set**.
+  - **Fix:** a deciding round's set is now recorded before its result is checked, so a set win counts on that round, not one game late.
+  - Resuming a set, or replaying a resumed match, never counts anything twice.
+- **Tests:**
+  - `tests/browser/fit.test.mjs` checks, at all three sizes:
+    - every screen, page and dialog;
+    - every tutorial step;
+    - a full journal (27 of 27);
+    - long text;
+    - a rotation that keeps focus.
+  - New unit tests cover the upgrade from achievement set 2 and set wins across a resume.
+
 ## 2.0.3: Sound, music and vibration polish (unreleased)
 
 - **Balance:** the shipped sounds are reused, with a fixed gain for each (`MIX`, measured from the files). Taps, events and big moments now each sit at their own level, and the music, mastered far louder than any effect, sits under them. Crowning, a loss, a draw and an achievement briefly dip the music. Details are in docs/assets.md.

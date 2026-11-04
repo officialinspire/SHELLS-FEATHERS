@@ -88,9 +88,27 @@ export class GamePage {
   }
 
   async press(name, options) {
-    const target = this.control(name, options);
+    const target = await this.reveal(this.control(name, options));
     if (this.touch) await target.tap();
     else await target.click();
+  }
+
+  // Long screens and dialogs page through (src/app/pager.js): turns to the
+  // page that holds `target` (a locator or a selector), as a player would
+  // with Next, and returns it. Anything not on a paged screen is returned as
+  // it is.
+  async reveal(target) {
+    const locator = typeof target === 'string' ? this.page.locator(target).first() : target;
+    await this.page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    if (await locator.isVisible()) return locator;
+    const modal = await this.page.locator('.modal.active').count();
+    const root = modal ? this.page.locator('.modal.active [data-pager]:not([hidden])').first() : this.page.locator('.screen.active[data-pager]');
+    if (!(await root.count())) return locator;
+    const prev = root.locator('[data-pager-prev]');
+    const next = root.locator('[data-pager-next]');
+    while (await prev.isVisible() && !(await prev.isDisabled())) await prev.click();
+    while (!(await locator.isVisible()) && await next.isVisible() && !(await next.isDisabled())) await next.click();
+    return locator;
   }
 
   // On a match screen: opens the match menu and presses one of its items
@@ -149,8 +167,8 @@ export class GamePage {
 
   // On the setup screen: difficulty 'Gentle' | 'Balanced' | 'Wise'; symbol 'Shell' | 'Feather'.
   async chooseOptions({ difficulty, symbol } = {}) {
-    if (difficulty) await this.page.getByRole('radio', { name: difficulty, exact: true }).check();
-    if (symbol) await this.page.getByRole('radio', { name: symbol }).check();
+    if (difficulty) await (await this.reveal(this.page.locator('.screen.active').getByRole('radio', { name: difficulty, exact: true }))).check();
+    if (symbol) await (await this.reveal(this.page.locator('.screen.active').getByRole('radio', { name: symbol }))).check();
   }
 
   // On the setup screen: starts a match and waits for the first turn.
@@ -278,9 +296,10 @@ export class GamePage {
   // On the Acorns & Leaves setup screen: variant 'Classic' | 'Fog of War';
   // side 'Acorns' | 'Leaves'; difficulty 'Gentle' | 'Balanced' | 'Wise'.
   async chooseCheckersOptions({ variant, side, difficulty } = {}) {
-    if (variant) await this.page.getByRole('radio', { name: variant, exact: true }).check();
-    if (side) await this.page.getByRole('radio', { name: side, exact: true }).check();
-    if (difficulty) await this.page.getByRole('radio', { name: difficulty, exact: true }).check();
+    const radio = (name) => this.reveal(this.page.locator('.screen.active').getByRole('radio', { name, exact: true }));
+    if (variant) await (await radio(variant)).check();
+    if (side) await (await radio(side)).check();
+    if (difficulty) await (await radio(difficulty)).check();
   }
 
   async startCheckers(mode) {

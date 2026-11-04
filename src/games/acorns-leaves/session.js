@@ -527,9 +527,8 @@ export function createSession({
     spiritActing = false;
     const text = resultText({ mode, result, humanSide: match.humanSide });
     match.resultText = text;
-    const unlocked = [...earlier, ...(profile.recordAcornsLeavesResult({
-      mode, difficulty: match.difficulty, outcome: text.outcome, variant, side: match.humanSide,
-    }) ?? [])];
+    // A set this round decides is recorded first, so the achievements
+    // checked with the round's result count it at once.
     set = recordRound(set, ROUND_WINNER[text.outcome]);
     const decided = setScore(set);
     if (inSet() && decided.done) {
@@ -538,6 +537,9 @@ export function createSession({
         game: 'acornsLeaves', mode, length: set.length, outcome: setOutcome, variant,
       });
     }
+    const unlocked = [...earlier, ...(profile.recordAcornsLeavesResult({
+      mode, difficulty: match.difficulty, outcome: text.outcome, variant, side: match.humanSide,
+    }) ?? [])];
     saveProgress();
     view.showSet?.(setLine());
     if (text.outcome === 'loss') {
