@@ -36,6 +36,7 @@ import { initHubChooser } from './hub-chooser.js';
 import { createTutorial, SETUP_PATHS } from './tutorial.js';
 import { createResumeStore } from '../shared/resume.js';
 import { createStartGate } from './start-gate.js';
+import { createHubLeaves } from './hub-leaves.js';
 import { createConfirmDialog } from './confirm-dialog.js';
 import { createToast } from './toast.js';
 import { installDialogFocus } from './dialog-focus.js';
@@ -78,6 +79,8 @@ export function createApp({ doc, win }) {
   const feedback = createFeedback({
     audio, haptics, clock: win, reducedMotion,
   });
+  // Leaves drift behind the hub only while it shows (src/app/hub-leaves.js).
+  const leaves = createHubLeaves({ doc, win, reducedMotion });
   const toast = createToast({ doc, clock: win, feedback });
   const confirmDialog = createConfirmDialog(doc);
   const view = createShellsFeathersView(doc);
@@ -124,8 +127,10 @@ export function createApp({ doc, win }) {
     'hub-screen': {
       enter: () => {
         resumeUi.renderHub();
+        leaves.enterHub();
         if (!firstRoute) audio.startMusic();
       },
+      leave: () => leaves.leaveHub(),
     },
     'sf-setup-screen': {
       enter: () => {
@@ -325,6 +330,8 @@ export function createApp({ doc, win }) {
         if (doc.hidden) game.pause('hidden');
         else game.resume('hidden');
       }
+      if (doc.hidden) leaves.hold('hidden');
+      else leaves.release('hidden');
       if (doc.hidden) {
         toast.hold('hidden');
         audio.suspend();
@@ -337,6 +344,7 @@ export function createApp({ doc, win }) {
     // on screen (a resumed one, a deep link) waits, and so do notices.
     for (const game of [session, checkers]) game.pause('start');
     toast.hold('start');
+    leaves.hold('start');
     const gate = createStartGate({
       doc,
       win,
@@ -348,6 +356,7 @@ export function createApp({ doc, win }) {
       onReady() {
         for (const game of [session, checkers]) game.resume('start');
         toast.release('start');
+        leaves.release('start');
         audio.startMusic();
         focusScreen(nav.current);
       },

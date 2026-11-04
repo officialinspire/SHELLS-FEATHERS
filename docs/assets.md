@@ -32,6 +32,7 @@ Every file, font and picture the site uses, where it came from, and the terms it
 | Uncial Antiqua | Loaded from Google Fonts in `index.html` | Titles | Astigmatic (Brian J. Bonislawsky), via [Google Fonts](https://fonts.google.com/specimen/Uncial+Antiqua) | SIL Open Font License 1.1 |
 | Georgia, Iowan Old Style, Palatino Linotype, serif | The visitor's own fonts (`--font-body`, and the fallback when Google Fonts can't load) | Body text | Installed on the device; nothing is shipped | n/a |
 | Journal and achievement icons (`#icon-journal` and 19 `#ach-*` symbols: sprout, stack, laurel, shell, feather, breeze, scales, shield, pair, acorn, leaf, crown, hop, sun in mist, owl, lantern, fork, oak, compass) | Inline SVG sprite in `index.html` | The Journal link and tab, each achievement's medallion in the journal, and the unlock notice in the match header | Original, drawn in SVG for this project in the interface icons' line style (Stage 14) | Part of this repository |
+| Drifting hub leaves (green, gold, rust, sage) | `styles.css`, `.drift-leaf--*` (inline SVG data URLs); placed by `src/app/hub-leaves.js` | Leaves falling behind the main menu | Original, drawn for this project (the scatter's leaf shape with veins) | Part of this repository |
 | Emoji | None in the game since Stage 10: every piece and icon is drawn from the SVG sprite, so it looks the same on every device. A locked achievement's medallion is a dashed ring drawn with CSS. | | | |
 
 ### Sizes

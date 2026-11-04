@@ -27,7 +27,7 @@
   <meta name="twitter:title" content="Spirit of the Woods | Two woodland games" />
   <meta name="twitter:description" content="Shells & Feathers tic-tac-toe and Acorns & Leaves checkers, including Fog of War." />
   <meta name="twitter:image" content="https://officialinspire.github.io/SHELLS-FEATHERS/assets/spirit-of-the-woods-social.jpg" />
-  <link rel="stylesheet" href="styles.css?v=270457f69e" />
+  <link rel="stylesheet" href="styles.css?v=0534a11648" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
@@ -246,6 +246,10 @@
     <video id="intro-video" class="intro-video" playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
     <button type="button" class="intro-skip" id="intro-skip">Skip <span aria-hidden="true">›</span></button>
   </section>
+
+  <!-- Leaves drifting behind the hub (src/app/hub-leaves.js): decorative,
+       filled only while the hub is showing. -->
+  <div id="hub-leaves" class="hub-leaves" aria-hidden="true" hidden></div>
 
   <main id="game-container">
     <!-- Hub: choose a game -->
@@ -1078,10 +1082,11 @@
   <script type="importmap">
   {
     "imports": {
-      "./src/app/app.js": "./src/app/app.js?v=788bb92353",
+      "./src/app/app.js": "./src/app/app.js?v=6ff24469ad",
       "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
       "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
       "./src/app/hub-chooser.js": "./src/app/hub-chooser.js?v=911a709cf1",
+      "./src/app/hub-leaves.js": "./src/app/hub-leaves.js?v=dea9bf3201",
       "./src/app/intro.js": "./src/app/intro.js?v=5e46ddd3ac",
       "./src/app/journal-screen.js": "./src/app/journal-screen.js?v=e49f865d11",
       "./src/app/navigation.js": "./src/app/navigation.js?v=df1ca271ed",
@@ -1128,10 +1133,11 @@
     }
   }
   </script>
-  <link rel="modulepreload" href="src/app/app.js?v=788bb92353" />
+  <link rel="modulepreload" href="src/app/app.js?v=6ff24469ad" />
   <link rel="modulepreload" href="src/app/confirm-dialog.js?v=fba3c17fca" />
   <link rel="modulepreload" href="src/app/dialog-focus.js?v=77ccee0736" />
   <link rel="modulepreload" href="src/app/hub-chooser.js?v=911a709cf1" />
+  <link rel="modulepreload" href="src/app/hub-leaves.js?v=dea9bf3201" />
   <link rel="modulepreload" href="src/app/intro.js?v=5e46ddd3ac" />
   <link rel="modulepreload" href="src/app/journal-screen.js?v=e49f865d11" />
   <link rel="modulepreload" href="src/app/navigation.js?v=df1ca271ed" />

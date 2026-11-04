@@ -47,6 +47,9 @@ The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two 
 
 - **Opening, as in every INSPIRE game:** "Touch, click, or press any key to start", then the INSPIRE Software intro, once per browser session and skippable. The music starts when the hub appears after the intro.
 
+- **Drifting leaves on the main menu:** a few woodland leaves fall behind the hub, each at its own size, speed, sway and spin. Only while the hub shows (not behind the start screen or intro, nor in a background tab), and none when motion is reduced, by Settings or the device.
+- **Short landscape phones:** the hub's Settings, Your Path and Journal buttons are full 44px tap targets again (they were 38px at 640×360), and still fit a 568×320 screen.
+
 ### Changed
 - **Visual identity:**
   - **Look:** one woodland tabletop look across the hub and both games, built on design tokens (type, spacing, surfaces, shadows, borders, icons, states).

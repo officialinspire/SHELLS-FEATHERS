@@ -28,10 +28,14 @@ const panel = (game, id) => game.page.evaluate((modal) => ({
 }), id);
 
 // Every running animation, with how long it runs in all.
-const animations = (game) => game.page.evaluate(() => document.getAnimations().map((a) => {
-  const timing = a.effect.getComputedTiming();
-  return { name: a.animationName ?? a.transitionProperty, iterations: timing.iterations, total: timing.activeDuration };
-}));
+// Every running animation, except the leaves drifting behind the hub: the
+// one ambient loop, made only while the hub shows (hub-leaves.test.mjs).
+const animations = (game) => game.page.evaluate(() => document.getAnimations()
+  .filter((a) => !a.effect?.target?.classList?.contains('drift-leaf'))
+  .map((a) => {
+    const timing = a.effect.getComputedTiming();
+    return { name: a.animationName ?? a.transitionProperty, iterations: timing.iterations, total: timing.activeDuration };
+  }));
 
 test('Spirit of the Woods polish', { timeout: 300_000 }, async (t) => {
   const harness = await startHarness(t);

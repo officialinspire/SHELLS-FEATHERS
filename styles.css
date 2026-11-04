@@ -837,12 +837,15 @@ h2[tabindex="-1"]:focus {
         flex-direction: column;
     }
 
+    /* Still a full 44px tap target on a short landscape phone; a closer
+       stack keeps all three on a 320px-tall screen. */
     #hub-screen .hub-links {
         grid-template-columns: 1fr;
+        gap: 3px;
     }
 
     #hub-screen .hub-links .btn {
-        min-height: 38px;
+        min-height: 44px;
     }
 }
 
@@ -3632,5 +3635,74 @@ kbd {
 @media (hover: hover) {
     .intro-skip:hover {
         background: rgba(255, 255, 255, 0.14);
+    }
+}
+
+/* Leaves drifting down behind the hub (src/app/hub-leaves.js): fixed to the
+   screen and clipped to it, behind the hub's cards (#game-container is
+   above), never in the way of a tap. Each leaf falls on `transform` and
+   sways on the separate `translate`, so the browser animates both without
+   repainting. No leaves at all when motion is reduced (the static scatter
+   on the page stays). */
+.hub-leaves {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    contain: strict;
+}
+
+.hub-leaves[hidden] {
+    display: none;
+}
+
+.drift-leaf {
+    position: absolute;
+    top: calc(var(--size) * -2);
+    left: var(--x);
+    width: var(--size);
+    height: var(--size);
+    opacity: var(--alpha);
+    background: center / contain no-repeat;
+    animation:
+        leafFall var(--fall) linear var(--delay) infinite,
+        leafSway var(--sway-time) ease-in-out var(--delay) infinite alternate;
+    will-change: transform;
+}
+
+.drift-leaf--green {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-16 -16 32 32'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='%236E9A55'/%3E%3Cpath d='M0-11V13M0-4L4-8M0 2L-4-2M0 7L4 4' stroke='%232F4F25' stroke-width='1.1' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.drift-leaf--gold {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-16 -16 32 32'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='%23D9A441'/%3E%3Cpath d='M0-11V13M0-4L4-8M0 2L-4-2M0 7L4 4' stroke='%237A5418' stroke-width='1.1' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.drift-leaf--rust {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-16 -16 32 32'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='%23B5602E'/%3E%3Cpath d='M0-11V13M0-4L4-8M0 2L-4-2M0 7L4 4' stroke='%235E2C12' stroke-width='1.1' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.drift-leaf--sage {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-16 -16 32 32'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='%23A7BE92'/%3E%3Cpath d='M0-11V13M0-4L4-8M0 2L-4-2M0 7L4 4' stroke='%234E6340' stroke-width='1.1' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+@keyframes leafFall {
+    from { transform: translate3d(0, 0, 0) rotate(var(--tilt)); }
+    to { transform: translate3d(0, calc(100vh + var(--size) * 4), 0) rotate(calc(var(--tilt) + var(--spin))); }
+}
+
+@keyframes leafSway {
+    from { translate: calc(var(--sway) * -1) 0; }
+    to { translate: var(--sway) 0; }
+}
+
+:root[data-motion="reduce"] .hub-leaves {
+    display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root:not([data-motion="full"]) .hub-leaves {
+        display: none;
     }
 }
