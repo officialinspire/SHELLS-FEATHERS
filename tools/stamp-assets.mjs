@@ -16,11 +16,19 @@
 // Browsers without import maps (Safari before 16.4) ignore the map and load
 // the plain paths, as before.
 //
-//   node tools/stamp-assets.mjs           # rewrite index.html
-//   node tools/stamp-assets.mjs --check   # exit 1 if index.html is stale
+// Then sw.js gets the release: a hash of the stamped index.html (which
+// carries every module's and the stylesheet's hash) and of every file in the
+// service worker's SHELL list. Any change to the offline shell, even to one
+// module only, gives sw.js new bytes, so browsers install the new worker,
+// and a cache of its own (spirit-woods-shell-<release>).
 //
-// Run it after changing any file in src/ or styles.css; the unit test
-// tests/unit/asset-versions.test.mjs fails until you do.
+//   node tools/stamp-assets.mjs                 # rewrite index.html and sw.js
+//   node tools/stamp-assets.mjs --check         # exit 1 if either is stale
+//   node tools/stamp-assets.mjs --root <dir>    # another copy of the site
+//
+// Run it after changing any file in src/, styles.css, index.html or a file
+// sw.js precaches; the unit test tests/unit/asset-versions.test.mjs fails
+// until you do.
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
@@ -31,12 +39,14 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const START = '<!-- asset versions (tools/stamp-assets.mjs) -->';
 const END = '<!-- /asset versions -->';
 
-const hash = (file) => createHash('sha256').update(readFileSync(path.join(ROOT, file))).digest('hex').slice(0, 10);
+const RELEASE_LINE = /const RELEASE = '[a-z0-9]*'; \/\/ stamped by tools\/stamp-assets\.mjs/;
 
-function modules(dir = 'src') {
-  return readdirSync(path.join(ROOT, dir)).sort().flatMap((name) => {
+const hashOf = (root, file) => createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex').slice(0, 10);
+
+function modulesIn(root, dir = 'src') {
+  return readdirSync(path.join(root, dir)).sort().flatMap((name) => {
     const file = `${dir}/${name}`;
-    if (statSync(path.join(ROOT, file)).isDirectory()) return modules(file);
+    if (statSync(path.join(root, file)).isDirectory()) return modulesIn(root, file);
     return name.endsWith('.js') ? [file] : [];
   });
 }
@@ -44,6 +54,8 @@ function modules(dir = 'src') {
 // index.html as it should be, given the files on disk.
 // `html` defaults to the index.html on disk.
 export function stampedIndex(root = ROOT, html = readFileSync(path.join(root, 'index.html'), 'utf8')) {
+  const hash = (file) => hashOf(root, file);
+  const modules = () => modulesIn(root);
   const eol = html.includes('\r\n') ? '\r\n' : '\n';
   const imports = Object.fromEntries(modules().map((file) => [`./${file}`, `./${file}?v=${hash(file)}`]));
   const map = JSON.stringify({ imports }, null, 2).split('\n').map((line) => `  ${line}`).join(eol);
@@ -68,18 +80,45 @@ export function stampedIndex(root = ROOT, html = readFileSync(path.join(root, 'i
   return { current: html, expected: out };
 }
 
+// The files sw.js precaches (its SHELL list), as paths from the site root.
+export function shellFiles(swSource) {
+  const list = /const SHELL = \[([\s\S]*?)\];/.exec(swSource);
+  if (!list) throw new Error('sw.js has no SHELL list');
+  return [...list[1].matchAll(/'\.\/([^']*)'/g)].map((m) => m[1]).filter((file) => file && file !== 'index.html');
+}
+
+// The release: everything the shell is made of, with index.html as stamped.
+export function releaseOf(root, indexHtml, swSource) {
+  const digest = createHash('sha256').update(indexHtml);
+  for (const file of shellFiles(swSource)) digest.update(`\0${file}\0`).update(readFileSync(path.join(root, file)));
+  return digest.digest('hex').slice(0, 12);
+}
+
+// sw.js as it should be, given the stamped index.html (default: as
+// stampedIndex would leave it).
+export function stampedServiceWorker(root = ROOT, indexHtml = stampedIndex(root).expected) {
+  const current = readFileSync(path.join(root, 'sw.js'), 'utf8');
+  if (!RELEASE_LINE.test(current)) throw new Error('sw.js has no stamped RELEASE line');
+  const release = releaseOf(root, indexHtml, current);
+  return { current, expected: current.replace(RELEASE_LINE, `const RELEASE = '${release}'; // stamped by tools/stamp-assets.mjs`), release };
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const { current, expected } = stampedIndex();
+  const at = process.argv.indexOf('--root');
+  const root = at === -1 ? ROOT : path.resolve(process.argv[at + 1]);
+  const index = stampedIndex(root);
+  const worker = stampedServiceWorker(root, index.expected);
   if (process.argv.includes('--check')) {
-    if (current !== expected) {
-      console.error('index.html asset versions are stale: run node tools/stamp-assets.mjs');
+    const stale = [index.current !== index.expected && 'index.html', worker.current !== worker.expected && 'sw.js'].filter(Boolean);
+    if (stale.length) {
+      console.error(`${stale.join(' and ')} asset versions are stale: run node tools/stamp-assets.mjs`);
       process.exit(1);
     }
-    console.log('index.html asset versions are current');
-  } else if (current === expected) {
-    console.log('index.html already current');
+    console.log('index.html and sw.js asset versions are current');
   } else {
-    writeFileSync(path.join(ROOT, 'index.html'), expected);
-    console.log('index.html stamped');
+    if (index.current !== index.expected) writeFileSync(path.join(root, 'index.html'), index.expected);
+    if (worker.current !== worker.expected) writeFileSync(path.join(root, 'sw.js'), worker.expected);
+    const changed = [index.current !== index.expected && 'index.html', worker.current !== worker.expected && 'sw.js'].filter(Boolean);
+    console.log(changed.length ? `${changed.join(' and ')} stamped (release ${worker.release})` : `already current (release ${worker.release})`);
   }
 }

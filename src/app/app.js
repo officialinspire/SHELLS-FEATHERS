@@ -36,6 +36,9 @@ import { initHubChooser } from './hub-chooser.js';
 import { createTutorial, SETUP_PATHS } from './tutorial.js';
 import { createResumeStore } from '../shared/resume.js';
 import { createStartGate } from './start-gate.js';
+import { createHubLeaves } from './hub-leaves.js';
+import { createUpdatePrompt } from './update-prompt.js';
+import { createPagers } from './pager.js';
 import { createConfirmDialog } from './confirm-dialog.js';
 import { createToast } from './toast.js';
 import { installDialogFocus } from './dialog-focus.js';
@@ -78,6 +81,8 @@ export function createApp({ doc, win }) {
   const feedback = createFeedback({
     audio, haptics, clock: win, reducedMotion,
   });
+  // Leaves drift behind the hub only while it shows (src/app/hub-leaves.js).
+  const leaves = createHubLeaves({ doc, win, reducedMotion });
   const toast = createToast({ doc, clock: win, feedback });
   const confirmDialog = createConfirmDialog(doc);
   const view = createShellsFeathersView(doc);
@@ -89,6 +94,23 @@ export function createApp({ doc, win }) {
     view: checkersView, audio, feedback, profile, clock: win, resume: resumeStore, notify: (achievements) => toast.achievements('al', achievements),
   });
   const resumeUi = createResumeUi({ doc, resumeStore });
+  // A new release waiting: Reload or Later (src/app/update-prompt.js). Reload
+  // holds and saves both matches first; a match on screen resumes on the
+  // same turn after the refresh (the router's resume, below).
+  const updates = createUpdatePrompt({
+    doc,
+    win,
+    busy: () => session.midMove() || checkers.midMove(),
+    beforeReload() {
+      for (const game of [session, checkers]) {
+        game.pause('update');
+        game.saveNow();
+      }
+      toast.hold('update');
+      audio.stopMusic();
+    },
+    onLaterFocus: () => focusScreen(nav.current),
+  });
   const tutorial = createTutorial({ doc, profile, feedback });
   let sfSetup = null;
   let alSetup = null;
@@ -124,8 +146,11 @@ export function createApp({ doc, win }) {
     'hub-screen': {
       enter: () => {
         resumeUi.renderHub();
+        leaves.enterHub();
+        updates.hubShown();
         if (!firstRoute) audio.startMusic();
       },
+      leave: () => leaves.leaveHub(),
     },
     'sf-setup-screen': {
       enter: () => {
@@ -241,6 +266,12 @@ export function createApp({ doc, win }) {
     'al-take-control': () => checkers.takeControl(),
     'reset-al-stats': () => path.resetAcornsLeaves(),
     'delete-all-data': () => settingsScreen.deleteAll(),
+    // From the banner, or a match menu's row: a move half made is finished
+    // on the board first, so a menu closes to let it be.
+    'update-reload': () => {
+      if (updates.reload() === 'after-move') doc.querySelector('.match-menu.active [data-menu-close]')?.click();
+    },
+    'update-later': () => updates.later(),
   };
 
   // After "Delete all saved data": start again from a fresh page, or say
@@ -306,6 +337,9 @@ export function createApp({ doc, win }) {
       },
       onSettings: () => alSettings.show(),
     });
+    // Screens and dialogs taller than the window page through instead of
+    // scrolling (src/app/pager.js).
+    createPagers({ doc, win });
     openHelpWhereItFits();
     rescueFocusOnResize();
     sfSetup = initShellsFeathersSetup({ doc, profile, feedback });
@@ -325,6 +359,8 @@ export function createApp({ doc, win }) {
         if (doc.hidden) game.pause('hidden');
         else game.resume('hidden');
       }
+      if (doc.hidden) leaves.hold('hidden');
+      else leaves.release('hidden');
       if (doc.hidden) {
         toast.hold('hidden');
         audio.suspend();
@@ -337,6 +373,7 @@ export function createApp({ doc, win }) {
     // on screen (a resumed one, a deep link) waits, and so do notices.
     for (const game of [session, checkers]) game.pause('start');
     toast.hold('start');
+    leaves.hold('start');
     const gate = createStartGate({
       doc,
       win,
@@ -348,12 +385,14 @@ export function createApp({ doc, win }) {
       onReady() {
         for (const game of [session, checkers]) game.resume('start');
         toast.release('start');
+        leaves.release('start');
         audio.startMusic();
         focusScreen(nav.current);
       },
     });
     gate.show();
     router.start();
+    updates.register();
     for (const note of profile.notes) console.info(`Spirit of the Woods: ${note}`);
   }
 

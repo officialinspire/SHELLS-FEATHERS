@@ -13,12 +13,17 @@
 //   change the rules, block input or wait for anything.
 // - The same cue (name + key) twice within DEDUPE_MS counts once, so two
 //   listeners reporting one event can't double the feedback.
+// - Restraint: taps are soft, events (captures, a reveal) a little more,
+//   big moments (crowning, a result, an achievement) the most, and those
+//   dip the music while they sound (`duck`; levels in audio.js MIX). An
+//   achievement's chime waits for the sound of the move that earned it.
 // - Delayed parts (`delay`, e.g. the chirp after a multi-jump) are queued on
 //   the service's own timers. cancel() drops the queue, stops the match
 //   effects already playing, stops any vibration and clears animations;
 //   hold(reason) does that and ignores cues until release(reason) (the
 //   match menu, a hidden page). The session cancels when a match ends,
-//   restarts or is left; the app cancels when sound effects are muted.
+//   restarts or is left. silence() stops only the sounds (the effects
+//   switch turned off): vibration and animations are settings of their own.
 //
 // Fog of War: the session only names squares the player can see, and with
 // two players sharing the device it uses one cue (`shared`) for every move.
@@ -37,15 +42,19 @@ export const CUES = {
   jump: { sfx: 'capture-sound', haptic: 12, motion: 'land' },
   capture: { sfx: 'capture-sound', haptic: 16, motion: 'capture' },
   multi: { sfx: 'multi-sound', delay: 150 },
-  crown: { sfx: 'crown-sound', haptic: [10, 40, 16], motion: 'crown' },
+  crown: {
+    sfx: 'crown-sound', haptic: [10, 40, 16], motion: 'crown', duck: true,
+  },
   invalid: {
     sfx: 'invalid-sound', haptic: 8, hapticEvery: 900, soundEvery: 250, motion: 'refuse',
   },
   reveal: { sfx: 'reveal-sound', haptic: 8, motion: 'found' },
-  win: { sfx: 'victory-sound', haptic: [18, 60, 24] },
-  loss: { sfx: 'loss-sound', haptic: 14 },
-  draw: { sfx: 'draw-sound', haptic: 14 },
-  achievement: { sfx: 'achievement-sound', haptic: [10, 40, 10], match: false },
+  win: { sfx: 'victory-sound', haptic: [18, 60, 24] }, // the music stops for it
+  loss: { sfx: 'loss-sound', haptic: 14, duck: true },
+  draw: { sfx: 'draw-sound', haptic: 14, duck: true },
+  achievement: {
+    sfx: 'achievement-sound', haptic: [10, 40, 10], match: false, duck: true, delay: 600,
+  },
 };
 
 export function createFeedback({
@@ -64,7 +73,8 @@ export function createFeedback({
     const at = now();
     if (def.soundEvery && at - (lastSound.get(def.sfx) ?? -Infinity) < def.soundEvery) return;
     lastSound.set(def.sfx, at);
-    audio.playSfx(def.sfx);
+    if (def.duck) audio.playSfx(def.sfx, { duck: true });
+    else audio.playSfx(def.sfx);
     if (def.match !== false) playing.add(def.sfx);
   }
 
@@ -74,11 +84,15 @@ export function createFeedback({
     if (def.motion && at && !reducedMotion()) animators.get(at.game)?.play(def.motion, at);
   }
 
-  function cancel() {
+  function silence() {
     for (const id of queued) clock.clearTimeout(id);
     queued.clear();
     for (const id of playing) audio.stopSfx(id);
     playing.clear();
+  }
+
+  function cancel() {
+    silence();
     haptics?.cancel();
     for (const animator of animators.values()) animator.clear();
   }
@@ -112,6 +126,7 @@ export function createFeedback({
       animators.set(game, animator);
     },
     cancel,
+    silence,
     hold(reason) {
       holds.add(reason);
       cancel();

@@ -27,7 +27,7 @@
   <meta name="twitter:title" content="Spirit of the Woods | Two woodland games" />
   <meta name="twitter:description" content="Shells & Feathers tic-tac-toe and Acorns & Leaves checkers, including Fog of War." />
   <meta name="twitter:image" content="https://officialinspire.github.io/SHELLS-FEATHERS/assets/spirit-of-the-woods-social.jpg" />
-  <link rel="stylesheet" href="styles.css?v=270457f69e" />
+  <link rel="stylesheet" href="styles.css?v=dd488e1e6f" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
@@ -216,6 +216,15 @@
     <symbol id="ach-owl" viewBox="0 0 24 24">
       <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 9C5.5 6 7.2 4 9 5.5L12 7.5L15 5.5C16.8 4 18.5 6 18.5 9V14C18.5 18 15.5 21 12 21S5.5 18 5.5 14Z" /><circle cx="9.3" cy="11" r="2.1" /><circle cx="14.7" cy="11" r="2.1" /><path d="M11 14.5L12 16L13 14.5" /></g>
     </symbol>
+    <symbol id="ach-cup" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4H16.5V9.5C16.5 12.3 14.5 14.3 12 14.3S7.5 12.3 7.5 9.5Z" /><path d="M7.5 6H4.8C4.8 9 6 10.3 7.8 10.6M16.5 6H19.2C19.2 9 18 10.3 16.2 10.6" /><path d="M12 14.3V17.5M8.5 20.5H15.5L14.7 17.5H9.3Z" /><path d="M10.2 8.4L11.4 9.6L13.9 7.1" /></g>
+    </symbol>
+    <symbol id="ach-board" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1.5" /><path d="M4 12H20M12 4V20" /><circle cx="8" cy="8" r="2" /><circle cx="16" cy="16" r="2" /></g>
+    </symbol>
+    <symbol id="ach-mistowl" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8.5C7 6 8.4 4.3 9.9 5.6L12 7L14.1 5.6C15.6 4.3 17 6 17 8.5V12.5C17 14.4 15.5 15.8 12 15.8S7 14.4 7 12.5Z" /><circle cx="10" cy="10" r="1.4" /><circle cx="14" cy="10" r="1.4" /><path d="M3 18.3C5 17.2 7 19.4 9 18.3S13 17.2 15 18.3 19 19.4 21 18.3M5 21C7 19.9 9 22.1 11 21S15 19.9 17 21" /></g>
+    </symbol>
     <symbol id="ach-lantern" viewBox="0 0 24 24">
       <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6V3.5H14V6M8 6H16L17 17.5H7Z" /><path d="M5.5 20.5H18.5M7 17.5V20.5M17 17.5V20.5" /><path d="M12 9C13.3 10.5 13.3 12.6 12 13.8C10.7 12.6 10.7 10.5 12 9Z" /></g>
     </symbol>
@@ -246,6 +255,18 @@
     <video id="intro-video" class="intro-video" playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
     <button type="button" class="intro-skip" id="intro-skip">Skip <span aria-hidden="true">›</span></button>
   </section>
+
+  <!-- Leaves drifting behind the hub (src/app/hub-leaves.js): decorative,
+       filled only while the hub is showing. -->
+  <div id="hub-leaves" class="hub-leaves" aria-hidden="true" hidden></div>
+  <!-- A new release waiting (src/app/update-prompt.js): Reload or Later. -->
+  <div id="update-banner" class="update-banner" role="region" aria-label="Update" hidden>
+    <p id="update-banner-text" class="update-text" role="status" aria-live="polite"></p>
+    <div class="update-buttons">
+      <button type="button" class="btn btn-primary update-btn" data-action="update-reload">Reload</button>
+      <button type="button" class="btn update-btn" data-action="update-later">Later</button>
+    </div>
+  </div>
 
   <main id="game-container">
     <!-- Hub: choose a game -->
@@ -309,62 +330,75 @@
     </section>
 
     <!-- Shells & Feathers: mode and difficulty -->
-    <section id="sf-setup-screen" class="screen" aria-labelledby="sf-setup-title">
-      <div class="screen-top"><a class="back-link" href="#/" data-up>← All games</a></div>
-      <header class="screen-header">
-        <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg></p>
-        <h2 id="sf-setup-title" tabindex="-1">Shells &amp; Feathers</h2>
-        <p class="screen-subtitle">Tic-Tac-Toe · three in a row wins</p>
-      </header>
-
-      <p class="storage-note" id="sf-resume-note" role="status" hidden></p>
-      <section class="panel resume-panel" id="sf-resume" aria-labelledby="sf-resume-title" hidden>
-        <h3 class="resume-title" id="sf-resume-title">Unfinished match</h3>
-        <p class="resume-text" id="sf-resume-text"></p>
-        <div class="resume-actions">
-          <a class="btn btn-primary" href="#/shells-feathers/resume">Resume</a>
-          <button type="button" class="btn" data-action="sf-discard-resume">Discard</button>
-        </div>
-        <p class="hint">Starting a new match below replaces it.</p>
-      </section>
-      <section class="panel tutorial-card" id="sf-tutorial-card" aria-labelledby="sf-tutorial-card-title" hidden>
-        <h3 class="resume-title" id="sf-tutorial-card-title">New to Shells &amp; Feathers?</h3>
-        <p>A one-minute practice on its own board shows how to play. Nothing in it counts toward your records.</p>
-        <div class="resume-actions">
-          <a class="btn btn-secondary" href="#/shells-feathers/tutorial">Try the tutorial</a>
-          <button type="button" class="btn btn-quiet" data-action="sf-skip-tutorial">Skip</button>
-        </div>
-      </section>
-
-      <div class="panel setup-panel">
-        <fieldset class="option-group">
-          <legend>Player 1 plays as</legend>
-          <div class="segmented">
-            <label class="segment"><input type="radio" name="sf-symbol" value="shell" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> Shell</span></label>
-            <label class="segment"><input type="radio" name="sf-symbol" value="feather" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg> Feather</span></label>
-          </div>
-        </fieldset>
-        <fieldset class="option-group">
-          <legend>Spirit difficulty</legend>
-          <div class="segmented segmented-stack">
-            <label class="segment"><input type="radio" name="sf-difficulty" value="easy" aria-describedby="sf-difficulty-hint" /><span>Gentle</span></label>
-            <label class="segment"><input type="radio" name="sf-difficulty" value="medium" aria-describedby="sf-difficulty-hint" /><span>Balanced</span></label>
-            <label class="segment"><input type="radio" name="sf-difficulty" value="hard" aria-describedby="sf-difficulty-hint" /><span>Wise</span></label>
-          </div>
-          <p class="hint" id="sf-difficulty-hint"></p>
-        </fieldset>
-        <fieldset class="option-group">
-          <legend>Match</legend>
-          <div class="segmented segmented-stack">
-            <label class="segment"><input type="radio" name="sf-length" value="1" aria-describedby="sf-length-hint" /><span>Single game</span></label>
-            <label class="segment"><input type="radio" name="sf-length" value="3" aria-describedby="sf-length-hint" /><span>Best of 3</span></label>
-            <label class="segment"><input type="radio" name="sf-length" value="5" aria-describedby="sf-length-hint" /><span>Best of 5</span></label>
-          </div>
-          <p class="hint" id="sf-length-hint"></p>
-        </fieldset>
+    <section id="sf-setup-screen" class="screen paged-screen" data-pager aria-labelledby="sf-setup-title">
+      <div class="screen-head">
+        <div class="screen-top"><a class="back-link" href="#/" data-up>← All games</a></div>
+        <header class="screen-header">
+          <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg></p>
+          <h2 id="sf-setup-title" tabindex="-1">Shells &amp; Feathers</h2>
+          <p class="screen-subtitle">Tic-Tac-Toe · three in a row wins</p>
+        </header>
       </div>
 
-      <div class="mode-choices">
+      <div class="pager-main">
+        <div class="pager-body" data-pager-body>
+          <p class="storage-note" id="sf-resume-note" role="status" hidden></p>
+          <section class="panel resume-panel" id="sf-resume" aria-labelledby="sf-resume-title" hidden>
+            <h3 class="resume-title" id="sf-resume-title">Unfinished match</h3>
+            <p class="resume-text" id="sf-resume-text"></p>
+            <div class="resume-actions">
+              <a class="btn btn-primary" href="#/shells-feathers/resume">Resume</a>
+              <button type="button" class="btn" data-action="sf-discard-resume">Discard</button>
+            </div>
+            <p class="hint">Starting a new match below replaces it.</p>
+          </section>
+          <section class="panel tutorial-card" id="sf-tutorial-card" aria-labelledby="sf-tutorial-card-title" hidden>
+            <h3 class="resume-title" id="sf-tutorial-card-title">New to Shells &amp; Feathers?</h3>
+            <p>A one-minute practice on its own board shows how to play. Nothing in it counts toward your records.</p>
+            <div class="resume-actions">
+              <a class="btn btn-secondary" href="#/shells-feathers/tutorial">Try the tutorial</a>
+              <button type="button" class="btn btn-quiet" data-action="sf-skip-tutorial">Skip</button>
+            </div>
+          </section>
+
+          <div class="panel setup-panel" data-page-split>
+            <fieldset class="option-group">
+              <legend>Player 1 plays as</legend>
+              <div class="segmented">
+                <label class="segment"><input type="radio" name="sf-symbol" value="shell" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> Shell</span></label>
+                <label class="segment"><input type="radio" name="sf-symbol" value="feather" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg> Feather</span></label>
+              </div>
+            </fieldset>
+            <fieldset class="option-group">
+              <legend>Spirit difficulty</legend>
+              <div class="segmented segmented-stack">
+                <label class="segment"><input type="radio" name="sf-difficulty" value="easy" aria-describedby="sf-difficulty-hint" /><span>Gentle</span></label>
+                <label class="segment"><input type="radio" name="sf-difficulty" value="medium" aria-describedby="sf-difficulty-hint" /><span>Balanced</span></label>
+                <label class="segment"><input type="radio" name="sf-difficulty" value="hard" aria-describedby="sf-difficulty-hint" /><span>Wise</span></label>
+              </div>
+              <p class="hint" id="sf-difficulty-hint"></p>
+            </fieldset>
+            <fieldset class="option-group">
+              <legend>Match</legend>
+              <div class="segmented segmented-stack">
+                <label class="segment"><input type="radio" name="sf-length" value="1" aria-describedby="sf-length-hint" /><span>Single game</span></label>
+                <label class="segment"><input type="radio" name="sf-length" value="3" aria-describedby="sf-length-hint" /><span>Best of 3</span></label>
+                <label class="segment"><input type="radio" name="sf-length" value="5" aria-describedby="sf-length-hint" /><span>Best of 5</span></label>
+              </div>
+              <p class="hint" id="sf-length-hint"></p>
+            </fieldset>
+          </div>
+
+      
+          <p class="setup-links"><a class="text-link" href="#/shells-feathers/how-to-play">How to Play</a> <a class="text-link" href="#/shells-feathers/tutorial">Tutorial</a></p>
+        </div>
+        <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+          <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+          <p class="pager-status" data-pager-status aria-live="polite"></p>
+          <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+        </nav>
+      </div>
+      <div class="mode-choices screen-actions">
         <a class="mode-btn" href="#/shells-feathers/play/single">
           <span class="mode-icon" aria-hidden="true"><svg class="icon icon-lg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-tree" /></svg></span>
           <span class="mode-title">Play the Spirit</span>
@@ -376,7 +410,6 @@
           <span class="mode-desc">Take turns on one device</span>
         </a>
       </div>
-      <p class="setup-links"><a class="text-link" href="#/shells-feathers/how-to-play">How to Play</a> <a class="text-link" href="#/shells-feathers/tutorial">Tutorial</a></p>
     </section>
 
     <!-- Shells & Feathers: match -->
@@ -430,6 +463,7 @@
       <div class="match-notes">
         <p class="match-note" id="sf-note"></p>
       </div>
+      <a class="text-link match-help-link" href="#/shells-feathers/how-to-play">Rules and keys</a>
       <details class="match-help" data-help="shells-feathers">
         <summary>Rules and keys</summary>
         <ul>
@@ -445,103 +479,128 @@
     </section>
 
     <!-- How to Play: Shells & Feathers -->
-    <section id="sf-howto-screen" class="screen" aria-labelledby="sf-howto-title">
-      <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
-      <header class="screen-header">
-        <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg></p>
-        <h2 id="sf-howto-title" tabindex="-1">How to Play Shells &amp; Feathers</h2>
-        <p class="screen-subtitle">Tic-Tac-Toe</p>
-      </header>
-      <div class="panel prose">
-        <h3>Goal</h3>
-        <p>Get three of your pieces in a row: across, down or diagonally.</p>
-        <h3>Taking turns</h3>
-        <ul>
-          <li>Players take turns placing one piece on an empty square.</li>
-          <li>Player 1 always moves first. Choose whether Player 1 plays shells or feathers before the game.</li>
-          <li>If all nine squares fill up with no row of three, the game is a draw.</li>
-        </ul>
-        <h3>Against the Spirit</h3>
-        <ul>
-          <li>You are Player 1 and the forest Spirit answers each move.</li>
-          <li><strong>Gentle</strong> picks open squares at random. <strong>Balanced</strong> plays its best move about 7 times in 10. <strong>Wise</strong> never loses, so a draw is a great result.</li>
-        </ul>
-        <h3>Two players</h3>
-        <p>Share one device and take turns. The turn line above the board shows whose move it is.</p>
-        <h3>Menu</h3>
-        <p><strong>Menu</strong>, above the board, pauses the game and holds Restart, Change Mode and All Games.</p>
-        <h3>Keyboard</h3>
-        <p>Tab to the board, move between squares with the arrow keys, and press Enter or Space to place a piece.</p>
+    <section id="sf-howto-screen" class="screen paged-screen" data-pager aria-labelledby="sf-howto-title">
+      <div class="screen-head">
+        <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
+        <header class="screen-header">
+          <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-feather" /></svg></p>
+          <h2 id="sf-howto-title" tabindex="-1">How to Play Shells &amp; Feathers</h2>
+          <p class="screen-subtitle">Tic-Tac-Toe</p>
+        </header>
       </div>
-      <a class="btn btn-primary" href="#/shells-feathers">Play Shells &amp; Feathers</a>
+      <div class="pager-main">
+        <div class="pager-body" data-pager-body>
+          <div class="panel prose" data-page-split>
+            <h3>Goal</h3>
+            <p>Get three of your pieces in a row: across, down or diagonally.</p>
+            <h3>Taking turns</h3>
+            <ul data-page-split>
+              <li>Players take turns placing one piece on an empty square.</li>
+              <li>Player 1 always moves first. Choose whether Player 1 plays shells or feathers before the game.</li>
+              <li>If all nine squares fill up with no row of three, the game is a draw.</li>
+            </ul>
+            <h3>Against the Spirit</h3>
+            <ul data-page-split>
+              <li>You are Player 1 and the forest Spirit answers each move.</li>
+              <li><strong>Gentle</strong> picks open squares at random. <strong>Balanced</strong> plays its best move about 7 times in 10. <strong>Wise</strong> never loses, so a draw is a great result.</li>
+            </ul>
+            <h3>Two players</h3>
+            <p>Share one device and take turns. The turn line above the board shows whose move it is.</p>
+            <h3>Menu</h3>
+            <p><strong>Menu</strong>, above the board, pauses the game and holds Restart, Change Mode and All Games.</p>
+            <h3>Keyboard</h3>
+            <p>Tab to the board, move between squares with the arrow keys, and press Enter or Space to place a piece.</p>
+          </div>
+      
+        </div>
+        <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+          <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+          <p class="pager-status" data-pager-status aria-live="polite"></p>
+          <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+        </nav>
+      </div>
+      <a class="btn btn-primary screen-actions" href="#/shells-feathers">Play Shells &amp; Feathers</a>
     </section>
 
     <!-- Acorns & Leaves: side, difficulty and mode -->
-    <section id="al-setup-screen" class="screen" aria-labelledby="al-setup-title">
-      <div class="screen-top"><a class="back-link" href="#/" data-up>← All games</a></div>
-      <header class="screen-header">
-        <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg></p>
-        <h2 id="al-setup-title" tabindex="-1">Acorns &amp; Leaves</h2>
-        <p class="screen-subtitle">Checkers · capture every piece, or leave no move</p>
-      </header>
-
-      <p class="storage-note" id="al-resume-note" role="status" hidden></p>
-      <section class="panel resume-panel" id="al-resume" aria-labelledby="al-resume-title" hidden>
-        <h3 class="resume-title" id="al-resume-title">Unfinished match</h3>
-        <p class="resume-text" id="al-resume-text"></p>
-        <div class="resume-actions">
-          <a class="btn btn-primary" href="#/acorns-leaves/resume">Resume</a>
-          <button type="button" class="btn" data-action="al-discard-resume">Discard</button>
-        </div>
-        <p class="hint">Starting a new match below replaces it.</p>
-      </section>
-      <section class="panel tutorial-card" id="al-tutorial-card" aria-labelledby="al-tutorial-card-title" hidden>
-        <h3 class="resume-title" id="al-tutorial-card-title">New to Acorns &amp; Leaves?</h3>
-        <p>A one-minute practice on its own board shows how to play. Nothing in it counts toward your records.</p>
-        <div class="resume-actions">
-          <a class="btn btn-secondary" href="#/acorns-leaves/tutorial">Try the tutorial</a>
-          <button type="button" class="btn btn-quiet" data-action="al-skip-tutorial">Skip</button>
-        </div>
-      </section>
-
-      <div class="panel setup-panel">
-        <fieldset class="option-group">
-          <legend>Rules</legend>
-          <div class="segmented">
-            <label class="segment"><input type="radio" name="al-variant" value="classic" aria-describedby="al-variant-hint" /><span>Classic</span></label>
-            <label class="segment"><input type="radio" name="al-variant" value="fog" aria-describedby="al-variant-hint" /><span>Fog of War</span></label>
-          </div>
-          <p class="hint" id="al-variant-hint"></p>
-        </fieldset>
-        <fieldset class="option-group">
-          <legend>Against the Spirit, you play</legend>
-          <div class="segmented">
-            <label class="segment"><input type="radio" name="al-side" value="acorn" aria-describedby="al-side-hint" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> Acorns</span></label>
-            <label class="segment"><input type="radio" name="al-side" value="leaf" aria-describedby="al-side-hint" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg> Leaves</span></label>
-          </div>
-          <p class="hint" id="al-side-hint">Acorns move first. Your pieces start at the bottom of the board.</p>
-        </fieldset>
-        <fieldset class="option-group">
-          <legend>Spirit difficulty</legend>
-          <div class="segmented segmented-stack">
-            <label class="segment"><input type="radio" name="al-difficulty" value="easy" aria-describedby="al-difficulty-hint" /><span>Gentle</span></label>
-            <label class="segment"><input type="radio" name="al-difficulty" value="medium" aria-describedby="al-difficulty-hint" /><span>Balanced</span></label>
-            <label class="segment"><input type="radio" name="al-difficulty" value="hard" aria-describedby="al-difficulty-hint" /><span>Wise</span></label>
-          </div>
-          <p class="hint" id="al-difficulty-hint"></p>
-        </fieldset>
-        <fieldset class="option-group">
-          <legend>Match</legend>
-          <div class="segmented segmented-stack">
-            <label class="segment"><input type="radio" name="al-length" value="1" aria-describedby="al-length-hint" /><span>Single game</span></label>
-            <label class="segment"><input type="radio" name="al-length" value="3" aria-describedby="al-length-hint" /><span>Best of 3</span></label>
-            <label class="segment"><input type="radio" name="al-length" value="5" aria-describedby="al-length-hint" /><span>Best of 5</span></label>
-          </div>
-          <p class="hint" id="al-length-hint"></p>
-        </fieldset>
+    <section id="al-setup-screen" class="screen paged-screen" data-pager aria-labelledby="al-setup-title">
+      <div class="screen-head">
+        <div class="screen-top"><a class="back-link" href="#/" data-up>← All games</a></div>
+        <header class="screen-header">
+          <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg></p>
+          <h2 id="al-setup-title" tabindex="-1">Acorns &amp; Leaves</h2>
+          <p class="screen-subtitle">Checkers · capture every piece, or leave no move</p>
+        </header>
       </div>
 
-      <div class="mode-choices">
+      <div class="pager-main">
+        <div class="pager-body" data-pager-body>
+          <p class="storage-note" id="al-resume-note" role="status" hidden></p>
+          <section class="panel resume-panel" id="al-resume" aria-labelledby="al-resume-title" hidden>
+            <h3 class="resume-title" id="al-resume-title">Unfinished match</h3>
+            <p class="resume-text" id="al-resume-text"></p>
+            <div class="resume-actions">
+              <a class="btn btn-primary" href="#/acorns-leaves/resume">Resume</a>
+              <button type="button" class="btn" data-action="al-discard-resume">Discard</button>
+            </div>
+            <p class="hint">Starting a new match below replaces it.</p>
+          </section>
+          <section class="panel tutorial-card" id="al-tutorial-card" aria-labelledby="al-tutorial-card-title" hidden>
+            <h3 class="resume-title" id="al-tutorial-card-title">New to Acorns &amp; Leaves?</h3>
+            <p>A one-minute practice on its own board shows how to play. Nothing in it counts toward your records.</p>
+            <div class="resume-actions">
+              <a class="btn btn-secondary" href="#/acorns-leaves/tutorial">Try the tutorial</a>
+              <button type="button" class="btn btn-quiet" data-action="al-skip-tutorial">Skip</button>
+            </div>
+          </section>
+
+          <div class="panel setup-panel" data-page-split>
+            <fieldset class="option-group">
+              <legend>Rules</legend>
+              <div class="segmented">
+                <label class="segment"><input type="radio" name="al-variant" value="classic" aria-describedby="al-variant-hint" /><span>Classic</span></label>
+                <label class="segment"><input type="radio" name="al-variant" value="fog" aria-describedby="al-variant-hint" /><span>Fog of War</span></label>
+              </div>
+              <p class="hint" id="al-variant-hint"></p>
+            </fieldset>
+            <fieldset class="option-group">
+              <legend>Against the Spirit, you play</legend>
+              <div class="segmented">
+                <label class="segment"><input type="radio" name="al-side" value="acorn" aria-describedby="al-side-hint" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> Acorns</span></label>
+                <label class="segment"><input type="radio" name="al-side" value="leaf" aria-describedby="al-side-hint" /><span><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg> Leaves</span></label>
+              </div>
+              <p class="hint" id="al-side-hint">Acorns move first. Your pieces start at the bottom of the board.</p>
+            </fieldset>
+            <fieldset class="option-group">
+              <legend>Spirit difficulty</legend>
+              <div class="segmented segmented-stack">
+                <label class="segment"><input type="radio" name="al-difficulty" value="easy" aria-describedby="al-difficulty-hint" /><span>Gentle</span></label>
+                <label class="segment"><input type="radio" name="al-difficulty" value="medium" aria-describedby="al-difficulty-hint" /><span>Balanced</span></label>
+                <label class="segment"><input type="radio" name="al-difficulty" value="hard" aria-describedby="al-difficulty-hint" /><span>Wise</span></label>
+              </div>
+              <p class="hint" id="al-difficulty-hint"></p>
+            </fieldset>
+            <fieldset class="option-group">
+              <legend>Match</legend>
+              <div class="segmented segmented-stack">
+                <label class="segment"><input type="radio" name="al-length" value="1" aria-describedby="al-length-hint" /><span>Single game</span></label>
+                <label class="segment"><input type="radio" name="al-length" value="3" aria-describedby="al-length-hint" /><span>Best of 3</span></label>
+                <label class="segment"><input type="radio" name="al-length" value="5" aria-describedby="al-length-hint" /><span>Best of 5</span></label>
+              </div>
+              <p class="hint" id="al-length-hint"></p>
+            </fieldset>
+          </div>
+
+      
+          <p class="setup-links"><a class="text-link" href="#/acorns-leaves/how-to-play">How to Play</a> <a class="text-link" href="#/acorns-leaves/tutorial">Tutorial</a></p>
+        </div>
+        <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+          <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+          <p class="pager-status" data-pager-status aria-live="polite"></p>
+          <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+        </nav>
+      </div>
+      <div class="mode-choices screen-actions">
         <a class="mode-btn" id="al-play-single" href="#/acorns-leaves/play/single">
           <span class="mode-icon" aria-hidden="true"><svg class="icon icon-lg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-tree" /></svg></span>
           <span class="mode-title">Play the Spirit</span>
@@ -553,7 +612,6 @@
           <span class="mode-desc">Acorns and Leaves take turns on one device</span>
         </a>
       </div>
-      <p class="setup-links"><a class="text-link" href="#/acorns-leaves/how-to-play">How to Play</a> <a class="text-link" href="#/acorns-leaves/tutorial">Tutorial</a></p>
     </section>
 
     <!-- Acorns & Leaves: match -->
@@ -597,6 +655,7 @@
         <p class="match-last"><span class="match-note-label">Last move</span> <span id="al-last"></span></p>
         <p class="match-note" id="al-note"></p>
       </div>
+      <a class="text-link match-help-link" href="#/acorns-leaves/how-to-play">Rules and keys</a>
       <details class="match-help" data-help="acorns-leaves">
         <summary>Rules and keys</summary>
         <ul>
@@ -616,215 +675,251 @@
     </section>
 
     <!-- How to Play: Acorns & Leaves -->
-    <section id="al-howto-screen" class="screen" aria-labelledby="al-howto-title">
-      <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
-      <header class="screen-header">
-        <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg></p>
-        <h2 id="al-howto-title" tabindex="-1">How to Play Acorns &amp; Leaves</h2>
-        <p class="screen-subtitle">Checkers</p>
-      </header>
-      <div class="panel prose">
-        <p>Classic checkers (draughts): one side plays acorns, the other leaves.</p>
-        <figure class="checkers-figure">
-          <div class="checkers-mini checkers-mini-large" data-checkers-board aria-hidden="true"></div>
-          <figcaption>Starting position: 12 pieces each on the dark squares, Acorns at the bottom.</figcaption>
-        </figure>
-        <ul class="piece-legend" aria-label="The pieces">
-          <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> Acorn</li>
-          <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn-king" /></svg> Acorn king</li>
-          <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg> Leaf</li>
-          <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf-king" /></svg> Leaf king</li>
-        </ul>
-        <h3>Goal</h3>
-        <p>Capture every piece on the other side, or leave it with no move.</p>
-        <h3>Moves</h3>
-        <ul>
-          <li>Acorns move first. A piece moves one square diagonally forward, on the dark squares.</li>
-          <li>To capture, jump an opponent's piece to the empty square just beyond it. Ordinary pieces capture forward only.</li>
-          <li>Capturing is compulsory, but you choose which capture. A piece that can jump again keeps jumping.</li>
-        </ul>
-        <h3>Kings</h3>
-        <p>Reach the far row to be crowned (crown and gold ring). Kings move and capture backward too. Being crowned ends the move.</p>
-        <h3>Draw</h3>
-        <p>40 moves each with no capture and no ordinary piece moved.</p>
-        <h3>On the board</h3>
-        <ul>
-          <li>Tap a piece, then a marked square: a dot is a move, a ring is a jump. In a chain, tap each landing square. No dragging needed.</li>
-          <li>Tap the piece again (or another of yours) to put it back before it moves.</li>
-          <li>An orange ring marks pieces that must capture.</li>
-          <li><strong>Menu</strong> pauses the game and holds Restart, Change Mode and All Games.</li>
-          <li>Keyboard: arrow keys move between dark squares, Enter or Space picks, Escape puts the piece back.</li>
-        </ul>
-        <h3>Against the Spirit</h3>
-        <p>Pick your side and <strong>Gentle</strong>, <strong>Balanced</strong> or <strong>Wise</strong>. Your pieces start at the bottom. Gentle looks one move ahead and can miss a trap; Balanced looks three moves ahead; Wise looks as far ahead as a moment allows and always plays its best move. In Fog of War the Spirit sees only what you would, and guesses at the rest.</p>
-        <h3 id="al-fog-rules">Fog of War</h3>
-        <ul>
-          <li>You see your own pieces, and enemy pieces only on squares next to them. Other dark squares are misty: they may hide an enemy piece.</li>
-          <li>The real board decides what is legal, as in Classic. If a capture may be possible, you must try one; if a hidden piece blocks the landing square, it is shown to you and you choose again.</li>
-          <li>With two players, a handoff screen hides the board between turns. The fog lifts when the game ends.</li>
-        </ul>
+    <section id="al-howto-screen" class="screen paged-screen" data-pager aria-labelledby="al-howto-title">
+      <div class="screen-head">
+        <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
+        <header class="screen-header">
+          <p class="eyebrow" aria-hidden="true"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> <svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg></p>
+          <h2 id="al-howto-title" tabindex="-1">How to Play Acorns &amp; Leaves</h2>
+          <p class="screen-subtitle">Checkers</p>
+        </header>
       </div>
-      <a class="btn btn-primary" href="#/acorns-leaves">Play Acorns &amp; Leaves</a>
+      <div class="pager-main">
+        <div class="pager-body" data-pager-body>
+          <div class="panel prose" data-page-split>
+            <p>Classic checkers (draughts): one side plays acorns, the other leaves.</p>
+            <figure class="checkers-figure">
+              <div class="checkers-mini checkers-mini-large" data-checkers-board aria-hidden="true"></div>
+              <figcaption>Starting position: 12 pieces each on the dark squares, Acorns at the bottom.</figcaption>
+            </figure>
+            <ul class="piece-legend" aria-label="The pieces">
+              <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> Acorn</li>
+              <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn-king" /></svg> Acorn king</li>
+              <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf" /></svg> Leaf</li>
+              <li><svg class="legend-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-leaf-king" /></svg> Leaf king</li>
+            </ul>
+            <h3>Goal</h3>
+            <p>Capture every piece on the other side, or leave it with no move.</p>
+            <h3>Moves</h3>
+            <ul data-page-split>
+              <li>Acorns move first. A piece moves one square diagonally forward, on the dark squares.</li>
+              <li>To capture, jump an opponent's piece to the empty square just beyond it. Ordinary pieces capture forward only.</li>
+              <li>Capturing is compulsory, but you choose which capture. A piece that can jump again keeps jumping.</li>
+            </ul>
+            <h3>Kings</h3>
+            <p>Reach the far row to be crowned (crown and gold ring). Kings move and capture backward too. Being crowned ends the move.</p>
+            <h3>Draw</h3>
+            <p>40 moves each with no capture and no ordinary piece moved.</p>
+            <h3>On the board</h3>
+            <ul data-page-split>
+              <li>Tap a piece, then a marked square: a dot is a move, a ring is a jump. In a chain, tap each landing square. No dragging needed.</li>
+              <li>Tap the piece again (or another of yours) to put it back before it moves.</li>
+              <li>An orange ring marks pieces that must capture.</li>
+              <li><strong>Menu</strong> pauses the game and holds Restart, Change Mode and All Games.</li>
+              <li>Keyboard: arrow keys move between dark squares, Enter or Space picks, Escape puts the piece back.</li>
+            </ul>
+            <h3>Against the Spirit</h3>
+            <p>Pick your side and <strong>Gentle</strong>, <strong>Balanced</strong> or <strong>Wise</strong>. Your pieces start at the bottom. Gentle looks one move ahead and can miss a trap; Balanced looks three moves ahead; Wise looks as far ahead as a moment allows and always plays its best move. In Fog of War the Spirit sees only what you would, and guesses at the rest.</p>
+            <h3 id="al-fog-rules">Fog of War</h3>
+            <ul data-page-split>
+              <li>You see your own pieces, and enemy pieces only on squares next to them. Other dark squares are misty: they may hide an enemy piece.</li>
+              <li>The real board decides what is legal, as in Classic. If a capture may be possible, you must try one; if a hidden piece blocks the landing square, it is shown to you and you choose again.</li>
+              <li>With two players, a handoff screen hides the board between turns. The fog lifts when the game ends.</li>
+            </ul>
+          </div>
+      
+        </div>
+        <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+          <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+          <p class="pager-status" data-pager-status aria-live="polite"></p>
+          <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+        </nav>
+      </div>
+      <a class="btn btn-primary screen-actions" href="#/acorns-leaves">Play Acorns &amp; Leaves</a>
     </section>
 
     <!-- Settings: what every game shares (each game's own options are on
          its setup screen) -->
-    <section id="settings-screen" class="screen" aria-labelledby="settings-title">
-      <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
-      <header class="screen-header">
-        <h2 id="settings-title" tabindex="-1">Settings</h2>
-        <p class="screen-subtitle">Sound and motion for every game</p>
-      </header>
-      <p class="storage-note" id="settings-storage-note" role="status" hidden>This browser isn’t saving anything right now (storage is blocked or full). Changes last until you close the page.</p>
-
-      <div class="panel settings-container">
-        <h3 class="panel-title">Sound</h3>
-        <label class="setting-row" for="music-toggle">
-          <span class="setting-label">Music</span>
-          <span class="switch"><input type="checkbox" id="music-toggle" role="switch" data-setting="music" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
-        </label>
-        <div class="volume-row">
-          <label class="volume-label" for="music-volume">Music volume</label>
-          <input type="range" class="volume-slider" id="music-volume" data-setting="musicVolume" min="0" max="100" step="5" value="30" />
-          <output class="volume-value" id="music-volume-value" for="music-volume" data-setting-value="musicVolume">30%</output>
-        </div>
-        <label class="setting-row" for="audio-toggle">
-          <span class="setting-label">Sound effects</span>
-          <span class="switch"><input type="checkbox" id="audio-toggle" role="switch" data-setting="sfx" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
-        </label>
-        <div class="volume-row">
-          <label class="volume-label" for="sfx-volume">Effects volume</label>
-          <input type="range" class="volume-slider" id="sfx-volume" data-setting="sfxVolume" min="0" max="100" step="5" value="50" />
-          <output class="volume-value" id="sfx-volume-value" for="sfx-volume" data-setting-value="sfxVolume">50%</output>
-        </div>
-        <p class="hint">Sound starts after your first tap, click or key press, and pauses while the page is hidden.</p>
-        <label class="setting-row" for="haptics-toggle">
-          <span class="setting-label">Haptics (vibration)</span>
-          <span class="switch"><input type="checkbox" id="haptics-toggle" role="switch" data-setting="haptics" aria-describedby="haptics-hint" /><span class="toggle-switch" aria-hidden="true"></span></span>
-        </label>
-        <p class="hint" id="haptics-hint" data-setting-hint="haptics"></p>
+    <section id="settings-screen" class="screen paged-screen" data-pager aria-labelledby="settings-title">
+      <div class="screen-head">
+        <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
+        <header class="screen-header">
+          <h2 id="settings-title" tabindex="-1">Settings</h2>
+          <p class="screen-subtitle">Sound and motion for every game</p>
+        </header>
       </div>
+      <div class="pager-main">
+        <div class="pager-body" data-pager-body>
+          <p class="storage-note" id="settings-storage-note" role="status" hidden>This browser isn’t saving anything right now (storage is blocked or full). Changes last until you close the page.</p>
 
-      <div class="panel">
-        <fieldset class="option-group">
-          <legend>Motion</legend>
-          <div class="segmented segmented-stack">
-            <label class="segment"><input type="radio" name="motion" value="system" data-setting="motion" aria-describedby="motion-hint" /><span>Match device</span></label>
-            <label class="segment"><input type="radio" name="motion" value="reduce" data-setting="motion" aria-describedby="motion-hint" /><span>Reduce</span></label>
-            <label class="segment"><input type="radio" name="motion" value="full" data-setting="motion" aria-describedby="motion-hint" /><span>Full</span></label>
+          <div class="panel settings-container" data-page-split>
+            <h3 class="panel-title">Sound</h3>
+            <label class="setting-row" for="music-toggle">
+              <span class="setting-label">Music</span>
+              <span class="switch"><input type="checkbox" id="music-toggle" role="switch" data-setting="music" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
+            </label>
+            <div class="volume-row">
+              <label class="volume-label" for="music-volume">Music volume</label>
+              <input type="range" class="volume-slider" id="music-volume" data-setting="musicVolume" min="0" max="100" step="5" value="30" />
+              <output class="volume-value" id="music-volume-value" for="music-volume" data-setting-value="musicVolume">30%</output>
+            </div>
+            <label class="setting-row" for="audio-toggle">
+              <span class="setting-label">Sound effects</span>
+              <span class="switch"><input type="checkbox" id="audio-toggle" role="switch" data-setting="sfx" checked /><span class="toggle-switch" aria-hidden="true"></span></span>
+            </label>
+            <div class="volume-row">
+              <label class="volume-label" for="sfx-volume">Effects volume</label>
+              <input type="range" class="volume-slider" id="sfx-volume" data-setting="sfxVolume" min="0" max="100" step="5" value="50" />
+              <output class="volume-value" id="sfx-volume-value" for="sfx-volume" data-setting-value="sfxVolume">50%</output>
+            </div>
+            <p class="hint">Sound starts after your first tap, click or key press, and pauses while the page is hidden.</p>
+            <label class="setting-row" for="haptics-toggle">
+              <span class="setting-label">Haptics (vibration)</span>
+              <span class="switch"><input type="checkbox" id="haptics-toggle" role="switch" data-setting="haptics" aria-describedby="haptics-hint" /><span class="toggle-switch" aria-hidden="true"></span></span>
+            </label>
+            <p class="hint" id="haptics-hint" data-setting-hint="haptics"></p>
           </div>
-          <p class="hint" id="motion-hint" data-setting-hint="motion"></p>
-        </fieldset>
-      </div>
 
-      <div class="panel">
-        <h3 class="panel-title">Game options</h3>
-        <p class="hint settings-games-hint">Pieces, sides, rules and the Spirit’s difficulty belong to each game, on its own screen.</p>
-        <div class="settings-links">
-          <a class="btn btn-secondary" href="#/shells-feathers">Shells &amp; Feathers options</a>
-          <a class="btn btn-secondary" href="#/acorns-leaves">Acorns &amp; Leaves options</a>
+          <div class="panel" data-page-split>
+            <fieldset class="option-group">
+              <legend>Motion</legend>
+              <div class="segmented segmented-stack">
+                <label class="segment"><input type="radio" name="motion" value="system" data-setting="motion" aria-describedby="motion-hint" /><span>Match device</span></label>
+                <label class="segment"><input type="radio" name="motion" value="reduce" data-setting="motion" aria-describedby="motion-hint" /><span>Reduce</span></label>
+                <label class="segment"><input type="radio" name="motion" value="full" data-setting="motion" aria-describedby="motion-hint" /><span>Full</span></label>
+              </div>
+              <p class="hint" id="motion-hint" data-setting-hint="motion"></p>
+            </fieldset>
+          </div>
+
+          <div class="panel" data-page-split>
+            <h3 class="panel-title">Game options</h3>
+            <p class="hint settings-games-hint">Pieces, sides, rules and the Spirit’s difficulty belong to each game, on its own screen.</p>
+            <div class="settings-links">
+              <a class="btn btn-secondary" href="#/shells-feathers">Shells &amp; Feathers options</a>
+              <a class="btn btn-secondary" href="#/acorns-leaves">Acorns &amp; Leaves options</a>
+            </div>
+          </div>
+
+          <div class="panel" data-page-split>
+            <h3 class="panel-title">Saved data</h3>
+            <p class="hint">Settings, records and achievements are kept in this browser only. To clear just one game’s progress, use the button at the end of that game in Your Path.</p>
+            <button type="button" class="btn btn-danger danger-wide" data-action="delete-all-data">Delete all saved data…</button>
+            <p class="hint" id="delete-all-status" role="status"></p>
+          </div>
         </div>
-      </div>
-
-      <div class="panel">
-        <h3 class="panel-title">Saved data</h3>
-        <p class="hint">Settings, records and achievements are kept in this browser only. To clear just one game’s progress, use the button at the end of that game in Your Path.</p>
-        <button type="button" class="btn btn-danger danger-wide" data-action="delete-all-data">Delete all saved data…</button>
-        <p class="hint" id="delete-all-status" role="status"></p>
+        <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+          <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+          <p class="pager-status" data-pager-status aria-live="polite"></p>
+          <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+        </nav>
       </div>
     </section>
 
     <!-- Your Path: each game's records and achievements -->
-    <section id="path-screen" class="screen" aria-labelledby="path-title">
-      <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
-      <header class="screen-header">
-        <h2 id="path-title" tabindex="-1">Your Path</h2>
-        <p class="screen-subtitle">Records, game by game, and your achievements</p>
-      </header>
-      <p class="storage-note" id="path-storage-note" role="status" hidden>This browser isn’t saving anything right now (storage is blocked or full). New results last until you close the page.</p>
-
-      <div class="panel path-panel" id="sf-path">
-        <h3 class="panel-title"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> Shells &amp; Feathers</h3>
-        <h4>You against the Spirit</h4>
-        <div class="stats-container">
-          <div class="stat-card"><div class="stat-value" id="sf-wins">0</div><div class="stat-label">Wins</div></div>
-          <div class="stat-card"><div class="stat-value" id="sf-draws">0</div><div class="stat-label">Draws</div></div>
-          <div class="stat-card"><div class="stat-value" id="sf-losses">0</div><div class="stat-label">Losses</div></div>
-          <div class="stat-card"><div class="stat-value" id="sf-games">0</div><div class="stat-label">Games</div></div>
-        </div>
-        <table class="record-table">
-          <caption class="visually-hidden">Shells &amp; Feathers against the Spirit, by difficulty</caption>
-          <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
-          <tbody id="spirit-records"></tbody>
-        </table>
-
-        <h4>Two players on this device</h4>
-        <p id="two-player-record"></p>
-        <p class="hint">Shared games are kept apart: a two-player win is never counted as one of your wins.</p>
-        <p class="hint" id="legacy-note" hidden></p>
-
-        <h4>Sets</h4>
-        <ul class="set-records" id="sf-set-records"></ul>
-
-        <h4>Achievements</h4>
-        <p class="path-journal-line"><span id="sf-journal-count"></span> <a class="journal-link" href="#/journal/shells-feathers"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-journal" /></svg> Open in the journal</a></p>
-
-        <button type="button" class="btn btn-danger danger-wide" data-action="reset-stats">Clear Shells &amp; Feathers progress…</button>
+    <section id="path-screen" class="screen paged-screen" data-pager aria-labelledby="path-title">
+      <div class="screen-head">
+        <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
+        <header class="screen-header">
+          <h2 id="path-title" tabindex="-1">Your Path</h2>
+          <p class="screen-subtitle">Records, game by game, and your achievements</p>
+        </header>
       </div>
+      <div class="pager-main">
+        <div class="pager-body" data-pager-body>
+          <p class="storage-note" id="path-storage-note" role="status" hidden>This browser isn’t saving anything right now (storage is blocked or full). New results last until you close the page.</p>
 
-      <div class="panel path-panel" id="al-path">
-        <h3 class="panel-title"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> Acorns &amp; Leaves</h3>
-        <h4>You against the Spirit</h4>
-        <div class="stats-container">
-          <div class="stat-card"><div class="stat-value" id="al-wins">0</div><div class="stat-label">Wins</div></div>
-          <div class="stat-card"><div class="stat-value" id="al-draws">0</div><div class="stat-label">Draws</div></div>
-          <div class="stat-card"><div class="stat-value" id="al-losses">0</div><div class="stat-label">Losses</div></div>
-          <div class="stat-card"><div class="stat-value" id="al-games">0</div><div class="stat-label">Games</div></div>
-        </div>
-        <p class="hint">Classic and Fog of War together; each is below.</p>
-        <div class="record-pair">
-          <div>
+          <div class="panel path-panel" data-page-split id="sf-path">
+            <h3 class="panel-title"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#sf-shell" /></svg> Shells &amp; Feathers</h3>
+            <h4>You against the Spirit</h4>
+            <div class="stats-container">
+              <div class="stat-card"><div class="stat-value" id="sf-wins">0</div><div class="stat-label">Wins</div></div>
+              <div class="stat-card"><div class="stat-value" id="sf-draws">0</div><div class="stat-label">Draws</div></div>
+              <div class="stat-card"><div class="stat-value" id="sf-losses">0</div><div class="stat-label">Losses</div></div>
+              <div class="stat-card"><div class="stat-value" id="sf-games">0</div><div class="stat-label">Games</div></div>
+            </div>
+            <table class="record-table">
+              <caption class="visually-hidden">Shells &amp; Feathers against the Spirit, by difficulty</caption>
+              <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
+              <tbody id="spirit-records"></tbody>
+            </table>
+
+            <h4>Two players on this device</h4>
+            <p id="two-player-record"></p>
+            <p class="hint">Shared games are kept apart: a two-player win is never counted as one of your wins.</p>
+            <p class="hint" id="legacy-note" hidden></p>
+
+            <h4>Sets</h4>
+            <ul class="set-records" id="sf-set-records"></ul>
+
+            <h4>Achievements</h4>
+            <p class="path-journal-line"><span id="sf-journal-count"></span> <a class="journal-link" href="#/journal/shells-feathers"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-journal" /></svg> Open in the journal</a></p>
+
+            <button type="button" class="btn btn-danger danger-wide" data-action="reset-stats">Clear Shells &amp; Feathers progress…</button>
+          </div>
+
+          <div class="panel path-panel" data-page-split id="al-path">
+            <h3 class="panel-title"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg> Acorns &amp; Leaves</h3>
+            <h4>You against the Spirit</h4>
+            <div class="stats-container">
+              <div class="stat-card"><div class="stat-value" id="al-wins">0</div><div class="stat-label">Wins</div></div>
+              <div class="stat-card"><div class="stat-value" id="al-draws">0</div><div class="stat-label">Draws</div></div>
+              <div class="stat-card"><div class="stat-value" id="al-losses">0</div><div class="stat-label">Losses</div></div>
+              <div class="stat-card"><div class="stat-value" id="al-games">0</div><div class="stat-label">Games</div></div>
+            </div>
+            <p class="hint">Classic and Fog of War together; each is below.</p>
+            <div class="record-pair" data-page-split>
+              <div>
+                <h5>Classic</h5>
+                <table class="record-table">
+                  <caption class="visually-hidden">Acorns &amp; Leaves Classic against the Spirit, by difficulty</caption>
+                  <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
+                  <tbody id="al-spirit-records"></tbody>
+                </table>
+              </div>
+              <div>
+                <h5>Fog of War</h5>
+                <table class="record-table">
+                  <caption class="visually-hidden">Acorns &amp; Leaves Fog of War against the Spirit, by difficulty</caption>
+                  <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
+                  <tbody id="al-fog-spirit-records"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <h4>Two players on this device</h4>
             <h5>Classic</h5>
-            <table class="record-table">
-              <caption class="visually-hidden">Acorns &amp; Leaves Classic against the Spirit, by difficulty</caption>
-              <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
-              <tbody id="al-spirit-records"></tbody>
-            </table>
-          </div>
-          <div>
+            <p id="al-two-player-record"></p>
             <h5>Fog of War</h5>
-            <table class="record-table">
-              <caption class="visually-hidden">Acorns &amp; Leaves Fog of War against the Spirit, by difficulty</caption>
-              <thead><tr><th scope="col">Difficulty</th><th scope="col">Wins</th><th scope="col">Draws</th><th scope="col">Losses</th></tr></thead>
-              <tbody id="al-fog-spirit-records"></tbody>
-            </table>
+            <p id="al-fog-two-player-record"></p>
+            <p class="hint">Shared games are kept apart: a two-player win is never counted as one of your wins.</p>
+
+            <h4>Sets</h4>
+            <ul class="set-records" id="al-set-records"></ul>
+
+            <h4>Achievements</h4>
+            <p class="path-journal-line"><span id="al-journal-count"></span> <a class="journal-link" href="#/journal/acorns-leaves"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-journal" /></svg> Open in the journal</a></p>
+
+            <button type="button" class="btn btn-danger danger-wide" data-action="reset-al-stats">Clear Acorns &amp; Leaves progress…</button>
           </div>
         </div>
-
-        <h4>Two players on this device</h4>
-        <h5>Classic</h5>
-        <p id="al-two-player-record"></p>
-        <h5>Fog of War</h5>
-        <p id="al-fog-two-player-record"></p>
-        <p class="hint">Shared games are kept apart: a two-player win is never counted as one of your wins.</p>
-
-        <h4>Sets</h4>
-        <ul class="set-records" id="al-set-records"></ul>
-
-        <h4>Achievements</h4>
-        <p class="path-journal-line"><span id="al-journal-count"></span> <a class="journal-link" href="#/journal/acorns-leaves"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-journal" /></svg> Open in the journal</a></p>
-
-        <button type="button" class="btn btn-danger danger-wide" data-action="reset-al-stats">Clear Acorns &amp; Leaves progress…</button>
+        <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+          <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+          <p class="pager-status" data-pager-status aria-live="polite"></p>
+          <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+        </nav>
       </div>
     </section>
 
     <!-- Achievement journal: every achievement, in four tabs -->
-    <section id="journal-screen" class="screen" aria-labelledby="journal-title">
-      <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
-      <header class="screen-header">
-        <h2 id="journal-title" tabindex="-1">Achievement Journal</h2>
-        <p class="screen-subtitle" id="journal-summary"></p>
-      </header>
+    <section id="journal-screen" class="screen paged-screen" data-pager aria-labelledby="journal-title">
+      <div class="screen-head">
+        <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
+        <header class="screen-header">
+          <h2 id="journal-title" tabindex="-1">Achievement Journal</h2>
+          <p class="screen-subtitle" id="journal-summary"></p>
+        </header>
+      </div>
       <p class="storage-note" id="journal-storage-note" role="status" hidden>This browser isn’t saving anything right now (storage is blocked or full). Achievements unlocked now last until you close the page.</p>
       <div class="journal-tabs" role="tablist" aria-label="Journal pages">
         <button type="button" class="journal-tab" role="tab" id="journal-tab-all" aria-controls="journal-panel" aria-selected="true" tabindex="0"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#icon-journal" /></svg><span class="tab-name">All</span> <span class="tab-count"></span></button>
@@ -832,27 +927,39 @@
         <button type="button" class="journal-tab" role="tab" id="journal-tab-acornsLeaves" aria-controls="journal-panel" aria-selected="false" tabindex="-1"><svg class="icon-piece" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#al-acorn" /></svg><span class="tab-name">Acorns &amp; Leaves</span> <span class="tab-count"></span></button>
         <button type="button" class="journal-tab" role="tab" id="journal-tab-collection" aria-controls="journal-panel" aria-selected="false" tabindex="-1"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#ach-compass" /></svg><span class="tab-name">Collection</span> <span class="tab-count"></span></button>
       </div>
-      <div class="panel journal-panel" id="journal-panel" role="tabpanel" aria-labelledby="journal-tab-all" tabindex="0"></div>
-      <p class="hint journal-hint">“Against the Spirit” counts only your own games against the Spirit; games for two players on this device have their own entries and never count as anyone’s win. Achievements are unlocked once, from what really happened: nothing is guessed from older totals. Clearing a game’s progress in Your Path locks its achievements again, with the Collection entries that need them.</p>
+      <div class="pager-main">
+        <div class="pager-body" data-pager-body>
+          <div class="panel journal-panel" id="journal-panel" data-page-split role="tabpanel" aria-labelledby="journal-tab-all" tabindex="0"></div>
+          <p class="hint journal-hint">“Against the Spirit” counts only your own games against the Spirit; games for two players on this device have their own entries and never count as anyone’s win. Achievements are unlocked once, from what really happened: nothing is guessed from older totals. Clearing a game’s progress in Your Path locks its achievements again, with the Collection entries that need them.</p>
+        </div>
+        <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+          <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+          <p class="pager-status" data-pager-status aria-live="polite"></p>
+          <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+        </nav>
+      </div>
     </section>
 
     <!-- Tutorial: a short practice on its own board (src/app/tutorial.js) -->
-    <section id="tutorial-screen" class="screen" aria-labelledby="tutorial-title">
-      <div class="screen-top"><a class="back-link" href="#/" data-back>← Back</a></div>
-      <header class="screen-header">
-        <h2 id="tutorial-title" tabindex="-1">Tutorial</h2>
-        <p class="screen-subtitle" id="tutorial-progress"></p>
-      </header>
-      <div class="panel tutorial-panel">
-        <p class="tutorial-lesson" id="tutorial-lesson"></p>
+    <section id="tutorial-screen" class="screen tutorial-screen" aria-labelledby="tutorial-title">
+      <div class="screen-head">
+        <div class="screen-top"><a class="back-link" href="#/" data-back><span aria-hidden="true">←</span><span class="back-word"> Back</span></a></div>
+        <header class="screen-header">
+          <h2 id="tutorial-title" tabindex="-1">Tutorial</h2>
+          <p class="screen-subtitle"><span id="tutorial-progress"></span> · <span class="tutorial-note">Practice only: nothing here counts.</span></p>
+        </header>
+      </div>
+      <p class="tutorial-lesson" id="tutorial-lesson"></p>
+      <div class="practice-well">
         <div class="practice-board" id="practice-board" aria-label="Practice board"></div>
+      </div>
+      <div class="panel tutorial-panel">
         <p class="tutorial-hint" id="tutorial-hint" role="status" aria-live="polite"></p>
         <div class="tutorial-actions">
           <button type="button" class="btn btn-primary" id="tutorial-next" data-action="tutorial-next" hidden>Next</button>
           <a class="btn btn-primary" id="tutorial-play" href="#/" data-up hidden>Play</a>
           <button type="button" class="btn btn-quiet" id="tutorial-skip" data-action="tutorial-skip">Skip tutorial</button>
         </div>
-        <p class="hint">Practice only: nothing here counts toward your records or achievements.</p>
       </div>
     </section>
 
@@ -863,13 +970,20 @@
 
     <!-- Shells & Feathers result -->
     <div id="game-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message modal-set modal-summary modal-achievements">
-      <div class="modal-content">
+      <div class="modal-content" data-pager>
         <div class="modal-emblem" id="modal-emblem" aria-hidden="true"></div>
         <h3 id="modal-title" class="modal-title">Victory!</h3>
-        <p id="modal-message" class="modal-message">The spirits smile upon you</p>
-        <p id="modal-set" class="modal-set"></p>
-        <p id="modal-summary" class="modal-summary"></p>
-        <p id="modal-achievements" class="modal-achievements"></p>
+        <div class="result-body" data-pager-body>
+          <p id="modal-message" class="modal-message">The spirits smile upon you</p>
+          <p id="modal-set" class="modal-set"></p>
+          <p id="modal-summary" class="modal-summary"></p>
+          <p id="modal-achievements" class="modal-achievements"></p>
+        </div>
+        <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+          <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+          <p class="pager-status" data-pager-status aria-live="polite"></p>
+          <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+        </nav>
         <div class="modal-buttons">
           <button type="button" class="btn btn-primary modal-btn" data-action="play-again">Play Again</button>
           <button type="button" class="btn modal-btn" data-action="switch-sides">Switch Sides</button>
@@ -883,9 +997,21 @@
     <!-- Shells & Feathers: the match menu (Menu button in the match header) -->
     <div id="sf-menu" class="modal match-menu" role="dialog" aria-modal="true" aria-labelledby="sf-menu-title" aria-describedby="sf-menu-info sf-menu-note">
       <div class="modal-content menu-content">
-        <div class="menu-view" data-menu-view="pause">
+        <div class="menu-view" data-menu-view="pause" data-pager>
           <h3 id="sf-menu-title" class="modal-title">Paused</h3>
-          <p id="sf-menu-info" class="modal-message menu-info"></p>
+          <div class="menu-body" data-pager-body>
+            <p id="sf-menu-info" class="modal-message menu-info"></p>
+            <div class="menu-update" data-update-row hidden>
+              <p class="menu-update-text">An update is ready. Your match is kept.</p>
+              <button type="button" class="btn modal-btn" data-action="update-reload">Reload to Update</button>
+            </div>
+            <p id="sf-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
+          </div>
+          <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+            <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+            <p class="pager-status" data-pager-status aria-live="polite"></p>
+            <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+          </nav>
           <div class="modal-buttons">
             <button type="button" class="btn btn-primary modal-btn" data-menu-close>Resume</button>
             <button type="button" class="btn modal-btn" data-menu-settings>Settings</button>
@@ -893,12 +1019,11 @@
             <a class="btn modal-btn" href="#/shells-feathers" data-up>Change Mode</a>
             <a class="btn modal-btn" href="#/" data-up>All Games</a>
           </div>
-          <p id="sf-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
         </div>
-        <div class="menu-view" data-menu-view="settings" hidden>
+        <div class="menu-view" data-menu-view="settings" data-pager hidden>
           <h3 id="sf-menu-settings-title" class="modal-title" tabindex="-1">Settings</h3>
-          <p class="modal-message menu-info">The game stays paused while you change these.</p>
-          <div class="menu-settings">
+          <div class="menu-settings" data-pager-body>
+            <p class="modal-message menu-info">The game stays paused while you change these.</p>
             <label class="setting-row" for="sf-menu-music">
               <span class="setting-label">Music</span>
               <span class="switch"><input type="checkbox" id="sf-menu-music" role="switch" data-setting="music" /><span class="toggle-switch" aria-hidden="true"></span></span>
@@ -932,6 +1057,11 @@
               <p class="hint" id="sf-menu-motion-hint" data-setting-hint="motion"></p>
             </fieldset>
           </div>
+          <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+            <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+            <p class="pager-status" data-pager-status aria-live="polite"></p>
+            <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+          </nav>
           <div class="modal-buttons">
             <button type="button" class="btn btn-primary modal-btn" data-menu-back>Done</button>
           </div>
@@ -941,13 +1071,20 @@
 
     <!-- Acorns & Leaves result -->
     <div id="al-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="al-modal-title" aria-describedby="al-modal-message al-modal-set al-modal-summary al-modal-achievements">
-      <div class="modal-content">
+      <div class="modal-content" data-pager>
         <div class="modal-emblem" id="al-modal-emblem" aria-hidden="true"></div>
         <h3 id="al-modal-title" class="modal-title">Victory!</h3>
-        <p id="al-modal-message" class="modal-message"></p>
-        <p id="al-modal-set" class="modal-set"></p>
-        <p id="al-modal-summary" class="modal-summary"></p>
-        <p id="al-modal-achievements" class="modal-achievements"></p>
+        <div class="result-body" data-pager-body>
+          <p id="al-modal-message" class="modal-message"></p>
+          <p id="al-modal-set" class="modal-set"></p>
+          <p id="al-modal-summary" class="modal-summary"></p>
+          <p id="al-modal-achievements" class="modal-achievements"></p>
+        </div>
+        <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+          <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+          <p class="pager-status" data-pager-status aria-live="polite"></p>
+          <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+        </nav>
         <div class="modal-buttons">
           <button type="button" class="btn btn-primary modal-btn" data-action="al-rematch">Rematch</button>
           <button type="button" class="btn modal-btn" data-action="al-switch-sides">Switch Sides</button>
@@ -961,9 +1098,21 @@
     <!-- Acorns & Leaves: the match menu (Menu button in the match header) -->
     <div id="al-menu" class="modal match-menu" role="dialog" aria-modal="true" aria-labelledby="al-menu-title" aria-describedby="al-menu-info al-menu-note">
       <div class="modal-content menu-content">
-        <div class="menu-view" data-menu-view="pause">
+        <div class="menu-view" data-menu-view="pause" data-pager>
           <h3 id="al-menu-title" class="modal-title">Paused</h3>
-          <p id="al-menu-info" class="modal-message menu-info"></p>
+          <div class="menu-body" data-pager-body>
+            <p id="al-menu-info" class="modal-message menu-info"></p>
+            <div class="menu-update" data-update-row hidden>
+              <p class="menu-update-text">An update is ready. Your match is kept.</p>
+              <button type="button" class="btn modal-btn" data-action="update-reload">Reload to Update</button>
+            </div>
+            <p id="al-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
+          </div>
+          <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+            <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+            <p class="pager-status" data-pager-status aria-live="polite"></p>
+            <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+          </nav>
           <div class="modal-buttons">
             <button type="button" class="btn btn-primary modal-btn" data-menu-close>Resume</button>
             <button type="button" class="btn modal-btn" data-menu-settings>Settings</button>
@@ -971,12 +1120,11 @@
             <a class="btn modal-btn" href="#/acorns-leaves" data-up>Change Mode</a>
             <a class="btn modal-btn" href="#/" data-up>All Games</a>
           </div>
-          <p id="al-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
         </div>
-        <div class="menu-view" data-menu-view="settings" hidden>
+        <div class="menu-view" data-menu-view="settings" data-pager hidden>
           <h3 id="al-menu-settings-title" class="modal-title" tabindex="-1">Settings</h3>
-          <p class="modal-message menu-info">The game stays paused while you change these.</p>
-          <div class="menu-settings">
+          <div class="menu-settings" data-pager-body>
+            <p class="modal-message menu-info">The game stays paused while you change these.</p>
             <label class="setting-row" for="al-menu-music">
               <span class="setting-label">Music</span>
               <span class="switch"><input type="checkbox" id="al-menu-music" role="switch" data-setting="music" /><span class="toggle-switch" aria-hidden="true"></span></span>
@@ -1010,6 +1158,11 @@
               <p class="hint" id="al-menu-motion-hint" data-setting-hint="motion"></p>
             </fieldset>
           </div>
+          <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+            <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+            <p class="pager-status" data-pager-status aria-live="polite"></p>
+            <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+          </nav>
           <div class="modal-buttons">
             <button type="button" class="btn btn-primary modal-btn" data-menu-back>Done</button>
           </div>
@@ -1030,15 +1183,20 @@
     </div>
     <!-- Deleting saved data: says exactly what goes and what stays -->
     <div id="confirm-dialog" class="modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-body">
-      <div class="modal-content confirm-content">
+      <div class="modal-content confirm-content" data-pager>
         <h3 id="confirm-title" class="confirm-title"></h3>
-        <div id="confirm-body" class="confirm-body">
-          <p class="confirm-lead">This deletes:</p>
-          <ul id="confirm-deletes" class="confirm-list confirm-deletes"></ul>
-          <p class="confirm-lead" id="confirm-keeps-lead">This keeps:</p>
-          <ul id="confirm-keeps" class="confirm-list"></ul>
-          <p class="confirm-warning">This can’t be undone.</p>
+        <div id="confirm-body" class="confirm-body" data-pager-body>
+          <p class="confirm-lead" data-page-heading>This deletes:</p>
+          <ul id="confirm-deletes" class="confirm-list confirm-deletes" data-page-split></ul>
+          <p class="confirm-lead" id="confirm-keeps-lead" data-page-heading>This keeps:</p>
+          <ul id="confirm-keeps" class="confirm-list" data-page-split></ul>
         </div>
+        <nav class="pager-nav" data-pager-nav aria-label="Pages" hidden>
+          <button type="button" class="btn pager-btn" data-pager-prev><span aria-hidden="true">←</span><span class="pager-word"> Previous</span></button>
+          <p class="pager-status" data-pager-status aria-live="polite"></p>
+          <button type="button" class="btn pager-btn" data-pager-next><span class="pager-word">Next </span><span aria-hidden="true">→</span></button>
+        </nav>
+        <p class="confirm-warning">This can’t be undone.</p>
         <div class="modal-buttons confirm-buttons">
           <button type="button" class="btn" id="confirm-cancel">Cancel</button>
           <button type="button" class="btn btn-danger" id="confirm-accept">Delete</button>
@@ -1078,28 +1236,31 @@
   <script type="importmap">
   {
     "imports": {
-      "./src/app/app.js": "./src/app/app.js?v=788bb92353",
+      "./src/app/app.js": "./src/app/app.js?v=89571a9514",
       "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
       "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
       "./src/app/hub-chooser.js": "./src/app/hub-chooser.js?v=911a709cf1",
+      "./src/app/hub-leaves.js": "./src/app/hub-leaves.js?v=dea9bf3201",
       "./src/app/intro.js": "./src/app/intro.js?v=5e46ddd3ac",
-      "./src/app/journal-screen.js": "./src/app/journal-screen.js?v=e49f865d11",
+      "./src/app/journal-screen.js": "./src/app/journal-screen.js?v=73c5100ba2",
       "./src/app/navigation.js": "./src/app/navigation.js?v=df1ca271ed",
+      "./src/app/pager.js": "./src/app/pager.js?v=03532ccefe",
       "./src/app/path-screen.js": "./src/app/path-screen.js?v=5ed64db792",
       "./src/app/resume-ui.js": "./src/app/resume-ui.js?v=2965e78509",
       "./src/app/router.js": "./src/app/router.js?v=cbc93752ac",
       "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=c63f17cc7a",
-      "./src/app/sound-motion.js": "./src/app/sound-motion.js?v=f7e46a67c0",
+      "./src/app/sound-motion.js": "./src/app/sound-motion.js?v=84fd10d3e6",
       "./src/app/start-gate.js": "./src/app/start-gate.js?v=7f1003c308",
       "./src/app/toast.js": "./src/app/toast.js?v=8e6cb89471",
       "./src/app/tutorial.js": "./src/app/tutorial.js?v=7d842e314f",
+      "./src/app/update-prompt.js": "./src/app/update-prompt.js?v=c22aa6d0d9",
       "./src/games/acorns-leaves/ai.js": "./src/games/acorns-leaves/ai.js?v=ec51e2bd96",
       "./src/games/acorns-leaves/engine.js": "./src/games/acorns-leaves/engine.js?v=f4ae64291c",
       "./src/games/acorns-leaves/fog-ai.js": "./src/games/acorns-leaves/fog-ai.js?v=9792d8c2f9",
       "./src/games/acorns-leaves/fog.js": "./src/games/acorns-leaves/fog.js?v=c6a4aaa2c2",
       "./src/games/acorns-leaves/pieces.js": "./src/games/acorns-leaves/pieces.js?v=778ba9533a",
       "./src/games/acorns-leaves/resume.js": "./src/games/acorns-leaves/resume.js?v=05e5c19654",
-      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=32d26f8842",
+      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=7b874cc8f3",
       "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=ce6b957d2b",
       "./src/games/acorns-leaves/text.js": "./src/games/acorns-leaves/text.js?v=5229e61624",
       "./src/games/acorns-leaves/turn.js": "./src/games/acorns-leaves/turn.js?v=4c32d00fbb",
@@ -1108,14 +1269,14 @@
       "./src/games/shells-feathers/match.js": "./src/games/shells-feathers/match.js?v=dd264e8ee4",
       "./src/games/shells-feathers/resume.js": "./src/games/shells-feathers/resume.js?v=4c5bdb2421",
       "./src/games/shells-feathers/rules.js": "./src/games/shells-feathers/rules.js?v=6f838579f5",
-      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=e47624754e",
+      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=ce1c1c7cc8",
       "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=059417c2b3",
       "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=381e9162aa",
-      "./src/main.js": "./src/main.js?v=bb0d4beebf",
-      "./src/shared/achievements.js": "./src/shared/achievements.js?v=ebc7788204",
-      "./src/shared/audio.js": "./src/shared/audio.js?v=1d1539e3ec",
+      "./src/main.js": "./src/main.js?v=b0d0ca161a",
+      "./src/shared/achievements.js": "./src/shared/achievements.js?v=92cf5030fc",
+      "./src/shared/audio.js": "./src/shared/audio.js?v=16bd81f2ed",
       "./src/shared/board-taps.js": "./src/shared/board-taps.js?v=0d80361510",
-      "./src/shared/feedback.js": "./src/shared/feedback.js?v=b7f605d3e9",
+      "./src/shared/feedback.js": "./src/shared/feedback.js?v=3df2204922",
       "./src/shared/haptics.js": "./src/shared/haptics.js?v=28c182c91c",
       "./src/shared/icons.js": "./src/shared/icons.js?v=6688127809",
       "./src/shared/match-menu.js": "./src/shared/match-menu.js?v=5240555d5f",
@@ -1128,28 +1289,31 @@
     }
   }
   </script>
-  <link rel="modulepreload" href="src/app/app.js?v=788bb92353" />
+  <link rel="modulepreload" href="src/app/app.js?v=89571a9514" />
   <link rel="modulepreload" href="src/app/confirm-dialog.js?v=fba3c17fca" />
   <link rel="modulepreload" href="src/app/dialog-focus.js?v=77ccee0736" />
   <link rel="modulepreload" href="src/app/hub-chooser.js?v=911a709cf1" />
+  <link rel="modulepreload" href="src/app/hub-leaves.js?v=dea9bf3201" />
   <link rel="modulepreload" href="src/app/intro.js?v=5e46ddd3ac" />
-  <link rel="modulepreload" href="src/app/journal-screen.js?v=e49f865d11" />
+  <link rel="modulepreload" href="src/app/journal-screen.js?v=73c5100ba2" />
   <link rel="modulepreload" href="src/app/navigation.js?v=df1ca271ed" />
+  <link rel="modulepreload" href="src/app/pager.js?v=03532ccefe" />
   <link rel="modulepreload" href="src/app/path-screen.js?v=5ed64db792" />
   <link rel="modulepreload" href="src/app/resume-ui.js?v=2965e78509" />
   <link rel="modulepreload" href="src/app/router.js?v=cbc93752ac" />
   <link rel="modulepreload" href="src/app/settings-screen.js?v=c63f17cc7a" />
-  <link rel="modulepreload" href="src/app/sound-motion.js?v=f7e46a67c0" />
+  <link rel="modulepreload" href="src/app/sound-motion.js?v=84fd10d3e6" />
   <link rel="modulepreload" href="src/app/start-gate.js?v=7f1003c308" />
   <link rel="modulepreload" href="src/app/toast.js?v=8e6cb89471" />
   <link rel="modulepreload" href="src/app/tutorial.js?v=7d842e314f" />
+  <link rel="modulepreload" href="src/app/update-prompt.js?v=c22aa6d0d9" />
   <link rel="modulepreload" href="src/games/acorns-leaves/ai.js?v=ec51e2bd96" />
   <link rel="modulepreload" href="src/games/acorns-leaves/engine.js?v=f4ae64291c" />
   <link rel="modulepreload" href="src/games/acorns-leaves/fog-ai.js?v=9792d8c2f9" />
   <link rel="modulepreload" href="src/games/acorns-leaves/fog.js?v=c6a4aaa2c2" />
   <link rel="modulepreload" href="src/games/acorns-leaves/pieces.js?v=778ba9533a" />
   <link rel="modulepreload" href="src/games/acorns-leaves/resume.js?v=05e5c19654" />
-  <link rel="modulepreload" href="src/games/acorns-leaves/session.js?v=32d26f8842" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/session.js?v=7b874cc8f3" />
   <link rel="modulepreload" href="src/games/acorns-leaves/setup.js?v=ce6b957d2b" />
   <link rel="modulepreload" href="src/games/acorns-leaves/text.js?v=5229e61624" />
   <link rel="modulepreload" href="src/games/acorns-leaves/turn.js?v=4c32d00fbb" />
@@ -1158,14 +1322,14 @@
   <link rel="modulepreload" href="src/games/shells-feathers/match.js?v=dd264e8ee4" />
   <link rel="modulepreload" href="src/games/shells-feathers/resume.js?v=4c5bdb2421" />
   <link rel="modulepreload" href="src/games/shells-feathers/rules.js?v=6f838579f5" />
-  <link rel="modulepreload" href="src/games/shells-feathers/session.js?v=e47624754e" />
+  <link rel="modulepreload" href="src/games/shells-feathers/session.js?v=ce1c1c7cc8" />
   <link rel="modulepreload" href="src/games/shells-feathers/setup.js?v=059417c2b3" />
   <link rel="modulepreload" href="src/games/shells-feathers/view.js?v=381e9162aa" />
-  <link rel="modulepreload" href="src/main.js?v=bb0d4beebf" />
-  <link rel="modulepreload" href="src/shared/achievements.js?v=ebc7788204" />
-  <link rel="modulepreload" href="src/shared/audio.js?v=1d1539e3ec" />
+  <link rel="modulepreload" href="src/main.js?v=b0d0ca161a" />
+  <link rel="modulepreload" href="src/shared/achievements.js?v=92cf5030fc" />
+  <link rel="modulepreload" href="src/shared/audio.js?v=16bd81f2ed" />
   <link rel="modulepreload" href="src/shared/board-taps.js?v=0d80361510" />
-  <link rel="modulepreload" href="src/shared/feedback.js?v=b7f605d3e9" />
+  <link rel="modulepreload" href="src/shared/feedback.js?v=3df2204922" />
   <link rel="modulepreload" href="src/shared/haptics.js?v=28c182c91c" />
   <link rel="modulepreload" href="src/shared/icons.js?v=6688127809" />
   <link rel="modulepreload" href="src/shared/match-menu.js?v=5240555d5f" />
@@ -1175,7 +1339,7 @@
   <link rel="modulepreload" href="src/shared/save-data.js?v=e19049cace" />
   <link rel="modulepreload" href="src/shared/storage.js?v=40ebff7603" />
   <link rel="modulepreload" href="src/shared/timers.js?v=22efd36a1d" />
-  <script type="module" src="src/main.js?v=bb0d4beebf"></script>
+  <script type="module" src="src/main.js?v=b0d0ca161a"></script>
   <!-- /asset versions -->
 </body>
 </html>

@@ -10,12 +10,13 @@ import { createDefaultSave, normalizeSave, SAVE_KEY, LEGACY_STATS_KEY } from '..
 import { createProfile } from '../../src/shared/profile.js';
 import { openStorage } from '../../src/shared/storage.js';
 import { createSession, DELAYS } from '../../src/games/acorns-leaves/session.js';
+import { createSession as createShellsFeathersSession, DELAYS as SF_DELAYS } from '../../src/games/shells-feathers/session.js';
 import { positionFromRows, legalMoves, squareAt } from '../../src/games/acorns-leaves/engine.js';
 import { createToast, NOTICE } from '../../src/app/toast.js';
-import { createFeedback } from '../../src/shared/feedback.js';
+import { createFeedback, CUES } from '../../src/shared/feedback.js';
 import { progressText, stateText } from '../../src/app/journal-screen.js';
 import {
-  createFakeClock, createFakeAudio, createFakeCheckersView, createMemoryStorage,
+  createFakeClock, createFakeAudio, createFakeCheckersView, createFakeView, createFakeResume, createMemoryStorage,
 } from '../helpers/fakes.mjs';
 
 const sq = (row, col) => squareAt(row, col);
@@ -58,8 +59,8 @@ test('a win with a side counts only as a win against the Spirit with that side: 
   assert.deepEqual(profile.recordAcornsLeavesResult({ mode: 'single', difficulty: 'easy', outcome: 'loss', side: 'leaf' }).map((a) => a.id), ['first-game', 'both-games']);
   assert.deepEqual(profile.recordAcornsLeavesResult({ mode: 'two', outcome: 'leaf', side: 'leaf' }).map((a) => a.id), ['shared-board']);
   assert.deepEqual(profile.recordAcornsLeavesResult(win('leaf', { variant: 'fog', difficulty: 'hard' })).map((a) => a.id),
-    ['first-win', 'fog-win', 'wise-win', 'leaf-win', 'both-wins']);
-  assert.deepEqual(profile.recordAcornsLeavesResult(win('acorn')).map((a) => a.id), ['acorn-win', 'all-sides']);
+    ['first-win', 'fog-win', 'wise-win', 'fog-wise-win', 'leaf-win', 'both-wins']);
+  assert.deepEqual(profile.recordAcornsLeavesResult(win('acorn')).map((a) => a.id), ['classic-win', 'acorn-win', 'all-sides']);
   // A result without a side (an older caller) unlocks no side entry.
   const other = newProfile().profile;
   assert.ok(!other.recordResult({ mode: 'single', difficulty: 'easy', outcome: 'win' }).some((a) => /-win$/.test(a.id) && a.id !== 'first-win' && a.id !== 'gentle-win'));
@@ -204,7 +205,7 @@ test('clearing a game locks its achievements and the Collection entries that nee
   assert.deepEqual(unlocked(again, 'collection'), []);
   // Earned again, with the new date.
   at(7000);
-  assert.deepEqual(again.recordAcornsLeavesResult(win('acorn')).map((a) => a.id), ['first-game', 'first-win', 'acorn-win', 'both-games', 'both-wins']);
+  assert.deepEqual(again.recordAcornsLeavesResult(win('acorn')).map((a) => a.id), ['first-game', 'first-win', 'classic-win', 'acorn-win', 'both-games', 'both-wins']);
   assert.equal(entry(again, 'collection', 'both-wins').at, 7000);
 });
 
@@ -213,9 +214,9 @@ test('the journal lists every book in order with its state text', () => {
   profile.recordResult(win('shell'));
   const journal = profile.journal();
   assert.deepEqual(journal.books.map((b) => [b.book, b.title, b.entries.length]), [
-    ['shellsFeathers', 'Shells & Feathers', 9], ['acornsLeaves', 'Acorns & Leaves', 10], ['collection', 'Collection', 3],
+    ['shellsFeathers', 'Shells & Feathers', 10], ['acornsLeaves', 'Acorns & Leaves', 14], ['collection', 'Collection', 3],
   ]);
-  assert.deepEqual([journal.unlocked, journal.total], [4, 22]);
+  assert.deepEqual([journal.unlocked, journal.total], [4, 27]);
   const date = (ms) => `day ${ms}`;
   assert.equal(stateText(entry(profile, 'shellsFeathers', 'first-win'), date), 'Unlocked day 1000');
   assert.equal(stateText({ unlocked: true, at: null }, date), 'Unlocked before dates were kept');
@@ -301,7 +302,7 @@ test('an achievement unlocked by the winning move is listed with the result, not
   assert.equal(game.view.model.phase, 'over');
   assert.deepEqual(game.notified, []);
   game.clock.tick(DELAYS.resultModal);
-  assert.deepEqual(game.view.resultAchievements.map((a) => a.id), ['crowned', 'first-game', 'first-win', 'acorn-win']);
+  assert.deepEqual(game.view.resultAchievements.map((a) => a.id), ['crowned', 'first-game', 'first-win', 'classic-win', 'acorn-win']);
 });
 
 // Notices ----------------------------------------------------------------
@@ -336,20 +337,23 @@ test('notices: one at a time in the match line\'s place, read out in full, one c
   toast.achievements('al', []);
   assert.deepEqual(audio.calls, [], 'nothing to say, no chime');
   toast.achievements('al', [CROWNED, DOUBLE]);
-  assert.deepEqual(audio.calls, ['sfx:achievement-sound']);
   assert.equal(showing(), 'Unlocked: Crowned');
+  assert.deepEqual(audio.calls, [], 'the chime waits for the move\'s own sound');
+  clock.tick(CUES.achievement.delay);
+  assert.deepEqual(audio.calls, ['sfx:achievement-sound']);
   assert.equal(nodes['al-notice-icon'].attrs.href, '#ach-crown');
   assert.ok(nodes['al-notice-slot'].classList.contains('is-noticing'), 'the match line makes way');
   assert.equal(nodes['notice-status'].textContent, 'Achievement unlocked: Crowned. Crown one of your own pieces.');
-  clock.tick(NOTICE.SHOW_MS);
+  clock.tick(NOTICE.SHOW_MS - CUES.achievement.delay);
   assert.equal(showing(), null);
   assert.ok(!nodes['al-notice-slot'].classList.contains('is-noticing'), 'the match line is back between notices');
   clock.tick(NOTICE.GAP_MS);
   assert.equal(showing(), 'Unlocked: Double Jump');
   toast.achievements('al', [{ ...CROWNED, title: 'Late' }]);
   assert.equal(showing(), 'Unlocked: Double Jump', 'a new batch waits its turn');
+  clock.tick(CUES.achievement.delay);
   assert.equal(audio.calls.length, 2);
-  clock.tick(NOTICE.SHOW_MS + NOTICE.GAP_MS);
+  clock.tick(NOTICE.SHOW_MS + NOTICE.GAP_MS - CUES.achievement.delay);
   assert.equal(showing(), 'Unlocked: Late');
   clock.tick(NOTICE.SHOW_MS);
   assert.equal(showing(), null);
@@ -388,4 +392,73 @@ test('notices: time stands still while the match is held (menu, hidden page); le
   toast.achievements('chess', [CROWNED]);
   toast.achievements('al', [DOUBLE]);
   assert.equal(showing(), 'Unlocked: Double Jump');
+});
+
+// Achievement set 3 ------------------------------------------------------
+
+test('upgrading from set 2: the new record achievements are worked out once, undated; everything already earned keeps its date', () => {
+  const save = createDefaultSave();
+  save.achievementSet = 2;
+  save.shellsFeathers.achievements = { 'first-game': { at: 5 }, 'first-win': { at: 6 }, 'gentle-win': { at: 6 } };
+  save.shellsFeathers.stats.single.easy.wins = 2;
+  save.shellsFeathers.stats.sets.single.bestOf3.wins = 1;
+  save.acornsLeaves.achievements = { 'first-game': { at: 9 }, 'first-win': { at: 9 }, 'fog-win': { at: 9 }, 'wise-win': { at: 9 } };
+  save.acornsLeaves.stats.single.easy.losses = 8;
+  save.acornsLeaves.stats.fog.single.hard.wins = 2;
+  const { profile, storage } = newProfile({ [SAVE_KEY]: JSON.stringify(save) });
+  assert.equal(ACHIEVEMENT_SET, 3);
+  const at = (book) => Object.fromEntries(profile.achievements(book).filter((a) => a.unlocked).map((a) => [a.id, a.at]));
+  assert.deepEqual(at('shellsFeathers'), {
+    'first-game': 5, 'first-win': 6, 'gentle-win': 6, 'set-win': null,
+  });
+  assert.deepEqual(at('acornsLeaves'), {
+    'first-game': 9, 'ten-games': null, 'first-win': 9, 'fog-win': 9, 'wise-win': 9, 'fog-wise-win': null,
+  }, 'no Classic Win: its wins were all in Fog');
+  assert.equal(JSON.parse(storage.map.get(SAVE_KEY)).achievementSet, 3);
+  // Checked once: a later load changes nothing, and nothing is announced.
+  const again = createProfile(openStorage(() => storage), { now: () => 50_000 });
+  assert.deepEqual(Object.fromEntries(again.achievements('acornsLeaves').filter((a) => a.unlocked).map((a) => [a.id, a.at])), at('acornsLeaves'));
+  assert.deepEqual(again.recordAcornsLeavesResult({ mode: 'two', outcome: 'draw' }).map((a) => a.id), ['shared-board']);
+});
+
+test('a set won against the Spirit counts on the round that decides it, once; resuming mid-set never counts anything twice', () => {
+  const storage = createMemoryStorage();
+  const resume = createFakeResume();
+  const sf = () => {
+    const clock = createFakeClock();
+    const view = createFakeView();
+    const profile = createProfile(openStorage(() => storage));
+    const session = createShellsFeathersSession({
+      view, audio: createFakeAudio(), profile, clock, rng: () => 0, resume,
+    });
+    // Gentle with rng 0 takes the first open square: 1-4-7 wins.
+    const winRound = () => {
+      for (const cell of [4, 1]) {
+        session.selectCell(cell);
+        clock.tick(SF_DELAYS.spiritMove);
+      }
+      session.selectCell(7);
+      clock.tick(SF_DELAYS.resultModal);
+      return view.resultAchievements.map((a) => a.id);
+    };
+    return { profile, session, winRound };
+  };
+  const first = sf();
+  first.profile.updateGameSettings({ difficulty: 'easy', player1Symbol: 'shell', setLength: 3 });
+  first.session.enter('single');
+  assert.ok(!first.winRound().includes('set-win'), 'one round of three is not a set');
+  first.session.playAgain(); // round 2, saved for resuming
+  // The page is reloaded: the match resumes on round 2.
+  const second = sf();
+  assert.equal(second.session.resumeFrom(resume.get('shellsFeathers')), true);
+  assert.deepEqual(second.winRound(), ['set-win'], 'the deciding round');
+  assert.equal(second.profile.progress().shellsFeathers.sets, 1);
+  assert.equal(second.profile.statsSummary().wins, 2, 'each round recorded once');
+  assert.equal(resume.get('shellsFeathers'), null, 'a decided set leaves nothing to resume');
+  // Another set won: nothing new to announce.
+  second.session.playAgain();
+  second.winRound();
+  second.session.playAgain();
+  assert.deepEqual(second.winRound(), []);
+  assert.equal(second.profile.progress().shellsFeathers.sets, 2);
 });

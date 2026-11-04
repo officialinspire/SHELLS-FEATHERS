@@ -2,7 +2,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createTimerScope } from '../../src/shared/timers.js';
-import { createAudio } from '../../src/shared/audio.js';
+import {
+  createAudio, MIX, DUCK, FADE_MS, EFFECT_FADE_MS, MAX_VOICES,
+} from '../../src/shared/audio.js';
 import { createFakeClock, createFakeAudioElement } from '../helpers/fakes.mjs';
 
 test('dispose() cancels pending callbacks and ignores later ones', () => {
@@ -65,11 +67,17 @@ test('pause() holds pending callbacks with the time they had left; resume() runs
 // Settles pending promise callbacks (play() refusals are asynchronous).
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 
+// The behaviour tests use a flat mix (every gain 1), so a level read back is
+// the player's volume; the mix has tests of its own.
+const FLAT = { music: 1, sfx: {} };
+
 function setupAudio({ musicEnabled = true, unlocked = true, ...options } = {}) {
   const clock = createFakeClock();
   const elements = { music: createFakeAudioElement(), victory: createFakeAudioElement(), click: createFakeAudioElement() };
   const doc = { getElementById: (id) => elements[id] ?? null };
-  const audio = createAudio({ doc, clock, musicId: 'music', musicEnabled, ...options });
+  const audio = createAudio({
+    doc, clock, win: {}, musicId: 'music', musicEnabled, mix: FLAT, ...options,
+  });
   if (unlocked) audio.unlock();
   return { clock, audio, music: elements.music, elements };
 }
@@ -193,21 +201,25 @@ test('music stays off while disabled; sound effects respect their toggle and vol
 });
 
 test('turning effects off, or their volume to 0, stops one already playing (the victory theme is long)', () => {
-  const { audio, elements } = setupAudio();
+  const { clock, audio, elements } = setupAudio();
   audio.playSfx('victory');
   audio.setSfxVolume(70);
   assert.equal(elements.victory.volume, 0.7, 'a playing effect follows the volume');
   audio.setSfxEnabled(false);
+  clock.tick(EFFECT_FADE_MS);
   assert.equal(elements.victory.paused, true);
   assert.equal(elements.victory.currentTime, 0);
   audio.setSfxEnabled(true);
   audio.playSfx('victory');
   audio.setSfxVolume(0);
+  clock.tick(EFFECT_FADE_MS);
   assert.equal(elements.victory.paused, true);
   audio.setSfxVolume(50);
   audio.playSfx('victory');
   audio.stopEffects();
+  clock.tick(EFFECT_FADE_MS);
   assert.equal(elements.victory.paused, true);
+  assert.equal(clock.pending, 0);
 });
 
 test('music volume: set at once while playing, retargets a fade-in, 0 pauses, and coming back from 0 fades in', () => {
@@ -320,11 +332,168 @@ test('a hidden page pauses the music at once; showing it again fades back in onl
   assert.equal(music.paused, true);
 });
 
-test('stopSfx stops and rewinds a playing effect', () => {
-  const { audio, elements } = setupAudio();
+test('stopSfx fades a playing effect out quickly (no click), then stops and rewinds it', () => {
+  const { clock, audio, elements } = setupAudio();
   audio.playSfx('victory');
   elements.victory.currentTime = 12;
   audio.stopSfx('victory');
+  clock.tick(EFFECT_FADE_MS / 2);
+  assert.equal(elements.victory.paused, false, 'still fading');
+  assert.ok(elements.victory.volume > 0 && elements.victory.volume < 0.5, String(elements.victory.volume));
+  clock.tick(EFFECT_FADE_MS / 2);
   assert.equal(elements.victory.paused, true);
   assert.equal(elements.victory.currentTime, 0);
+  assert.equal(clock.pending, 0);
+  // Played again straight away: at full level, not stuck faded.
+  audio.playSfx('victory');
+  assert.equal(elements.victory.volume, 0.5);
+});
+
+test('the mix: each effect at its own gain under the player\'s volume, the music trimmed under them', () => {
+  const clock = createFakeClock();
+  const elements = {
+    music: createFakeAudioElement(), 'button-select': createFakeAudioElement(), 'select-sound': createFakeAudioElement(), 'crown-sound': createFakeAudioElement(),
+  };
+  const audio = createAudio({
+    doc: { getElementById: (id) => elements[id] ?? null }, clock, win: {}, musicId: 'music', sfxVolume: 50, musicVolume: 30,
+  });
+  audio.unlock();
+  audio.startMusic();
+  clock.tick(FADE_MS);
+  assert.equal(elements.music.volume, 0.3 * MIX.music);
+  for (const id of ['button-select', 'select-sound', 'crown-sound']) {
+    audio.playSfx(id);
+    assert.equal(elements[id].volume, 0.5 * MIX.sfx[id], id);
+  }
+  // Every shipped effect has a gain, and none is boosted past the file.
+  for (const gain of [MIX.music, ...Object.values(MIX.sfx)]) assert.ok(gain > 0 && gain <= 1);
+});
+
+test('a big moment dips the music while it sounds, then lets it back up', () => {
+  const { clock, audio, music } = setupAudio();
+  audio.startMusic();
+  clock.tick(FADE_MS);
+  audio.playSfx('click', { duck: true }); // a 1 s sound (no duration known)
+  clock.tick(DUCK.attackMs + 40);
+  assert.equal(music.volume, 0.3 * DUCK.level);
+  clock.tick(1_000 + DUCK.releaseMs + 100);
+  assert.equal(music.volume, 0.3);
+  assert.equal(clock.pending, 0);
+  // Stopping the effects ends the dip at once.
+  audio.playSfx('click', { duck: true });
+  clock.tick(200);
+  audio.stopEffects();
+  clock.tick(DUCK.releaseMs + 100);
+  assert.equal(music.volume, 0.3);
+  // No music, nothing to dip.
+  audio.stopMusic();
+  clock.tick(FADE_MS);
+  audio.playSfx('click', { duck: true });
+  assert.equal(clock.pending, 0);
+});
+
+test('an effect asked for again while it rings plays on another voice instead of cutting itself off', () => {
+  const clock = createFakeClock();
+  const made = [];
+  const base = createFakeAudioElement();
+  base.cloneNode = () => {
+    const copy = createFakeAudioElement();
+    made.push(copy);
+    return copy;
+  };
+  const audio = createAudio({
+    doc: { getElementById: (id) => (id === 'capture' ? base : null) }, clock, win: {}, musicId: 'music', mix: FLAT,
+  });
+  audio.unlock();
+  audio.playSfx('capture');
+  base.currentTime = 0.1;
+  audio.playSfx('capture');
+  assert.equal(base.currentTime, 0.1, 'the first one rings on');
+  assert.equal(made.length, 1);
+  assert.equal(made[0].paused, false);
+  for (let i = 0; i < 5; i++) audio.playSfx('capture');
+  assert.equal(made.length, MAX_VOICES - 1, 'never more than MAX_VOICES');
+  // When one has finished, it is used again.
+  base.pause();
+  const before = base.plays;
+  audio.playSfx('capture');
+  assert.equal(base.plays, before + 1);
+  assert.equal(made.length, MAX_VOICES - 1);
+  audio.stopSfx('capture');
+  clock.tick(EFFECT_FADE_MS);
+  assert.ok([base, ...made].every((el) => el.paused), 'every voice stops');
+});
+
+// iOS Safari: an element's volume can't be set (it stays 1).
+function fixedVolumeElement() {
+  const el = createFakeAudioElement();
+  Object.defineProperty(el, 'volume', { get: () => 1, set: () => {} });
+  return el;
+}
+
+test('iOS without Web Audio: fades still finish (music stops for a result), and no timer runs on', () => {
+  const clock = createFakeClock();
+  const music = fixedVolumeElement();
+  const audio = createAudio({
+    doc: { getElementById: (id) => (id === 'music' ? music : null) }, clock, win: {}, musicId: 'music',
+  });
+  audio.unlock();
+  audio.startMusic();
+  clock.tick(FADE_MS);
+  assert.equal(clock.pending, 0, 'the fade-in ended');
+  audio.stopMusic();
+  clock.tick(FADE_MS);
+  assert.equal(music.paused, true, 'paused for the result');
+  assert.equal(clock.pending, 0);
+});
+
+test('iOS with Web Audio: levels go through gain nodes once the context runs; it wakes on gestures and when shown', () => {
+  const clock = createFakeClock();
+  const music = fixedVolumeElement();
+  const click = fixedVolumeElement();
+  const log = { contexts: 0, resumes: 0, sources: [] };
+  class FakeContext {
+    constructor() {
+      log.contexts += 1;
+      log.ctx = this;
+      this.state = 'suspended';
+      this.destination = {};
+    }
+
+    resume() {
+      log.resumes += 1;
+      this.state = 'running';
+      return Promise.resolve();
+    }
+
+    createMediaElementSource(el) {
+      log.sources.push(el);
+      return { connect: (node) => node };
+    }
+
+    createGain() { return { gain: { value: 1 }, connect: (node) => node }; }
+  }
+  const audio = createAudio({
+    doc: { getElementById: (id) => ({ music, click })[id] ?? null }, clock, win: { AudioContext: FakeContext }, musicId: 'music', mix: FLAT,
+  });
+  audio.unlock();
+  assert.equal(log.contexts, 1);
+  assert.equal(log.resumes, 1);
+  audio.startMusic();
+  clock.tick(FADE_MS);
+  assert.deepEqual(log.sources, [music], 'the music is routed');
+  audio.playSfx('click');
+  assert.deepEqual(log.sources, [music, click]);
+  audio.playSfx('click');
+  assert.equal(log.sources.length, 2, 'each element is routed once');
+  // A context the system interrupted (a call, the page in the background)
+  // is resumed when the page is shown, and on the next gesture.
+  log.ctx.state = 'interrupted';
+  audio.suspend();
+  audio.resume();
+  assert.equal(log.resumes, 2);
+  log.ctx.state = 'interrupted';
+  audio.unlock();
+  assert.equal(log.resumes, 3);
+  assert.equal(log.contexts, 1, 'one context');
 });

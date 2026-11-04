@@ -2,6 +2,8 @@
    base, layout, controls, each game, Settings and Your Path. */
 
 :root {
+    /* The update banner's room at the top of the page (src/app/update-prompt.js). */
+    --update-room: 0px;
     /* ------------------------------------------------------------------
        Design tokens. A woodland tabletop: forest greens around warm wood,
        pearl shells, soft feathers, readable acorns and leaves, and a little
@@ -191,9 +193,8 @@ body::before {
     width: 100%;
     max-width: 960px;
     margin: 0 auto;
-    /* Screens fade in from 8px lower; don't let that briefly make the page scroll. */
-    overflow: hidden;
-    overflow: clip;
+    /* No clipping here: content that doesn't fit must stay reachable. (Screens
+       fade in from slightly higher, which never makes the page scroll.) */
 }
 
 /* A match uses the whole width of a wide screen (board and side panel). */
@@ -292,7 +293,7 @@ h2[tabindex="-1"]:focus {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(-6px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -837,12 +838,15 @@ h2[tabindex="-1"]:focus {
         flex-direction: column;
     }
 
+    /* Still a full 44px tap target on a short landscape phone; a closer
+       stack keeps all three on a 320px-tall screen. */
     #hub-screen .hub-links {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 3px;
     }
 
     #hub-screen .hub-links .btn {
-        min-height: 38px;
+        min-height: 44px;
     }
 }
 
@@ -1569,7 +1573,7 @@ h2[tabindex="-1"]:focus {
     /* The board has first claim on the width: its smallest size is as big
        as it can be while the side column keeps its minimum. */
     .match-screen {
-        --board-max: min(100vh - 16px, 450px);
+        --board-max: min(100vh - 16px - var(--update-room), 450px);
         --side-min: 220px;
         --board-side: minmax(var(--side-min), 330px);
         --board-min: max(200px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--side-min) - 16px));
@@ -1577,7 +1581,7 @@ h2[tabindex="-1"]:focus {
 
     @supports (height: 100dvh) {
         .match-screen {
-            --board-max: min(100dvh - 16px, 450px);
+            --board-max: min(100dvh - 16px - var(--update-room), 450px);
         }
     }
 
@@ -1637,22 +1641,22 @@ h2[tabindex="-1"]:focus {
         --panel-gap: 28px;
         --panel-min: 280px;
         --panel-max: 24rem;
-        --board-max: min(100vh - 48px, 640px);
+        --board-max: min(100vh - 48px - var(--update-room), 640px);
         --board-min: max(260px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--panel-min) - var(--panel-gap)));
     }
 
     .match-screen.al-match-screen {
-        --board-max: min(100vh - 48px, 860px);
+        --board-max: min(100vh - 48px - var(--update-room), 860px);
         --board-min: max(304px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--panel-min) - var(--panel-gap)));
     }
 
     @supports (height: 100dvh) {
         .match-screen {
-            --board-max: min(100dvh - 48px, 640px);
+            --board-max: min(100dvh - 48px - var(--update-room), 640px);
         }
 
         .match-screen.al-match-screen {
-            --board-max: min(100dvh - 48px, 860px);
+            --board-max: min(100dvh - 48px - var(--update-room), 860px);
         }
     }
 
@@ -1674,7 +1678,7 @@ h2[tabindex="-1"]:focus {
             max(var(--board-gutter), env(safe-area-inset-left));
     }
 
-    .match-screen :is(.game-header, .match-hint, .match-notes, .match-help, .game-controls) {
+    .match-screen :is(.game-header, .match-hint, .match-notes, .match-help, .match-help-link, .game-controls) {
         justify-self: stretch;
         width: auto;
         max-width: none;
@@ -1857,7 +1861,7 @@ kbd {
    board's size is worked out from the viewport instead. */
 @supports not (container-type: size) {
     .board-well > * {
-        --board-size: min(var(--board-max), max(var(--board-min), 100vh - 300px));
+        --board-size: min(var(--board-max), max(var(--board-min), 100vh - 300px - var(--update-room)));
     }
 
     @media (orientation: landscape) and (max-height: 540px) {
@@ -2596,7 +2600,7 @@ kbd {
    left; here the board's largest size follows the height alone. */
 @media (orientation: landscape) and (max-height: 540px) {
     .al-match-screen {
-        --board-max: min(100vh - 16px, 578px);
+        --board-max: min(100vh - 16px - var(--update-room), 578px);
         --side-min: 224px;
         --board-side: minmax(var(--side-min), 340px);
         --board-min: max(200px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--side-min) - 16px));
@@ -2604,7 +2608,7 @@ kbd {
 
     @supports (height: 100dvh) {
         .al-match-screen {
-            --board-max: min(100dvh - 16px, 578px);
+            --board-max: min(100dvh - 16px - var(--update-room), 578px);
         }
     }
 }
@@ -3633,4 +3637,870 @@ kbd {
     .intro-skip:hover {
         background: rgba(255, 255, 255, 0.14);
     }
+}
+
+/* Leaves drifting down behind the hub (src/app/hub-leaves.js): fixed to the
+   screen and clipped to it, behind the hub's cards (#game-container is
+   above), never in the way of a tap. Each leaf falls on `transform` and
+   sways on the separate `translate`, so the browser animates both without
+   repainting. No leaves at all when motion is reduced (the static scatter
+   on the page stays). */
+.hub-leaves {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    contain: strict;
+}
+
+.hub-leaves[hidden] {
+    display: none;
+}
+
+.drift-leaf {
+    position: absolute;
+    top: calc(var(--size) * -2);
+    left: var(--x);
+    width: var(--size);
+    height: var(--size);
+    opacity: var(--alpha);
+    background: center / contain no-repeat;
+    animation:
+        leafFall var(--fall) linear var(--delay) infinite,
+        leafSway var(--sway-time) ease-in-out var(--delay) infinite alternate;
+    will-change: transform;
+}
+
+.drift-leaf--green {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-16 -16 32 32'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='%236E9A55'/%3E%3Cpath d='M0-11V13M0-4L4-8M0 2L-4-2M0 7L4 4' stroke='%232F4F25' stroke-width='1.1' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.drift-leaf--gold {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-16 -16 32 32'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='%23D9A441'/%3E%3Cpath d='M0-11V13M0-4L4-8M0 2L-4-2M0 7L4 4' stroke='%237A5418' stroke-width='1.1' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.drift-leaf--rust {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-16 -16 32 32'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='%23B5602E'/%3E%3Cpath d='M0-11V13M0-4L4-8M0 2L-4-2M0 7L4 4' stroke='%235E2C12' stroke-width='1.1' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.drift-leaf--sage {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-16 -16 32 32'%3E%3Cpath d='M0-14C8-7 9 5 0 14C-9 5-8-7 0-14Z' fill='%23A7BE92'/%3E%3Cpath d='M0-11V13M0-4L4-8M0 2L-4-2M0 7L4 4' stroke='%234E6340' stroke-width='1.1' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+@keyframes leafFall {
+    from { transform: translate3d(0, 0, 0) rotate(var(--tilt)); }
+    to { transform: translate3d(0, calc(100vh + var(--size) * 4), 0) rotate(calc(var(--tilt) + var(--spin))); }
+}
+
+@keyframes leafSway {
+    from { translate: calc(var(--sway) * -1) 0; }
+    to { translate: var(--sway) 0; }
+}
+
+:root[data-motion="reduce"] .hub-leaves {
+    display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root:not([data-motion="full"]) .hub-leaves {
+        display: none;
+    }
+}
+
+/* An update waiting (src/app/update-prompt.js): a bar at the top of the
+   page with Reload and Later. It is part of the page, not over it, so it
+   covers nothing: while it shows, every screen is that much shorter (a
+   match's board shrinks to fit below it), and a screen that can't fit
+   scrolls. Under a dialog, and behind the start screen and intro, it isn't
+   shown. */
+.update-banner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 12px;
+    width: min(100% - 16px, 34rem);
+    margin: max(8px, env(safe-area-inset-top)) auto 0;
+    padding: 6px 8px 6px 14px;
+    border: 2px solid var(--wood-950);
+    border-radius: var(--radius-md);
+    background: linear-gradient(160deg, var(--forest-700), var(--forest-900));
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(214, 236, 196, 0.15);
+    color: var(--text);
+}
+
+.update-banner[hidden],
+:root:not([data-gate="ready"]) .update-banner,
+body:has(.modal.active, .handoff:not([hidden])) .update-banner {
+    display: none;
+}
+
+.update-text {
+    flex: 1 1 9rem;
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+.update-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.update-btn {
+    min-height: 44px;
+    padding: 6px 14px;
+    font-size: 0.98rem;
+}
+
+.update-btn[hidden] {
+    display: none;
+}
+
+/* The screens fit in what the banner leaves (--update-room: its height and
+   margin; the margin stays inside the page instead of moving it down). */
+:root.has-update body {
+    display: flow-root;
+}
+
+:root.has-update .screen.active {
+    min-height: calc(100vh - var(--update-room));
+    min-height: calc(100dvh - var(--update-room));
+}
+
+:root.has-update .match-screen.active {
+    height: calc(100vh - var(--update-room));
+    height: calc(100dvh - var(--update-room));
+    min-height: fit-content; /* and grows (the page scrolls) when it must */
+}
+
+/* The match menu's own Reload row, while an update waits. */
+.menu-update {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 12px;
+    margin-top: var(--space-4);
+    padding: 8px 10px;
+    border: 1px solid rgba(214, 236, 196, 0.3);
+    border-radius: var(--radius-md);
+    background: rgba(15, 33, 23, 0.45);
+}
+
+.menu-update[hidden] {
+    display: none;
+}
+
+.menu-update-text {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    color: var(--text-muted);
+}
+
+/* Short screens: the button says it all, and the banner is slimmer. */
+@media (max-height: 420px) {
+    .menu-update-text {
+        display: none;
+    }
+
+    .update-banner {
+        margin-top: max(4px, env(safe-area-inset-top));
+        padding-block: 3px;
+    }
+
+    .update-text {
+        font-size: 0.88rem;
+    }
+}
+
+/* Paged screens (src/app/pager.js): the screen is exactly the window's
+   height. Its head (Back and the title) and its actions (Play) stay put;
+   the body gets the room left and shows one page of its items at a time,
+   with Previous and Next below when there is more than one page. Nothing is
+   clipped: items that aren't on the page are taken out (pager-off), and
+   the pages are made so that the rest fits. */
+.pager-off {
+    display: none !important;
+}
+
+:root .screen.paged-screen.active {
+    justify-content: flex-start;
+    height: 100vh;
+    height: calc(100dvh - var(--update-room));
+    min-height: 0;
+    gap: 12px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.paged-screen > * {
+    flex: none;
+}
+
+.screen-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 640px;
+}
+
+.paged-screen > .pager-main {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 0;
+}
+
+.paged-screen .pager-body {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 560px;
+    min-height: 0;
+}
+
+.pager-body > * {
+    flex: none;
+}
+
+.pager-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    max-width: 560px;
+}
+
+.pager-nav[hidden] {
+    display: none;
+}
+
+.pager-btn {
+    min-height: 44px;
+    padding: 6px 14px;
+    font-size: 0.95rem;
+}
+
+.pager-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+    box-shadow: none;
+}
+
+.pager-status {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.paged-screen .screen-actions {
+    width: 100%;
+    max-width: 560px;
+}
+
+/* Phones and short windows: a slimmer head and panels, so each page holds
+   more; the decorative icons above the title go. */
+@media (max-height: 760px) {
+    .paged-screen .eyebrow {
+        display: none;
+    }
+
+    .paged-screen .screen-header {
+        padding: var(--space-2) var(--space-4);
+    }
+
+    .paged-screen .screen-header h2 {
+        font-size: clamp(1.25rem, 5vw, 1.6rem);
+    }
+
+    .paged-screen .screen-subtitle {
+        margin-top: 2px;
+        font-size: 0.95rem;
+    }
+
+    .paged-screen .pager-body .panel {
+        padding: var(--space-3) var(--space-4);
+    }
+
+    /* Play the Spirit and Two Players side by side, without the line under
+       each (still read out). */
+    .paged-screen .mode-choices {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .paged-screen .mode-btn {
+        gap: 4px;
+        padding: 8px 6px;
+    }
+
+    .paged-screen .mode-title {
+        font-size: 1.1rem;
+    }
+
+    .paged-screen .mode-desc {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+}
+
+/* Short windows (a phone on its side): Back beside the title, one line. */
+@media (max-height: 500px) {
+    :root .screen.paged-screen.active {
+        gap: 8px;
+        padding-top: max(8px, env(safe-area-inset-top));
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+
+    .screen-head {
+        flex-direction: row;
+        gap: 10px;
+        max-width: 760px;
+    }
+
+    .screen-head .screen-top {
+        width: auto;
+    }
+
+    .screen-head .screen-header {
+        display: flex;
+        flex: 1 1 auto;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: center;
+        column-gap: 12px;
+        min-width: 0;
+        padding: 4px 12px;
+    }
+
+    .paged-screen > .pager-main,
+    .paged-screen .pager-body {
+        gap: 8px;
+    }
+
+    .paged-screen .pager-body {
+        max-width: 760px;
+    }
+
+    .paged-screen .pager-nav,
+    .paged-screen .screen-actions {
+        max-width: 760px;
+    }
+
+    .paged-screen .mode-icon {
+        display: none;
+    }
+
+    .paged-screen .mode-btn {
+        min-height: 48px;
+        justify-content: center;
+    }
+}
+
+/* Paged dialogs: a dialog is never taller than the window. Its title and
+   buttons stay; only its paged body gives up room, a page at a time. */
+.modal.active > .modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    min-height: 0;
+}
+
+.modal-content > *,
+.menu-view > * {
+    flex: none;
+}
+
+.modal-content > [data-pager-body],
+.menu-view > [data-pager-body],
+.modal-content > .menu-view {
+    flex: 0 1 auto;
+    min-height: 0;
+}
+
+.menu-view:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.modal-content .pager-nav {
+    margin-bottom: 10px;
+}
+
+.menu-body .menu-update {
+    margin: 0 0 var(--space-3);
+}
+
+.menu-body .menu-note {
+    margin: 0 0 var(--space-3);
+}
+
+/* Short windows: dialogs and the handoff screen tighten up; the decorative
+   emblem and icon go. */
+@media (max-height: 500px) {
+    .modal {
+        padding: 8px;
+    }
+
+    .modal-content {
+        padding: var(--space-3) var(--space-4);
+    }
+
+    .modal-emblem,
+    .handoff-icon {
+        display: none;
+    }
+
+    .modal-title {
+        margin-bottom: 6px;
+    }
+
+    .modal-buttons {
+        gap: 8px;
+    }
+
+    .modal-buttons .btn {
+        min-height: 44px;
+        padding-block: 6px;
+    }
+
+    .confirm-warning {
+        margin: 6px 0 10px;
+    }
+
+    .handoff {
+        padding: 8px;
+    }
+
+    .handoff-content {
+        gap: 8px;
+    }
+
+    .handoff-title {
+        font-size: 1.6rem;
+    }
+
+    .handoff-text {
+        font-size: 1rem;
+        line-height: 1.4;
+    }
+}
+
+/* The page body is a size container, so a picture in it (the checkers
+   diagram in How to Play) never grows past one page. */
+.paged-screen .pager-body {
+    container-type: size;
+}
+
+.paged-screen .checkers-mini-large {
+    width: min(100%, 320px, 100cqh - 70px);
+}
+
+/* A phone on its side: two columns. The head, the journal's tabs and the
+   actions (Play) on the left; the pages, with Previous and Next under them,
+   on the right, at nearly the full height of the screen. */
+@media (max-height: 500px) and (orientation: landscape) {
+    :root .screen.paged-screen.active {
+        display: grid;
+        grid-template-columns: minmax(170px, 36%) minmax(0, 1fr);
+        grid-template-rows: auto auto auto minmax(0, 1fr);
+        column-gap: 14px;
+        row-gap: 8px;
+        align-items: start;
+        justify-items: stretch;
+    }
+
+    .paged-screen > .screen-head {
+        grid-area: 1 / 1;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .paged-screen > .storage-note {
+        grid-area: 2 / 1;
+    }
+
+    .paged-screen > .journal-tabs {
+        grid-area: 3 / 1;
+    }
+
+    .paged-screen > .screen-actions {
+        grid-area: 4 / 1;
+        align-self: end;
+    }
+
+    .paged-screen > .pager-main {
+        grid-area: 1 / 2 / 5 / 3;
+        height: 100%;
+    }
+
+    .paged-screen .pager-body,
+    .paged-screen .pager-nav {
+        max-width: none;
+    }
+
+    .paged-screen .mode-choices {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .paged-screen .screen-header {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* The journal's tabs two by two: icon and count (the name is still read
+       out). */
+    .paged-screen .journal-tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+    }
+
+    .paged-screen .journal-tab .tab-name {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+}
+
+.pager-status {
+    white-space: nowrap;
+}
+
+/* Narrow windows: Previous and Next show their arrows (and are still named
+   Previous and Next); the page count keeps its line. */
+@media (max-width: 400px) {
+    .pager-btn {
+        min-width: 56px;
+        padding: 6px 12px;
+    }
+
+    .pager-word {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+}
+
+/* The lowest landscape phones (320px tall): the side column's header, hint
+   and Play Again together fit beside the board once a game is over. */
+@media (orientation: landscape) and (max-height: 360px) {
+    .match-screen {
+        --match-gap: 6px;
+    }
+
+    .match-screen .side-chips {
+        row-gap: 6px;
+    }
+
+    .match-screen .game-header {
+        padding-top: 4px;
+        padding-bottom: 6px;
+    }
+}
+
+/* The tutorial fits the window like a match: the lesson above, the board
+   taking the room left, and the hint, Next/Play and Skip below it. On a
+   phone on its side the board takes the left side at full height. */
+:root .screen.tutorial-screen.active {
+    justify-content: flex-start;
+    height: 100vh;
+    height: calc(100dvh - var(--update-room));
+    min-height: fit-content;
+    gap: 10px;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+.tutorial-screen > * {
+    flex: none;
+    width: 100%;
+    max-width: 560px;
+}
+
+.tutorial-screen .screen-head {
+    flex-direction: row;
+    gap: 10px;
+    max-width: 640px;
+}
+
+.tutorial-screen .screen-head .screen-top {
+    width: auto;
+}
+
+.tutorial-screen .screen-header {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: var(--space-2) var(--space-4);
+}
+
+.tutorial-screen .screen-header h2 {
+    font-size: clamp(1.2rem, 4.6vw, 1.6rem);
+}
+
+.tutorial-screen .screen-subtitle {
+    margin-top: 2px;
+    font-size: 0.95rem;
+}
+
+.tutorial-screen .tutorial-lesson {
+    margin: 0;
+    padding: var(--space-2) var(--space-4);
+    background: var(--grain), var(--surface-panel);
+    border: var(--border-panel);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+}
+
+.practice-well {
+    display: grid;
+    flex: 1 1 0;
+    place-items: center;
+    min-height: 200px;
+    container-type: size;
+}
+
+.practice-well .practice-board {
+    width: min(100cqw, 100cqh, 420px);
+}
+
+.practice-well .practice-board[data-game="shellsFeathers"] {
+    width: min(100cqw, 100cqh, 300px);
+}
+
+.tutorial-screen .tutorial-panel {
+    padding: var(--space-2) var(--space-4);
+}
+
+.tutorial-screen .tutorial-hint {
+    min-height: 1.4em;
+    margin: 0 0 6px;
+}
+
+.tutorial-screen .tutorial-actions {
+    flex-wrap: nowrap;
+    margin-bottom: 2px;
+}
+
+.tutorial-screen .tutorial-actions .btn {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.tutorial-screen .back-link {
+    white-space: nowrap;
+}
+
+.tutorial-screen .tutorial-note {
+    font-family: var(--font-body);
+    font-size: 0.88em;
+}
+
+@media (max-height: 760px) {
+    .tutorial-screen .tutorial-lesson {
+        font-size: 0.95rem;
+        line-height: 1.35;
+    }
+
+    .tutorial-screen .tutorial-panel {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    :root .screen.tutorial-screen.active {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-rows: auto auto minmax(0, 1fr);
+        column-gap: 14px;
+        row-gap: 8px;
+        align-items: start;
+        padding-top: max(8px, env(safe-area-inset-top));
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+
+    .tutorial-screen > * {
+        grid-column: 2;
+        max-width: none;
+    }
+
+    .tutorial-screen .screen-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .tutorial-screen .screen-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .tutorial-screen > .practice-well {
+        grid-area: 1 / 1 / 4 / 2;
+        width: min(100dvh - 16px - var(--update-room), 50vw);
+        height: 100%;
+        min-height: 0;
+    }
+}
+
+/* Narrow or short screens: the tutorial's Back link is its arrow (still
+   named Back), so the title has the width. */
+@media (max-width: 400px), (max-height: 500px) and (orientation: landscape) {
+    .tutorial-screen .back-link {
+        justify-content: center;
+        min-width: 48px;
+        padding-inline: 12px;
+    }
+
+    .tutorial-screen .back-word {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    .tutorial-screen .screen-header h2 {
+        font-size: 1.05rem;
+    }
+
+    .tutorial-screen .screen-header {
+        padding: 6px 10px;
+    }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .tutorial-screen .tutorial-lesson {
+        font-size: 0.9rem;
+        line-height: 1.3;
+    }
+
+    .tutorial-screen .tutorial-panel {
+        font-size: 0.9rem;
+    }
+
+    .tutorial-screen .tutorial-actions .btn {
+        min-height: 44px;
+        padding-block: 6px;
+    }
+}
+
+/* "Rules and keys" in the side panel needs the height to open in place.
+   Where the window is too short for it open (measured: 720px for Shells &
+   Feathers, 800px for Acorns & Leaves), the panel links to How to Play
+   instead, which has the same rules and keys; Back returns to the match. */
+.match-help-link {
+    display: none;
+}
+
+@media (min-width: 900px) and (min-height: 541px) and (max-height: 719px) {
+    #game-screen .match-help {
+        display: none;
+    }
+
+    #game-screen .match-help-link {
+        display: inline-flex;
+        grid-area: help;
+        justify-self: start;
+        margin-top: 12px;
+    }
+}
+
+@media (min-width: 900px) and (min-height: 541px) and (max-height: 799px) {
+    #al-game-screen .match-help {
+        display: none;
+    }
+
+    #al-game-screen .match-help-link {
+        display: inline-flex;
+        grid-area: help;
+        justify-self: start;
+        margin-top: 12px;
+    }
+}
+
+/* A finished game is for looking at: its board may be smaller, so the
+   Rematch button fits under it on a small phone. */
+.al-match-screen[data-phase="over"] {
+    --board-min: min(100vw - 2 * var(--board-gutter), 260px);
+}
+
+/* Next and Skip on one line where they fit, each label whole. */
+.tutorial-screen .tutorial-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tutorial-screen .tutorial-actions .btn {
+    flex: 1 1 auto;
+    padding-inline: 12px;
+    white-space: nowrap;
+}
+
+:root .screen.tutorial-screen.active {
+    gap: 8px;
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    :root .screen.tutorial-screen.active {
+        row-gap: 6px;
+    }
+}
+
+@media (max-height: 600px) {
+    :root .screen.tutorial-screen.active { gap: 4px; }
+    .tutorial-screen .tutorial-panel { padding: 6px 8px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .tutorial-screen > .practice-well { width: min(43vw, 100dvh - 16px); }
+    .al-match-screen[data-phase="over"] { --board-min: min(100vw - 2 * var(--board-gutter), 240px); }
+}
+
+@media (max-height: 600px) {
+    .tutorial-screen .screen-head .screen-header { padding: 4px 8px; }
+    .tutorial-screen .tutorial-lesson { padding: 4px 8px; }
+    .tutorial-screen .practice-board[data-game="acornsLeaves"] { border-width: 2px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    #journal-screen.screen.active { row-gap: 2px; }
+    #journal-screen .screen-head { gap: 4px; }
+    #journal-screen .screen-header { padding: 4px 8px; }
+    #journal-screen .journal-tab { padding-block: 4px; }
+    .al-match-screen[data-phase="over"] { --match-gap: 2px; }
+    .al-match-screen[data-phase="over"] .side-chips { row-gap: 3px; }
+    .al-match-screen[data-phase="over"] .game-header { padding-block: 4px; }
 }

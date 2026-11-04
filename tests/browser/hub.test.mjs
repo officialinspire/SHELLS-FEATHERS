@@ -119,10 +119,10 @@ test('game hub', { timeout: 300_000 }, async (t) => {
     assert.equal(await page.locator('#sf-games').textContent(), '1');
     assert.equal(await page.locator('#two-player-record').textContent(), 'Player 1 wins: 1 · Player 2 wins: 0 · Draws: 0');
     const gentleWon = first.title === 'Victory!';
-    assert.equal(await page.locator('#sf-journal-count').textContent(), `${gentleWon ? 5 : 2} of 9 unlocked.`);
-    assert.equal(await page.locator('#al-journal-count').textContent(), '0 of 10 unlocked.', 'Acorns & Leaves untouched');
+    assert.equal(await page.locator('#sf-journal-count').textContent(), `${gentleWon ? 5 : 2} of 10 unlocked.`);
+    assert.equal(await page.locator('#al-journal-count').textContent(), '0 of 14 unlocked.', 'Acorns & Leaves untouched');
     // Its page of the journal.
-    await page.locator('#sf-path .journal-link').click();
+    await (await game.reveal('#sf-path .journal-link')).click();
     await game.waitForScreen('journal-screen');
     assert.equal(await page.locator('#journal-tab-shellsFeathers').getAttribute('aria-selected'), 'true');
     const achievement = (id) => page.locator(`#journal-panel .journal-entry[data-id="${id}"]`);

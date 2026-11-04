@@ -259,14 +259,8 @@ export function createSession({
     const { winner, line } = match.result;
     const outcome = match.outcome;
     view.setBoardState('over');
-    const unlocked = profile.recordResult({
-      mode, difficulty: match.difficulty, outcome, side: match.player1Symbol,
-    }) ?? [];
-    if (winner !== null) {
-      if (winner === match.player1Symbol) scores.player1++;
-      else scores.player2++;
-      view.highlight(line);
-    }
+    // A set this round decides is recorded first, so the achievements
+    // checked with the round's result count it at once.
     set = recordRound(set, ROUND_WINNER[outcome]);
     const decided = setScore(set);
     if (inSet() && decided.done) {
@@ -276,6 +270,14 @@ export function createSession({
       profile.recordSet({
         game: 'shellsFeathers', mode, length: set.length, outcome: setOutcome,
       });
+    }
+    const unlocked = profile.recordResult({
+      mode, difficulty: match.difficulty, outcome, side: match.player1Symbol,
+    }) ?? [];
+    if (winner !== null) {
+      if (winner === match.player1Symbol) scores.player1++;
+      else scores.player2++;
+      view.highlight(line);
     }
     saveProgress();
     if (outcome === 'loss') {
@@ -342,6 +344,10 @@ export function createSession({
 
   return {
     enter, resumeFrom, leave, restart, playAgain, switchSides, selectCell, pause, resume: resumeMatch,
+    // Saves the match now (it is already saved after every move); a move here
+    // is a single placement, never half made.
+    saveNow: saveProgress,
+    midMove: () => false,
     get set() { return set; },
   };
 }

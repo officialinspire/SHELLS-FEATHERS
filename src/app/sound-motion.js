@@ -82,7 +82,7 @@ export function createSoundMotion({
     profile.updateSettings({ sfx: sfxToggle.checked });
     audio.setSfxEnabled(sfxToggle.checked);
     if (sfxToggle.checked) audio.playSfx('button-select');
-    else feedback?.cancel(); // muted: nothing queued plays later
+    else feedback?.silence(); // muted: nothing queued sounds later (vibration is its own setting)
     onSaved();
   });
 
@@ -118,7 +118,7 @@ export function createSoundMotion({
   });
   sfxVolume.addEventListener('change', () => {
     profile.updateSettings({ sfxVolume: Number(sfxVolume.value) });
-    if (Number(sfxVolume.value) === 0) feedback?.cancel();
+    if (Number(sfxVolume.value) === 0) feedback?.silence();
     else audio.playSfx('button-select');
     onSaved();
   });

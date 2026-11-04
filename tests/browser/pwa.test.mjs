@@ -4,7 +4,7 @@ import { startHarness, openGame } from '../helpers/game-page.mjs';
 
 test('the installed application shell loads and plays offline', { timeout: 60_000 }, async (t) => {
   const harness = await startHarness(t);
-  const game = await openGame(harness);
+  const game = await openGame(harness, { serviceWorkers: 'allow' });
   const { page } = game;
   await page.evaluate(async () => {
     const registration = await navigator.serviceWorker.ready;

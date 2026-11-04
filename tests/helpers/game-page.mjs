@@ -4,18 +4,19 @@
 // browsers at once, and only an upper bound, so passing tests aren't slower.
 import { chromium } from 'playwright';
 import { serveRepo } from './static-server.mjs';
+import { MIX } from '../../src/shared/audio.js';
 
 // Starts the static server and Chromium for one test file; both stop when the
 // test (or suite) `t` finishes.
 export async function startHarness(t) {
   const server = await serveRepo();
   const base = `http://127.0.0.1:${server.address().port}`;
-  const browser = await chromium.launch();
-  t.after(async () => {
-    await browser.close();
+  t.after(() => {
     server.closeAllConnections();
     server.close();
   });
+  const browser = await chromium.launch();
+  t.after(() => browser.close());
   return { base, browser };
 }
 
@@ -33,10 +34,12 @@ const PASS_START_GATE = `(() => {
 // `storage` seeds localStorage before the game's first load; `initScript`
 // runs before the page's own scripts on every load; `fakeClock` gives the
 // page Playwright's controllable clock (timers run only on page.clock.runFor).
+// The service worker (sw.js) is blocked unless `serviceWorkers: 'allow'`:
+// tests about the game see the page exactly as served.
 export async function openGame({ base, browser }, {
-  viewport = { width: 390, height: 844 }, device, storage, initScript, fakeClock = false, gate = false,
+  viewport = { width: 390, height: 844 }, device, storage, initScript, fakeClock = false, gate = false, serviceWorkers = 'block',
 } = {}) {
-  const context = await browser.newContext(device ?? { viewport });
+  const context = await browser.newContext({ ...(device ?? { viewport }), serviceWorkers });
   const page = await context.newPage();
   const game = new GamePage(page, base, { touch: Boolean(device?.hasTouch) });
 
@@ -65,6 +68,20 @@ export async function openGame({ base, browser }, {
   return game;
 }
 
+// Keep a simulated burst inside the input debounce window even when the
+// browser process is descheduled between events.
+export async function rapidInput(page, send) {
+  await page.evaluate(() => {
+    const at = performance.now();
+    performance.now = () => at;
+  });
+  try {
+    await send();
+  } finally {
+    await page.evaluate(() => { delete performance.now; });
+  }
+}
+
 export class GamePage {
   constructor(page, base, { touch = false } = {}) {
     this.page = page;
@@ -85,9 +102,27 @@ export class GamePage {
   }
 
   async press(name, options) {
-    const target = this.control(name, options);
+    const target = await this.reveal(this.control(name, options));
     if (this.touch) await target.tap();
     else await target.click();
+  }
+
+  // Long screens and dialogs page through (src/app/pager.js): turns to the
+  // page that holds `target` (a locator or a selector), as a player would
+  // with Next, and returns it. Anything not on a paged screen is returned as
+  // it is.
+  async reveal(target) {
+    const locator = typeof target === 'string' ? this.page.locator(target).first() : target;
+    await this.page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    if (await locator.isVisible()) return locator;
+    const modal = await this.page.locator('.modal.active').count();
+    const root = modal ? this.page.locator('.modal.active [data-pager]:not([hidden])').first() : this.page.locator('.screen.active[data-pager]');
+    if (!(await root.count())) return locator;
+    const prev = root.locator('[data-pager-prev]');
+    const next = root.locator('[data-pager-next]');
+    while (await prev.isVisible() && !(await prev.isDisabled())) await prev.click();
+    while (!(await locator.isVisible()) && await next.isVisible() && !(await next.isDisabled())) await next.click();
+    return locator;
   }
 
   // On a match screen: opens the match menu and presses one of its items
@@ -146,8 +181,8 @@ export class GamePage {
 
   // On the setup screen: difficulty 'Gentle' | 'Balanced' | 'Wise'; symbol 'Shell' | 'Feather'.
   async chooseOptions({ difficulty, symbol } = {}) {
-    if (difficulty) await this.page.getByRole('radio', { name: difficulty, exact: true }).check();
-    if (symbol) await this.page.getByRole('radio', { name: symbol }).check();
+    if (difficulty) await (await this.reveal(this.page.locator('.screen.active').getByRole('radio', { name: difficulty, exact: true }))).check();
+    if (symbol) await (await this.reveal(this.page.locator('.screen.active').getByRole('radio', { name: symbol }))).check();
   }
 
   // On the setup screen: starts a match and waits for the first turn.
@@ -275,9 +310,10 @@ export class GamePage {
   // On the Acorns & Leaves setup screen: variant 'Classic' | 'Fog of War';
   // side 'Acorns' | 'Leaves'; difficulty 'Gentle' | 'Balanced' | 'Wise'.
   async chooseCheckersOptions({ variant, side, difficulty } = {}) {
-    if (variant) await this.page.getByRole('radio', { name: variant, exact: true }).check();
-    if (side) await this.page.getByRole('radio', { name: side, exact: true }).check();
-    if (difficulty) await this.page.getByRole('radio', { name: difficulty, exact: true }).check();
+    const radio = (name) => this.reveal(this.page.locator('.screen.active').getByRole('radio', { name, exact: true }));
+    if (variant) await (await radio(variant)).check();
+    if (side) await (await radio(side)).check();
+    if (difficulty) await (await radio(difficulty)).check();
   }
 
   async startCheckers(mode) {
@@ -370,11 +406,13 @@ export class GamePage {
 
   // Waits for the music to be playing at its full volume, 0.3 unless the
   // settings say otherwise (fades run on timers, so allow for a slow machine).
+  // Waits for the music playing, faded in to the player's volume `level`
+  // (0–1, the setting), which plays at that times its trim in the mix.
   waitForMusicPlaying(level = 0.3, timeout = 10_000) {
     return this.page.waitForFunction((target) => {
       const el = document.getElementById('gameplay-music');
       return !el.paused && Math.abs(el.volume - target) < 1e-6;
-    }, level, { timeout });
+    }, level * MIX.music, { timeout });
   }
 
   wait(ms) {

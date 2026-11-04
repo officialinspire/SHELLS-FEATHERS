@@ -26,17 +26,17 @@ function newProfile(entries = {}, options = {}) {
   return { storage, profile, errors, tick: () => { time += 1000; } };
 }
 
-test('a new player has every achievement locked: nine in Shells & Feathers, ten in Acorns & Leaves, three in the Collection', () => {
+test('a new player has every achievement locked: ten in Shells & Feathers, fourteen in Acorns & Leaves, three in the Collection', () => {
   const { profile } = newProfile();
   assert.deepEqual(profile.achievements('shellsFeathers').map((a) => a.id),
-    ['first-game', 'ten-games', 'first-win', 'shell-win', 'feather-win', 'gentle-win', 'balanced-win', 'steady-hand', 'shared-board']);
+    ['first-game', 'ten-games', 'first-win', 'shell-win', 'feather-win', 'gentle-win', 'balanced-win', 'steady-hand', 'set-win', 'shared-board']);
   assert.deepEqual(profile.achievements('acornsLeaves').map((a) => a.id),
-    ['first-game', 'first-win', 'acorn-win', 'leaf-win', 'crowned', 'double-jump', 'fog-win', 'wise-win', 'shared-board', 'shared-fog']);
+    ['first-game', 'ten-games', 'first-win', 'acorn-win', 'leaf-win', 'crowned', 'double-jump', 'classic-win', 'fog-win', 'wise-win', 'fog-wise-win', 'set-win', 'shared-board', 'shared-fog']);
   assert.deepEqual(profile.achievements('collection').map((a) => a.id), ['both-games', 'both-wins', 'all-sides']);
   for (const book of ['shellsFeathers', 'acornsLeaves', 'collection']) {
     assert.ok(profile.achievements(book).every((a) => !a.unlocked && a.at === null && a.title && a.description && a.icon));
   }
-  assert.deepEqual(profile.journal().total, 22);
+  assert.deepEqual(profile.journal().total, 27);
 });
 
 test('Shells & Feathers: each record achievement comes from the matching record', () => {
@@ -56,15 +56,20 @@ test('Shells & Feathers: each record achievement comes from the matching record'
   }
 });
 
-test('Acorns & Leaves: First Win, Through the Fog and Wise Victory need wins against the Spirit; two-player games give First Game and the shared entries only', () => {
+test('Acorns & Leaves: First Win, Classic Win, Through the Fog, Wise Victory and Wise in the Mist need wins against the Spirit; two-player games give First Game and the shared entries only', () => {
   const cases = [
-    [(s) => { s.single.easy.wins = 1; }, ['first-game', 'first-win']],
+    [(s) => { s.single.easy.wins = 1; }, ['first-game', 'first-win', 'classic-win']],
     [(s) => { s.fog.single.easy.wins = 1; }, ['first-game', 'first-win', 'fog-win']],
-    [(s) => { s.single.hard.wins = 1; }, ['first-game', 'first-win', 'wise-win']],
-    [(s) => { s.fog.single.hard.wins = 1; }, ['first-game', 'first-win', 'fog-win', 'wise-win']],
+    [(s) => { s.single.hard.wins = 1; }, ['first-game', 'first-win', 'classic-win', 'wise-win']],
+    [(s) => { s.fog.single.hard.wins = 1; }, ['first-game', 'first-win', 'fog-win', 'wise-win', 'fog-wise-win']],
     [(s) => { s.single.hard.draws = 3; s.fog.single.medium.losses = 2; }, ['first-game']],
     [(s) => { s.twoPlayer.acornWins = 4; }, ['first-game', 'shared-board']],
     [(s) => { s.fog.twoPlayer.leafWins = 1; }, ['first-game', 'shared-board', 'shared-fog']],
+    // Ten finished games, of any kind, Classic and Fog together.
+    [(s) => { s.single.easy.losses = 4; s.twoPlayer.draws = 3; s.fog.twoPlayer.acornWins = 3; }, ['first-game', 'ten-games', 'shared-board', 'shared-fog']],
+    // A set won against the Spirit (its rounds are recorded as games too).
+    [(s) => { s.fog.sets.single.bestOf3.wins = 1; s.fog.single.easy.wins = 2; }, ['first-game', 'first-win', 'fog-win', 'set-win']],
+    [(s) => { s.sets.twoPlayer.bestOf5.acornWins = 1; s.twoPlayer.acornWins = 3; }, ['first-game', 'shared-board']],
   ];
   for (const [change, expected] of cases) {
     const save = createDefaultSave();
@@ -98,7 +103,7 @@ test('each achievement unlocks once: a second earning, a reload and repeated mom
   // Reloaded: the same achievements, with the times they were unlocked.
   const again = createProfile(openStorage(() => storage), { now: () => 99_000 });
   assert.deepEqual(unlockedIds(again, 'shellsFeathers'), ['first-game', 'first-win', 'gentle-win', 'balanced-win']);
-  assert.deepEqual(again.achievements('shellsFeathers').map((a) => a.at), [1000, null, 1000, null, null, 1000, 2000, null, null]);
+  assert.deepEqual(again.achievements('shellsFeathers').map((a) => a.at), [1000, null, 1000, null, null, 1000, 2000, null, null, null]);
   assert.deepEqual(unlockedIds(again, 'acornsLeaves'), ['crowned', 'double-jump']);
   assert.deepEqual(again.recordResult({ mode: 'single', difficulty: 'easy', outcome: 'win' }), []);
   assert.deepEqual(again.recordMoment({ game: 'acornsLeaves', moment: 'crowned', mode: 'single' }), []);
@@ -156,7 +161,7 @@ test('achievement entries are repaired on load; ids from a newer build are kept 
   assert.deepEqual(repaired, { 'first-game': { at: 5 }, 'first-win': { at: null }, 'future-feat': { at: 7, extra: 1 } });
   const { profile } = newProfile({ [SAVE_KEY]: JSON.stringify(save) });
   assert.deepEqual(unlockedIds(profile, 'shellsFeathers'), ['first-game', 'first-win']);
-  assert.equal(profile.achievements('shellsFeathers').length, 9);
+  assert.equal(profile.achievements('shellsFeathers').length, 10);
   assert.equal(profile.progress().shellsFeathers.achievements, 2, 'unknown ids are not counted');
 });
 
@@ -169,14 +174,14 @@ test('clearing one game deletes its records and achievements only; settings and 
   profile.recordMoment({ game: 'acornsLeaves', moment: 'crowned', mode: 'single' });
   assert.deepEqual(profile.progress(), {
     shellsFeathers: { spiritGames: 1, twoPlayerGames: 0, earlierGames: 0, sets: 0, achievements: 3, collection: ['Two Paths', 'Friend of the Woods'] },
-    acornsLeaves: { spiritGames: 0, twoPlayerGames: 0, fogSpiritGames: 1, fogTwoPlayerGames: 0, sets: 0, achievements: 5, collection: ['Two Paths', 'Friend of the Woods'] },
+    acornsLeaves: { spiritGames: 0, twoPlayerGames: 0, fogSpiritGames: 1, fogTwoPlayerGames: 0, sets: 0, achievements: 6, collection: ['Two Paths', 'Friend of the Woods'] },
   });
 
   profile.resetStats();
   assert.deepEqual(unlockedIds(profile, 'shellsFeathers'), []);
   assert.equal(profile.statsSummary().totalGames, 0);
   assert.deepEqual(JSON.parse(storage.map.get(LEGACY_STATS_KEY)), { wins: 0, losses: 0, draws: 0, totalGames: 0 }, 'v1 mirror reset to match');
-  assert.deepEqual(unlockedIds(profile, 'acornsLeaves'), ['first-game', 'first-win', 'crowned', 'fog-win', 'wise-win']);
+  assert.deepEqual(unlockedIds(profile, 'acornsLeaves'), ['first-game', 'first-win', 'crowned', 'fog-win', 'wise-win', 'fog-wise-win']);
   assert.deepEqual(unlockedIds(profile, 'collection'), [], 'the Collection entries that needed Shells & Feathers lock too');
   assert.equal(profile.settings().musicVolume, 70);
   assert.equal(profile.gameSettings().difficulty, 'hard');

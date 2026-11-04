@@ -32,11 +32,20 @@ Every file, font and picture the site uses, where it came from, and the terms it
 | Uncial Antiqua | Loaded from Google Fonts in `index.html` | Titles | Astigmatic (Brian J. Bonislawsky), via [Google Fonts](https://fonts.google.com/specimen/Uncial+Antiqua) | SIL Open Font License 1.1 |
 | Georgia, Iowan Old Style, Palatino Linotype, serif | The visitor's own fonts (`--font-body`, and the fallback when Google Fonts can't load) | Body text | Installed on the device; nothing is shipped | n/a |
 | Journal and achievement icons (`#icon-journal` and 19 `#ach-*` symbols: sprout, stack, laurel, shell, feather, breeze, scales, shield, pair, acorn, leaf, crown, hop, sun in mist, owl, lantern, fork, oak, compass) | Inline SVG sprite in `index.html` | The Journal link and tab, each achievement's medallion in the journal, and the unlock notice in the match header | Original, drawn in SVG for this project in the interface icons' line style (Stage 14) | Part of this repository |
+| Drifting hub leaves (green, gold, rust, sage) | `styles.css`, `.drift-leaf--*` (inline SVG data URLs); placed by `src/app/hub-leaves.js` | Leaves falling behind the main menu | Original, drawn for this project (the scatter's leaf shape with veins) | Part of this repository |
 | Emoji | None in the game since Stage 10: every piece and icon is drawn from the SVG sprite, so it looks the same on every device. A locked achievement's medallion is a dashed ring drawn with CSS. | | | |
 
 ### Sizes
 
 All audio together is 7.9 MB, down from 15.4 MB. The music, at 7.2 MB, is fetched only when it first plays. The eleven original effects are 22,050 Hz mono WAV, 278 KB together (the three added in Stage 13 are 28 KB of that): short enough that a compressed format would save little, and with no encoder delay before the sound. `tools/make-sounds.py` gives byte-identical files on every run (fixed seed), so anyone can check they are made from scratch. `tools/prepare-audio.sh` rebuilds the MP3s from the originals in git history.
+
+**The mix** (`MIX` in `src/shared/audio.js`). The files are shipped unchanged. Measured at their loudest 100 ms, they range from −14 dB (the menu click) to −32 dB (the checker pick-up), while the music sits at a −14 dB median. Each sound therefore has a fixed gain at playback:
+- taps (picks, refusals, placements and moves) land near −26 dB at full volume;
+- events (captures, the multi-jump chirp, a Fog reveal, a new game) land near −22 dB;
+- big moments (crowning, results, achievements) land near −19 dB;
+- the music is brought down 8 dB (×0.4), under the taps at the default volumes.
+
+A sound already quieter than its level keeps a gain of 1: nothing is boosted. Crowning, a loss, a draw and an achievement also dip the music by half while they sound. The victory theme plays with the music stopped. The player's sliders scale all of this. On iPhone and iPad, where a page can't set an element's volume, the same levels go through Web Audio gain nodes.
 
 ## In the repository but not used
 

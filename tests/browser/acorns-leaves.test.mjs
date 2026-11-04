@@ -459,14 +459,14 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
 
     // The saved side and difficulty are selected on the setup screen.
     await game.goTo('#/acorns-leaves', 'al-setup-screen');
-    assert.equal(await page.getByRole('radio', { name: 'Leaves', exact: true }).isChecked(), true);
-    assert.equal(await page.getByRole('radio', { name: 'Wise', exact: true }).isChecked(), true);
+    assert.equal(await (await game.reveal(page.getByRole('radio', { name: 'Leaves', exact: true }))).isChecked(), true);
+    assert.equal(await (await game.reveal(page.getByRole('radio', { name: 'Wise', exact: true }))).isChecked(), true);
 
     await game.goTo('#/your-path', 'path-screen');
     // Your games (Classic and Fog together) apart from two-player ones.
     assert.deepEqual(await page.locator('#al-path .stat-value').allTextContents(), ['1', '2', '3', '6']);
     // Achievements already earned by these records, from before achievements were kept.
-    assert.equal(await page.locator('#al-journal-count').textContent(), '4 of 10 unlocked.');
+    assert.equal(await page.locator('#al-journal-count').textContent(), '6 of 14 unlocked.');
     // Clearing asks first, listing exactly what goes and what stays; Cancel keeps everything.
     await game.press('Clear Acorns & Leaves progress');
     const dialog = page.locator('#confirm-dialog');
@@ -474,7 +474,7 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
     assert.deepEqual(await dialog.locator('#confirm-deletes li').allTextContents(), [
       'Classic results: 6 games against the Spirit, 10 two-player games.',
       'Fog of War results: 0 games against the Spirit, 0 two-player games.',
-      'Acorns & Leaves achievements: 4 unlocked, which lock again.',
+      'Acorns & Leaves achievements: 6 unlocked, which lock again.',
       'Collection achievements that need this game, which lock again: Two Paths, Friend of the Woods.',
     ]);
     assert.deepEqual(await dialog.locator('#confirm-keeps li').allTextContents(), [
@@ -489,13 +489,13 @@ test('Acorns & Leaves', { timeout: 600_000 }, async (t) => {
     await game.press('Clear Acorns & Leaves progress');
     await page.keyboard.press('Escape');
     assert.equal(await game.modalOpen(), false);
-    assert.equal(await page.locator('#al-journal-count').textContent(), '4 of 10 unlocked.', 'Escape keeps everything too');
+    assert.equal(await page.locator('#al-journal-count').textContent(), '6 of 14 unlocked.', 'Escape keeps everything too');
 
     await game.press('Clear Acorns & Leaves progress');
     await game.press('Clear Acorns & Leaves progress');
     assert.equal(await page.locator('#al-two-player-record').textContent(), 'Acorns wins: 0 · Leaves wins: 0 · Draws: 0');
-    assert.equal(await page.locator('#al-journal-count').textContent(), '0 of 10 unlocked.');
-    assert.equal(await page.locator('#sf-journal-count').textContent(), '3 of 9 unlocked.', 'Shells & Feathers achievements kept');
+    assert.equal(await page.locator('#al-journal-count').textContent(), '0 of 14 unlocked.');
+    assert.equal(await page.locator('#sf-journal-count').textContent(), '3 of 10 unlocked.', 'Shells & Feathers achievements kept');
     assert.equal(await page.locator('#sf-games').textContent(), '2', 'Shells & Feathers records kept');
     const stored = JSON.parse(await game.storageItem('spiritOfTheWoods:v2'));
     assert.deepEqual(stored.acornsLeaves.stats.twoPlayer, { acornWins: 0, leafWins: 0, draws: 0 });

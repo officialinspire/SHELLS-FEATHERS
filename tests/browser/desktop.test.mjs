@@ -38,7 +38,7 @@ const panel = (page) => page.evaluate(() => {
     header: box('.game-header'),
     hint: box('.match-hint'),
     notes: box('.match-notes'),
-    help: box('.match-help summary'),
+    help: box('.match-help summary') ?? box('.match-help-link'),
     controls: [...s.querySelectorAll('.game-controls > *')].filter((el) => el.getClientRects().length).map((el) => {
       const r = el.getBoundingClientRect();
       return { name: el.textContent.trim(), height: r.height, bottom: r.bottom };

@@ -1,5 +1,66 @@
 # Changelog
 
+## 2.0.4: Every screen fits; achievements audited (unreleased)
+
+- **No scrolling:** every screen and dialog now fits the window: a 320×568 phone, the same phone on its side (568×320), and a desktop.
+  - **Pages:** long screens page with Previous and Next ("Page 2 of 5") instead of scrolling. This covers both setup screens, both How to Play pages, Settings, Your Path, every journal tab, the confirm dialogs, the match menu (its pause view and its Settings) and both results dialogs (`src/app/pager.js`).
+  - **Breaks:** pages break between whole items (paragraphs, option groups, settings rows, achievement cards) and never after a heading. A paragraph too long for any page pages by its sentences. Nothing is clipped or hidden by overflow.
+  - **Always visible:** Back, Play the Spirit, Two Players, Play, Resume, Cancel/Delete and "This can't be undone." stay on every page.
+  - **Resizing and rotating:** pages are worked out again on resize and rotation, keeping the focused control (or the first item that was showing) on screen. A screen opened again starts at page 1.
+  - **Narrow screens:** Previous and Next show only their arrows, and are still named Previous and Next.
+  - **A phone on its side:** paged screens have two columns, with the title, the journal's tabs and Play on the left and the pages on the right.
+  - **Tutorial:** fits like a match. The board shrinks to the room left, with squares at least 30px on a 320×568 phone, and sits beside the text on a phone on its side. Next and Skip share a row, and its "Practice only" note now sits beside the step count.
+  - **Matches:** a finished match fits on the smallest phones in both orientations. On a desktop window too short to open "Rules and keys" in the side panel, the panel links to How to Play instead.
+  - **No hidden overflow:** the page no longer hides overflow (`#game-container`), and screens fade in from slightly above instead of below.
+- **Achievements (set 3):** every existing ID and unlock date is kept. Five new achievements, each worked out once from saved records for existing players (shown as "unlocked before dates were kept"):
+  - Shells & Feathers: **Best of the Set** (win a best-of-three or best-of-five match against the Spirit).
+  - Acorns & Leaves: **Ten Games**, **Classic Win** (Classic only), **Wise in the Mist** (the Wise Spirit in Fog of War) and **Best of the Set**.
+  - **Fix:** a deciding round's set is now recorded before its result is checked, so a set win counts on that round, not one game late.
+  - Resuming a set, or replaying a resumed match, never counts anything twice.
+- **Tests:**
+  - `tests/browser/fit.test.mjs` checks, at all three sizes:
+    - every screen, page and dialog;
+    - every tutorial step;
+    - a full journal (27 of 27);
+    - long text;
+    - a rotation that keeps focus.
+  - New unit tests cover the upgrade from achievement set 2 and set wins across a resume.
+
+## 2.0.3: Sound, music and vibration polish (unreleased)
+
+- **Balance:** the shipped sounds are reused, with a fixed gain for each (`MIX`, measured from the files). Taps, events and big moments now each sit at their own level, and the music, mastered far louder than any effect, sits under them. Crowning, a loss, a draw and an achievement briefly dip the music. Details are in docs/assets.md.
+- **Smooth starts and stops:**
+  - music fades follow the clock along an S-curve, so they always finish;
+  - stopping an effect fades it out over 120 ms instead of cutting it;
+  - a sound asked for again while it still rings plays on a second voice (up to three) instead of restarting with a click.
+- **iPhone and iPad:** Safari ignores an element's volume. Before, the music's fade never finished there, so a win never paused the music, and a timer ran on for good. Fades now end on time, and volumes go through Web Audio gain nodes, so the mix and the sliders work there too. The audio context wakes on every tap and when the page is shown again.
+- **Independent settings:** turning sound effects off now stops only sounds. Vibration and animations follow their own settings.
+- **Achievement chime:** it waits 0.6 s, so it doesn't land on top of the crowning bell or capture that earned it.
+- **Tests:** a new browser test, `tests/browser/audio.test.mjs`, covers:
+  - one music element: silent under the intro, never started twice, through hiding the page, switching games and Play Again;
+  - effects, music and vibration each following their own saved setting, in Settings and a match menu, across a reload;
+  - rapid taps, a silent resume, and two-player Fog;
+  - missing sound files with no vibration;
+  - an emulated iPhone, where volume is fixed and levels go through gain nodes.
+
+  New unit tests cover the mix, ducking, voices, effect fade-outs, iOS fades and gain routing, and the feedback mapping.
+
+## 2.0.2: Updates offered, never forced (unreleased)
+
+- **Update prompt:** when a new release is published, an installed game downloads it in the background and then offers **Reload** or **Later**, in a bar at the top of the page. The bar takes its own room, so it never covers the board or its controls. The first install shows no prompt and never refreshes.
+  - **Later:** the match goes on, on the release it started with. The offer comes back the next time the hub shows, and each match menu keeps a "Reload to Update" row.
+  - **Reload:** if a chain of jumps is under way, the update waits for that move to end. Both matches are then saved, the new release takes over, and the page refreshes once. The match resumes on the same turn.
+  - **Already waiting:** an update that was waiting from an earlier visit is offered as the game starts. Until then, that visit still runs the release it had.
+- **Service worker:**
+  - every release, including one that changes only an app module, gets its own cache, named from a release id that `npm run stamp` writes into `sw.js`;
+  - installing no longer takes over at once (no install-time `skipWaiting`): the new worker waits for the player's Reload;
+  - the page is served from the running release's own cache, online or off, and once a new release takes over, older caches are deleted;
+  - short effects stay cached; the long music, the intro video and range requests stream as before.
+- **Tests:**
+  - a two-build browser test under `/SHELLS-FEATHERS/` on localhost: first install, decline, keep playing, relaunch, accept, resume the same turn, then launch offline;
+  - unit tests for the worker, the release stamp and the prompt.
+  - Browser tests now block the service worker unless a test asks for it.
+
 ## 2.0.1: Social preview and installable app
 
 - New wide social banner shows both games and the INSPIRE wordmark. The game's Open Graph and Twitter metadata point to its absolute GitHub Pages image URL.
@@ -46,6 +107,9 @@ The single Shells & Feathers page becomes **Spirit of the Woods**, a hub of two 
 - **Tutorial:** a one-minute practice for each game on its own board, offered once and easy to skip. Nothing in it counts. Its Fog of War step only ever shows what you could see.
 
 - **Opening, as in every INSPIRE game:** "Touch, click, or press any key to start", then the INSPIRE Software intro, once per browser session and skippable. The music starts when the hub appears after the intro.
+
+- **Drifting leaves on the main menu:** a few woodland leaves fall behind the hub, each at its own size, speed, sway and spin. Only while the hub shows (not behind the start screen or intro, nor in a background tab), and none when motion is reduced, by Settings or the device.
+- **Short landscape phones:** the hub's Settings, Your Path and Journal buttons are full 44px tap targets again (they were 38px at 640×360), and still fit a 568×320 screen.
 
 ### Changed
 - **Visual identity:**

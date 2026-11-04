@@ -527,9 +527,8 @@ export function createSession({
     spiritActing = false;
     const text = resultText({ mode, result, humanSide: match.humanSide });
     match.resultText = text;
-    const unlocked = [...earlier, ...(profile.recordAcornsLeavesResult({
-      mode, difficulty: match.difficulty, outcome: text.outcome, variant, side: match.humanSide,
-    }) ?? [])];
+    // A set this round decides is recorded first, so the achievements
+    // checked with the round's result count it at once.
     set = recordRound(set, ROUND_WINNER[text.outcome]);
     const decided = setScore(set);
     if (inSet() && decided.done) {
@@ -538,6 +537,9 @@ export function createSession({
         game: 'acornsLeaves', mode, length: set.length, outcome: setOutcome, variant,
       });
     }
+    const unlocked = [...earlier, ...(profile.recordAcornsLeavesResult({
+      mode, difficulty: match.difficulty, outcome: text.outcome, variant, side: match.humanSide,
+    }) ?? [])];
     saveProgress();
     view.showSet?.(setLine());
     if (text.outcome === 'loss') {
@@ -710,8 +712,14 @@ export function createSession({
     if (!holds.size) timers?.resume();
   }
 
+  // A move half made: a piece part way through a chain of jumps (the
+  // player's or the Spirit's). Saved progress holds whole moves only, so an
+  // update waits for the move to end (src/app/update-prompt.js).
+  const midMove = () => Boolean(match && !match.result && match.turn && rules.inChain(match.turn));
+
   return {
     enter, resumeFrom, leave, restart, playAgain, switchSides, selectSquare, cancelSelection, takeControl, pause, resume: resumeMatch,
+    saveNow: saveProgress, midMove,
     get set() { return set; },
   };
 }

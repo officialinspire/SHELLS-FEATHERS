@@ -444,3 +444,21 @@ test('holds: the menu and a hidden page each freeze the match until both let go'
   clock.tick(SPIRIT_THINK + 10 * SPIRIT_STEP);
   assert.equal(spiritMoves.length, 2);
 });
+
+// An update waits while a move is half made (src/app/update-prompt.js).
+test('midMove: true only part way through a chain of jumps', () => {
+  const { session, tap } = setup({
+    position: {
+      rows: ['.......l', '........', '...l....', '........', '.l......', 'a.......', '........', '........'],
+    },
+  });
+  assert.equal(session.midMove(), false, 'no match');
+  session.enter('two');
+  assert.equal(session.midMove(), false);
+  tap(sq(5, 0));
+  assert.equal(session.midMove(), false, 'a piece picked up can still be put back');
+  tap(sq(3, 2));
+  assert.equal(session.midMove(), true, 'one jump made, another to go');
+  tap(sq(1, 4));
+  assert.equal(session.midMove(), false, 'the move is over');
+});

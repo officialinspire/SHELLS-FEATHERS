@@ -26,13 +26,15 @@
 //   (no date if any of them has none).
 //
 // `since` is the achievement set an entry was added in (1: Stage 8,
-// 2: the journal). A save from set 1 gets the record entries of set 2
-// worked out once (save-data.js normalizeSave).
+// 2: the journal, 3: sets, Classic and Fog milestones). A save from an
+// older set gets the record entries added since worked out once, with no
+// date (save-data.js normalizeSave); ids never change, and nothing already
+// unlocked is touched.
 //
 // records: { shellsFeathers: { stats, totals }, acornsLeaves: { stats } },
 // where totals are the Shells & Feathers v1-style totals (summarizeStats),
 // which include games from before results were kept by mode.
-export const ACHIEVEMENT_SET = 2;
+export const ACHIEVEMENT_SET = 3;
 
 const LEVELS = ['easy', 'medium', 'hard'];
 const sum = (values) => values.reduce((a, b) => a + b, 0);
@@ -41,6 +43,8 @@ const spiritGames = (records) => sum(LEVELS.map((level) => sum(Object.values(rec
 const twoPlayerGames = (records) => sum(Object.values(records.twoPlayer));
 const checkersGames = (stats) => spiritGames(stats) + twoPlayerGames(stats) + spiritGames(stats.fog) + twoPlayerGames(stats.fog);
 const spiritWinWith = (side) => (result) => result.mode === 'single' && result.outcome === 'win' && result.side === side;
+// Best-of-three and best-of-five matches won against the Spirit.
+const setWins = (stats) => stats.sets.single.bestOf3.wins + stats.sets.single.bestOf5.wins;
 const SINCE_SIDES = 'Counts wins since the journal began noting sides.';
 
 export const SECTIONS = {
@@ -100,6 +104,11 @@ export const ACHIEVEMENTS = {
       fromRecords: ({ shellsFeathers }) => shellsFeathers.stats.single.hard.draws >= 1,
     },
     {
+      id: 'set-win', title: 'Best of the Set', icon: 'ach-cup', section: 'spirit', since: 3,
+      description: 'Win a best-of-three or best-of-five match against the Spirit at Shells & Feathers.',
+      fromRecords: ({ shellsFeathers }) => setWins(shellsFeathers.stats) >= 1,
+    },
+    {
       id: 'shared-board', title: 'Shared Board', icon: 'ach-pair', section: 'shared', since: 1,
       description: 'Finish a two-player game of Shells & Feathers on this device.',
       fromRecords: ({ shellsFeathers }) => twoPlayerGames(shellsFeathers.stats) >= 1,
@@ -110,6 +119,12 @@ export const ACHIEVEMENTS = {
       id: 'first-game', title: 'First Game', icon: 'ach-sprout', section: 'milestone', since: 2,
       description: 'Finish a game of Acorns & Leaves: Classic or Fog of War, against the Spirit or with two players, won, lost or drawn.',
       fromRecords: ({ acornsLeaves }) => checkersGames(acornsLeaves.stats) >= 1,
+    },
+    {
+      id: 'ten-games', title: 'Ten Games', icon: 'ach-tally', section: 'milestone', since: 3,
+      description: 'Finish ten games of Acorns & Leaves, Classic or Fog of War, in any mode.',
+      fromRecords: ({ acornsLeaves }) => checkersGames(acornsLeaves.stats) >= 10,
+      progress: ({ acornsLeaves }) => ({ value: checkersGames(acornsLeaves.stats), goal: 10, unit: 'games' }),
     },
     {
       id: 'first-win', title: 'First Win', icon: 'ach-laurel', section: 'spirit', since: 1,
@@ -135,6 +150,11 @@ export const ACHIEVEMENTS = {
       description: 'Capture two or more pieces in one move of yours against the Spirit, in Classic or Fog of War.',
     },
     {
+      id: 'classic-win', title: 'Classic Win', icon: 'ach-board', section: 'spirit', since: 3,
+      description: 'Beat the Spirit in Classic checkers, at any difficulty.',
+      fromRecords: ({ acornsLeaves }) => spiritWins(acornsLeaves.stats) >= 1,
+    },
+    {
       id: 'fog-win', title: 'Through the Fog', icon: 'ach-fogsun', section: 'spirit', since: 1,
       description: 'Beat the Spirit in Fog of War, at any difficulty.',
       fromRecords: ({ acornsLeaves }) => spiritWins(acornsLeaves.stats.fog) >= 1,
@@ -143,6 +163,16 @@ export const ACHIEVEMENTS = {
       id: 'wise-win', title: 'Wise Victory', icon: 'ach-owl', section: 'spirit', since: 1,
       description: 'Beat the Wise Spirit at Acorns & Leaves, in Classic or Fog of War.',
       fromRecords: ({ acornsLeaves }) => acornsLeaves.stats.single.hard.wins + acornsLeaves.stats.fog.single.hard.wins >= 1,
+    },
+    {
+      id: 'fog-wise-win', title: 'Wise in the Mist', icon: 'ach-mistowl', section: 'spirit', since: 3,
+      description: 'Beat the Wise Spirit in Fog of War, where it sees only what you would.',
+      fromRecords: ({ acornsLeaves }) => acornsLeaves.stats.fog.single.hard.wins >= 1,
+    },
+    {
+      id: 'set-win', title: 'Best of the Set', icon: 'ach-cup', section: 'spirit', since: 3,
+      description: 'Win a best-of-three or best-of-five match against the Spirit at Acorns & Leaves, Classic or Fog of War.',
+      fromRecords: ({ acornsLeaves }) => setWins(acornsLeaves.stats) + setWins(acornsLeaves.stats.fog) >= 1,
     },
     {
       id: 'shared-board', title: 'Shared Board', icon: 'ach-pair', section: 'shared', since: 1,

@@ -7,6 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, openGame } from '../helpers/game-page.mjs';
+import { MIX } from '../../src/shared/audio.js';
 
 const V1_KEY = 'spiritOfTheWoodsStats';
 const V2_KEY = 'spiritOfTheWoods:v2';
@@ -77,11 +78,11 @@ test('settings and progress', { timeout: 300_000 }, async (t) => {
     await slide(page, 'music-volume', 70);
     assert.equal(await page.locator('#music-volume-value').textContent(), '70%');
     assert.equal(await page.locator('#music-volume').getAttribute('aria-valuetext'), '70%');
-    assert.equal((await game.audioState('gameplay-music')).volume, 0.7, 'the music follows the slider at once');
+    assert.ok(Math.abs((await game.audioState('gameplay-music')).volume - 0.7 * MIX.music) < 1e-6, 'the music follows the slider at once (under its trim)');
     await slide(page, 'sfx-volume', 20);
     assert.equal(await page.evaluate(() => window.__plays.at(-1)), 'button-select', 'a sample at the new level');
-    assert.equal((await game.audioState('button-select')).volume, 0.2);
-    await page.locator('#settings-screen label', { has: page.locator('input[value="reduce"]') }).click();
+    assert.ok(Math.abs((await game.audioState('button-select')).volume - 0.2 * MIX.sfx['button-select']) < 1e-6, 'at its own gain in the mix');
+    await (await game.reveal(page.locator('#settings-screen label', { has: page.locator('input[value="reduce"]') }))).click();
     assert.equal(await page.evaluate(() => document.documentElement.dataset.motion), 'reduce');
     assert.match(await page.locator('#motion-hint').textContent(), /^Reduce:/);
 
@@ -147,7 +148,8 @@ test('settings and progress', { timeout: 300_000 }, async (t) => {
     // The music makes way for the victory theme: a one-second fade, then a pause.
     await page.waitForFunction(() => document.getElementById('gameplay-music').paused, null, { timeout: 5_000 });
     await game.goTo('#/settings', 'settings-screen');
-    assert.equal((await game.audioState('victory-sound')).paused, true, 'leaving the match stops the victory theme');
+    // Leaving the match stops the victory theme (a 120 ms fade-out, no click).
+    await page.waitForFunction(() => document.getElementById('victory-sound').paused, null, { timeout: 1_000 });
 
     // Effects off: the volume sample (and every other effect) stays silent.
     await page.click('label[for="audio-toggle"]');
@@ -290,7 +292,7 @@ test('settings and progress', { timeout: 300_000 }, async (t) => {
     await game.waitForScreen('settings-screen');
     assert.equal(await page.locator('#settings-storage-note').isVisible(), false, 'nothing tried yet');
     await slide(page, 'music-volume', 60);
-    assert.equal(await page.locator('#settings-storage-note').isVisible(), true);
+    assert.equal(await (await game.reveal('#settings-storage-note')).isVisible(), true);
     await game.waitForMusicPlaying(0.6);
     await game.goTo('#/your-path', 'path-screen');
     assert.equal(await page.locator('#path-storage-note').isVisible(), true);
