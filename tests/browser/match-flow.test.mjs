@@ -100,7 +100,9 @@ test('match flow', { timeout: 900_000 }, async (t) => {
     await game.goTo('#/acorns-leaves', 'al-setup-screen');
     assert.match(await page.locator('#al-resume-text').textContent(), /^Classic against the Spirit \(Gentle\), you play Acorns · Round 1 of 3 · You 0, the Spirit 0 · 2 moves played this round$/);
     await game.goTo('#/', 'hub-screen');
-    await page.locator('[data-hub-game="al"]').click();
+    // Phones choose a game first; wider screens show both cards.
+    const chooser = page.locator('[data-hub-game="al"]');
+    if (await chooser.isVisible()) await chooser.click();
     assert.equal(await page.locator('#al-hub-resume').isVisible(), true);
     await game.goTo('#/acorns-leaves', 'al-setup-screen');
     await game.press('Discard');
