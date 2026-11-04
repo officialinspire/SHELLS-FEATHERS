@@ -116,7 +116,8 @@ test('match lifecycle', { timeout: 180_000 }, async (t) => {
     await game.waitForResult();
     assert.equal((await game.audioState('victory-sound')).paused, false);
     await game.press('Play Again');
-    assert.equal((await game.audioState('victory-sound')).paused, true);
+    // Stopped by Play Again (after a 120 ms fade-out, no click).
+    await game.page.waitForFunction(() => document.getElementById('victory-sound').paused, null, { timeout: 1_000 });
     await game.waitForMusicPlaying();
   });
 

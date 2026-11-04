@@ -4,6 +4,7 @@
 // browsers at once, and only an upper bound, so passing tests aren't slower.
 import { chromium } from 'playwright';
 import { serveRepo } from './static-server.mjs';
+import { MIX } from '../../src/shared/audio.js';
 
 // Starts the static server and Chromium for one test file; both stop when the
 // test (or suite) `t` finishes.
@@ -372,11 +373,13 @@ export class GamePage {
 
   // Waits for the music to be playing at its full volume, 0.3 unless the
   // settings say otherwise (fades run on timers, so allow for a slow machine).
+  // Waits for the music playing, faded in to the player's volume `level`
+  // (0–1, the setting), which plays at that times its trim in the mix.
   waitForMusicPlaying(level = 0.3, timeout = 10_000) {
     return this.page.waitForFunction((target) => {
       const el = document.getElementById('gameplay-music');
       return !el.paused && Math.abs(el.volume - target) < 1e-6;
-    }, level, { timeout });
+    }, level * MIX.music, { timeout });
   }
 
   wait(ms) {
