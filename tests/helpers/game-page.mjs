@@ -68,6 +68,20 @@ export async function openGame({ base, browser }, {
   return game;
 }
 
+// Keep a simulated burst inside the input debounce window even when the
+// browser process is descheduled between events.
+export async function rapidInput(page, send) {
+  await page.evaluate(() => {
+    const at = performance.now();
+    performance.now = () => at;
+  });
+  try {
+    await send();
+  } finally {
+    await page.evaluate(() => { delete performance.now; });
+  }
+}
+
 export class GamePage {
   constructor(page, base, { touch = false } = {}) {
     this.page = page;

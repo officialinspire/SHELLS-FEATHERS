@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { devices } from 'playwright';
-import { startHarness, openGame } from '../helpers/game-page.mjs';
+import { rapidInput, startHarness, openGame } from '../helpers/game-page.mjs';
 import { createInitialState, rowsFromBoard, squareAt } from '../../src/games/acorns-leaves/engine.js';
 import { DELAYS as SF_DELAYS } from '../../src/games/shells-feathers/session.js';
 import { TAPS } from '../../src/shared/board-taps.js';
@@ -34,10 +34,12 @@ async function touch(page) {
     async rapid(...locators) {
       const points = [];
       for (const locator of locators) points.push(await centre(locator));
-      for (const point of points) {
-        await send('touchStart', [point]);
-        await send('touchEnd', []);
-      }
+      await rapidInput(page, async () => {
+        for (const point of points) {
+          await send('touchStart', [point]);
+          await send('touchEnd', []);
+        }
+      });
     },
     async slide(locator, dx, dy) {
       const { x, y } = await centre(locator);

@@ -13,7 +13,7 @@
 //   Web Audio gain nodes, so the mix and sliders still apply.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { startHarness, openGame } from '../helpers/game-page.mjs';
+import { rapidInput, startHarness, openGame } from '../helpers/game-page.mjs';
 import { MIX, FADE_MS } from '../../src/shared/audio.js';
 
 const V2_KEY = 'spiritOfTheWoods:v2';
@@ -143,22 +143,22 @@ test('audio', { timeout: 600_000 }, async (t) => {
     const game = await open(harness, { storage: settings({ haptics: true }) });
     const { page } = game;
     await game.startNew('#/acorns-leaves/play/two', 'al-game-screen');
-    // Ten taps at once on an empty light square: one refusal heard and felt.
+    // Repeated picks at the same instant share feedback.
     const mark = { e: (await effects(page)).length, v: (await vibes(page)).length };
-    await page.evaluate(() => {
+    await rapidInput(page, () => page.evaluate(() => {
       const piece = document.querySelector('#al-board button[data-piece="acorn"]');
       for (let i = 0; i < 10; i++) piece.click();
-    });
+    }));
     const tapped = (await effects(page)).slice(mark.e);
     assert.ok(tapped.length <= 2 && tapped.every((id) => id === 'select-sound'), `a pick and a put-back at most: ${tapped}`);
     // A piece picked, then ten taps at once on a square it can't reach.
     await game.square(44).click();
     await game.wait(150); // buzzes closer than HAPTICS.MIN_GAP_MS to the last are dropped
     const mid = { e: (await effects(page)).length, v: (await vibes(page)).length };
-    await page.evaluate(() => {
+    await rapidInput(page, () => page.evaluate(() => {
       const far = document.querySelector('#al-board button[data-square="0"]') ?? document.querySelector('#al-board button[data-square="1"]');
       for (let i = 0; i < 10; i++) far.click();
-    });
+    }));
     const refused = (await effects(page)).slice(mid.e);
     assert.deepEqual(refused, ['invalid-sound'], 'one rustle');
     assert.equal((await vibes(page)).length - mid.v, 1, 'one buzz');
