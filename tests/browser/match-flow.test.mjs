@@ -214,10 +214,10 @@ test('match flow', { timeout: 900_000 }, async (t) => {
         await game.tap(i);
       }
       await game.waitForResult();
+      await game.settle();
       const problems = await page.evaluate(() => [...document.querySelectorAll('#game-modal .modal-content :is(a, button)')]
         .filter((el) => el.getClientRects().length)
         .flatMap((el) => {
-          el.scrollIntoView({ block: 'center' });
           const r = el.getBoundingClientRect();
           const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
           return r.height >= 44 && r.right <= innerWidth && (hit === el || el.contains(hit)) ? [] : [`${el.textContent} ${Math.round(r.height)}`];
