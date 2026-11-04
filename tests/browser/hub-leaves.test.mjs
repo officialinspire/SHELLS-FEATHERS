@@ -65,6 +65,7 @@ test('hub leaves', { timeout: 300_000 }, async (t) => {
   await t.test('hub → game → hub, again and again: never more leaves or animations', async () => {
     const game = await openGame(harness, { viewport: { width: 390, height: 844 }, storage: withMotion('full') });
     const { page } = game;
+    await game.settle();
     const first = await leaves(page);
     assert.equal(first.count, leafCount(390));
     for (let round = 0; round < 6; round++) {
@@ -73,6 +74,7 @@ test('hub leaves', { timeout: 300_000 }, async (t) => {
       const away = await leaves(page);
       assert.deepEqual([away.count, away.animations, away.hidden], [0, 0, true], `round ${round}: none away from the hub`);
       await game.goTo('#/', 'hub-screen');
+      await game.settle();
       const back = await leaves(page);
       assert.deepEqual([back.count, back.animations], [first.count, first.animations], `round ${round}: the same number again`);
       assert.ok(back.total <= first.total, `round ${round}: no animation left behind (${back.total} > ${first.total})`);
@@ -118,7 +120,7 @@ test('hub leaves', { timeout: 300_000 }, async (t) => {
     // Changed in Settings, it applies on the way back to the hub.
     const game = await openGame(harness, { viewport: { width: 390, height: 844 }, storage: withMotion('full') });
     await game.goTo('#/settings', 'settings-screen');
-    await game.page.locator('#settings-screen input[name="motion"][value="reduce"]').check({ force: true });
+    await (await game.reveal('#settings-screen input[name="motion"][value="reduce"]')).check();
     await game.goTo('#/', 'hub-screen');
     assert.equal((await leaves(game.page)).count, 0);
   });

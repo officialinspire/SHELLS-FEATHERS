@@ -190,13 +190,15 @@ test('Shells & Feathers match flows', { timeout: 300_000 }, async (t) => {
     const { page } = game;
     assert.doesNotMatch(await page.locator('meta[name="viewport"]').getAttribute('content'), /user-scalable=no|maximum-scale/);
 
-    // A touch drag scrolls a screen that is taller than the phone.
+    // A drag on the paginated setup stays in the viewport.
     await game.openShellsFeathers();
     await game.settle();
     const cdp = await page.context().newCDPSession(page);
     await touchDrag(cdp, 160, 450, 150);
     await game.wait(300);
-    assert.ok(await page.evaluate(() => scrollY) > 0, 'touch scrolling works on the setup screen');
+    assert.equal(await page.evaluate(() => scrollY), 0);
+    await page.locator('#sf-setup-screen [data-pager-next]').tap();
+    assert.equal(await page.locator('#sf-setup-screen').getAttribute('data-page'), '2');
 
     await game.startMatch('two');
     const gestures = await page.evaluate(() => {

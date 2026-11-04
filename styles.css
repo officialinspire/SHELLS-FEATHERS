@@ -841,7 +841,7 @@ h2[tabindex="-1"]:focus {
     /* Still a full 44px tap target on a short landscape phone; a closer
        stack keeps all three on a 320px-tall screen. */
     #hub-screen .hub-links {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 3px;
     }
 
@@ -1678,7 +1678,7 @@ h2[tabindex="-1"]:focus {
             max(var(--board-gutter), env(safe-area-inset-left));
     }
 
-    .match-screen :is(.game-header, .match-hint, .match-notes, .match-help, .game-controls) {
+    .match-screen :is(.game-header, .match-hint, .match-notes, .match-help, .match-help-link, .game-controls) {
         justify-self: stretch;
         width: auto;
         max-width: none;
@@ -4477,4 +4477,30 @@ body:has(.modal.active, .handoff:not([hidden])) .update-banner {
     :root .screen.tutorial-screen.active {
         row-gap: 6px;
     }
+}
+
+@media (max-height: 600px) {
+    :root .screen.tutorial-screen.active { gap: 4px; }
+    .tutorial-screen .tutorial-panel { padding: 6px 8px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .tutorial-screen > .practice-well { width: min(43vw, 100dvh - 16px); }
+    .al-match-screen[data-phase="over"] { --board-min: min(100vw - 2 * var(--board-gutter), 240px); }
+}
+
+@media (max-height: 600px) {
+    .tutorial-screen .screen-head .screen-header { padding: 4px 8px; }
+    .tutorial-screen .tutorial-lesson { padding: 4px 8px; }
+    .tutorial-screen .practice-board[data-game="acornsLeaves"] { border-width: 2px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    #journal-screen.screen.active { row-gap: 2px; }
+    #journal-screen .screen-head { gap: 4px; }
+    #journal-screen .screen-header { padding: 4px 8px; }
+    #journal-screen .journal-tab { padding-block: 4px; }
+    .al-match-screen[data-phase="over"] { --match-gap: 2px; }
+    .al-match-screen[data-phase="over"] .side-chips { row-gap: 3px; }
+    .al-match-screen[data-phase="over"] .game-header { padding-block: 4px; }
 }

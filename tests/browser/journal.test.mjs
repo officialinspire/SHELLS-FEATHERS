@@ -71,13 +71,13 @@ test('achievement journal', { timeout: 600_000 }, async (t) => {
     await game.press('Journal');
     await game.waitForScreen('journal-screen');
     assert.equal(await page.evaluate(() => window.location.hash), '#/journal');
-    assert.equal(await page.locator('#journal-summary').textContent(), '6 of 22 achievements unlocked', 'Two Paths from both First Games');
+    assert.equal(await page.locator('#journal-summary').textContent(), '6 of 27 achievements unlocked', 'Two Paths from both First Games');
     const tabs = page.getByRole('tab');
-    assert.deepEqual(await tabs.allTextContents(), ['All 6 of 22', 'Shells & Feathers 4 of 9', 'Acorns & Leaves 1 of 10', 'Collection 1 of 3']);
+    assert.deepEqual(await tabs.allTextContents(), ['All 6 of 27', 'Shells & Feathers 4 of 10', 'Acorns & Leaves 1 of 14', 'Collection 1 of 3']);
     // All: three books, each in its parts.
     assert.deepEqual(await page.locator('#journal-panel .journal-book').allTextContents(),
-      ['Shells & Feathers (4 of 9)', 'Acorns & Leaves (1 of 10)', 'Collection (1 of 3)']);
-    assert.equal(await page.locator('#journal-panel .journal-entry').count(), 22);
+      ['Shells & Feathers (4 of 10)', 'Acorns & Leaves (1 of 14)', 'Collection (1 of 3)']);
+    assert.equal(await page.locator('#journal-panel .journal-entry').count(), 27);
 
     await page.getByRole('tab', { name: /Collection/ }).click();
     assert.equal(await page.evaluate(() => window.location.hash), '#/journal/collection');
@@ -156,20 +156,21 @@ test('achievement journal', { timeout: 600_000 }, async (t) => {
       const game = await openGame(harness, { viewport, storage: { [V2_KEY]: JSON.stringify(seeded) } });
       const { page } = game;
       await game.goTo('#/journal', 'journal-screen');
+      await game.reveal(page.locator(".journal-entry").first());
       const sizes = await page.evaluate(() => ({
         overflow: document.documentElement.scrollWidth - window.innerWidth,
         tabs: [...document.querySelectorAll('.journal-tab')].map((el) => {
           const r = el.getBoundingClientRect();
           return { w: r.width, h: r.height, top: Math.round(r.top) };
         }),
-        entries: [...document.querySelectorAll('.journal-entry')].map((el) => el.getBoundingClientRect().width),
+        entries: [...document.querySelectorAll('.journal-entry')].filter((el) => el.getClientRects().length).map((el) => el.getBoundingClientRect().width),
         desc: parseFloat(getComputedStyle(document.querySelector('.entry-desc')).fontSize),
         medal: document.querySelector('.medal').getBoundingClientRect().width,
       }));
       assert.ok(sizes.overflow <= 0, `${viewport.width}: no sideways scrolling`);
       assert.equal(new Set(sizes.tabs.map((r) => r.top)).size, 2, 'two rows of two');
       assert.ok(sizes.tabs.every((r) => r.h >= 44 && r.w >= 120), JSON.stringify(sizes.tabs));
-      assert.ok(Math.min(...sizes.entries) >= viewport.width - 80, 'one full-width column of entries');
+      assert.ok(sizes.entries.length > 0 && Math.min(...sizes.entries) >= viewport.width - 80, 'one full-width column of entries');
       assert.ok(sizes.desc >= 14, `descriptions at ${sizes.desc}px`);
       assert.ok(sizes.medal >= 40);
       assert.deepEqual(game.pageErrors, []);
@@ -186,7 +187,7 @@ test('achievement journal', { timeout: 600_000 }, async (t) => {
     const game = await openGame(harness, { viewport: { width: 1280, height: 800 }, storage: { [V2_KEY]: JSON.stringify(stage8) } });
     const { page } = game;
     const stored = JSON.parse(await game.storageItem(V2_KEY));
-    assert.equal(stored.achievementSet, 2);
+    assert.equal(stored.achievementSet, 3);
     assert.deepEqual(stored.shellsFeathers.achievements, stage8.shellsFeathers.achievements, 'ids and dates kept');
     assert.deepEqual(stored.acornsLeaves.achievements, { 'shared-board': { at: DAY }, 'first-game': { at: null }, 'shared-fog': { at: null } });
     assert.deepEqual(stored.shellsFeathers.stats.single.easy, { wins: 3, losses: 0, draws: 0 }, 'records kept');

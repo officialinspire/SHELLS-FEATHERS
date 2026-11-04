@@ -82,7 +82,7 @@ test('settings and progress', { timeout: 300_000 }, async (t) => {
     await slide(page, 'sfx-volume', 20);
     assert.equal(await page.evaluate(() => window.__plays.at(-1)), 'button-select', 'a sample at the new level');
     assert.ok(Math.abs((await game.audioState('button-select')).volume - 0.2 * MIX.sfx['button-select']) < 1e-6, 'at its own gain in the mix');
-    await page.locator('#settings-screen label', { has: page.locator('input[value="reduce"]') }).click();
+    await (await game.reveal(page.locator('#settings-screen label', { has: page.locator('input[value="reduce"]') }))).click();
     assert.equal(await page.evaluate(() => document.documentElement.dataset.motion), 'reduce');
     assert.match(await page.locator('#motion-hint').textContent(), /^Reduce:/);
 
@@ -292,7 +292,7 @@ test('settings and progress', { timeout: 300_000 }, async (t) => {
     await game.waitForScreen('settings-screen');
     assert.equal(await page.locator('#settings-storage-note').isVisible(), false, 'nothing tried yet');
     await slide(page, 'music-volume', 60);
-    assert.equal(await page.locator('#settings-storage-note').isVisible(), true);
+    assert.equal(await (await game.reveal('#settings-storage-note')).isVisible(), true);
     await game.waitForMusicPlaying(0.6);
     await game.goTo('#/your-path', 'path-screen');
     assert.equal(await page.locator('#path-storage-note').isVisible(), true);

@@ -24,7 +24,7 @@ test('match flow', { timeout: 900_000 }, async (t) => {
     const game = await openGame(harness, { viewport: { width: 1280, height: 800 }, storage: quiet });
     const { page } = game;
     await game.goTo('#/shells-feathers', 'sf-setup-screen');
-    await page.locator('label:has(input[name="sf-length"][value="3"])').click();
+    await (await game.reveal('label:has(input[name="sf-length"][value="3"])')).click();
     assert.match(await page.locator('#sf-length-hint').textContent(), /^Best of 3: up to three rounds; the first to win two takes the set\. A drawn round counts/);
     await game.press('Two Players');
     await game.waitForScreen('game-screen');
@@ -58,7 +58,7 @@ test('match flow', { timeout: 900_000 }, async (t) => {
     const game = await openGame(harness, { viewport: { width: 390, height: 844 }, storage: quiet, initScript: FIRST_OPEN });
     const { page } = game;
     await game.goTo('#/shells-feathers', 'sf-setup-screen');
-    await page.locator('label:has(input[name="sf-length"][value="3"])').click();
+    await (await game.reveal('label:has(input[name="sf-length"][value="3"])')).click();
     await game.press('Play the Spirit');
     await game.waitForScreen('game-screen');
     for (const i of [4, 1, 7]) {
@@ -78,7 +78,7 @@ test('match flow', { timeout: 900_000 }, async (t) => {
     const game = await openGame(harness, { viewport: { width: 1280, height: 800 }, storage: quiet, fakeClock: true });
     const { page } = game;
     await game.goTo('#/acorns-leaves', 'al-setup-screen');
-    await page.locator('label:has(input[name="al-length"][value="3"])').click();
+    await (await game.reveal('label:has(input[name="al-length"][value="3"])')).click();
     await game.press('Play the Spirit');
     await game.waitForScreen('al-game-screen');
     await game.playPath([sq(5, 2), sq(4, 3)]);
@@ -207,7 +207,7 @@ test('match flow', { timeout: 900_000 }, async (t) => {
       const game = await openGame(harness, { viewport, storage: quiet, initScript: FIRST_OPEN });
       const { page } = game;
       await game.goTo('#/shells-feathers', 'sf-setup-screen');
-      await page.locator('label:has(input[name="sf-length"][value="5"])').click();
+      await (await game.reveal('label:has(input[name="sf-length"][value="5"])')).click();
       await game.startNew('#/shells-feathers/play/single', 'game-screen');
       for (const i of [4, 1, 7]) {
         await game.waitForTurn('Your Turn');
@@ -215,7 +215,7 @@ test('match flow', { timeout: 900_000 }, async (t) => {
       }
       await game.waitForResult();
       const problems = await page.evaluate(() => [...document.querySelectorAll('#game-modal .modal-content :is(a, button)')]
-        .filter((el) => !el.hidden)
+        .filter((el) => el.getClientRects().length)
         .flatMap((el) => {
           el.scrollIntoView({ block: 'center' });
           const r = el.getBoundingClientRect();

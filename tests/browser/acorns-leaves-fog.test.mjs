@@ -94,7 +94,7 @@ test('Acorns & Leaves: Fog of War', { timeout: 900_000 }, async (t) => {
     const { page } = game;
     await game.openAcornsLeaves();
     const links = () => page.evaluate(() => ['al-play-single', 'al-play-two'].map((id) => document.getElementById(id).getAttribute('href')));
-    assert.equal(await page.getByRole('radio', { name: 'Classic', exact: true }).isChecked(), true);
+    assert.equal(await (await game.reveal(page.getByRole('radio', { name: 'Classic', exact: true }))).isChecked(), true);
     assert.deepEqual(await links(), ['#/acorns-leaves/play/single', '#/acorns-leaves/play/two']);
     await game.chooseCheckersOptions({ variant: 'Fog of War' });
     assert.deepEqual(await links(), ['#/acorns-leaves/fog/single', '#/acorns-leaves/fog/two']);
@@ -102,7 +102,7 @@ test('Acorns & Leaves: Fog of War', { timeout: 900_000 }, async (t) => {
     assert.equal((await records(game)).settings.variant, 'fog');
     await page.reload();
     await game.waitForScreen('al-setup-screen');
-    assert.equal(await page.getByRole('radio', { name: 'Fog of War', exact: true }).isChecked(), true);
+    assert.equal(await (await game.reveal(page.getByRole('radio', { name: 'Fog of War', exact: true }))).isChecked(), true);
     await game.startCheckers('single');
     assert.equal(await page.title(), 'Acorns & Leaves: Fog of War vs the Spirit · Spirit of the Woods');
     assert.equal(await page.locator('#al-match-info').textContent(), 'Fog of War · Gentle Spirit · You: Acorns');
