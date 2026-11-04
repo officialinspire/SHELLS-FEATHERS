@@ -16,7 +16,7 @@
 // - The page itself is served from this worker's own cache first, so an
 //   open installation always runs the release its worker belongs to, online
 //   or off, until the player accepts the update.
-const RELEASE = 'd2343175e458'; // stamped by tools/stamp-assets.mjs
+const RELEASE = 'a2d5027f2010'; // stamped by tools/stamp-assets.mjs
 const CACHE_PREFIX = 'spirit-woods-shell-';
 const CACHE_NAME = CACHE_PREFIX + RELEASE;
 const SCOPE = self.registration.scope;

@@ -145,7 +145,7 @@ The stamp also writes a release id into `sw.js`, made from the stamped `index.ht
 
 **Deploying:** GitHub Pages publishes the root of `main`. `.nojekyll` makes Pages serve every file as it is. All paths are relative, because the site lives at `/SHELLS-FEATHERS/`. File names are case-sensitive there, and a unit test checks every reference.
 
-**Analytics:** the game sends no analytics or tracking events and makes no network requests besides its own files and Google Fonts.
+**Analytics:** optional anonymous PostHog events report game opens, starts, results and achievements for both games. Settings → Anonymous usage turns sending off; Do Not Track and Global Privacy Control also disable it. No names, emails or recordings are collected. Gameplay works when analytics is offline or blocked. The public ingestion configuration lives in `.env.production`; `npm run analytics:build` refreshes the deployed JSON config and pinned CDN SDK version from the lockfile. These are public browser values, never personal/admin API keys. Run `npm run stamp` after rebuilding or editing the game.
 
 Changes are listed in [`CHANGELOG.md`](CHANGELOG.md).
 

@@ -52,7 +52,7 @@ const ROUND_WINNER = {
 };
 
 export function createSession({
-  view, audio, profile, clock = globalThis, rng = Math.random, delays = DELAYS, feedback = createFeedback({ audio, clock }),
+  view, audio, analytics = null, profile, clock = globalThis, rng = Math.random, delays = DELAYS, feedback = createFeedback({ audio, clock }),
   resume = null,
 }) {
   let mode = null;
@@ -142,6 +142,7 @@ export function createSession({
   function startMatch(restored = null) {
     teardownMatch();
     matchCount += 1;
+    analytics?.capture(restored ? 'game_resumed' : 'game_started', { game: 'SHELLS-FEATHERS', mode, difficulty: config.difficulty });
     const { difficulty, player1Symbol } = config;
     match = restored?.match ?? createMatch({ mode, player1Symbol, difficulty });
     moves = restored ? [...restored.moves] : [];
@@ -274,6 +275,9 @@ export function createSession({
     const unlocked = profile.recordResult({
       mode, difficulty: match.difficulty, outcome, side: match.player1Symbol,
     }) ?? [];
+    analytics?.capture('round_completed', { game: 'SHELLS-FEATHERS', mode, outcome: outcome });
+    analytics?.capture(outcome === 'loss' || outcome === 'draw' ? 'game_over' : 'game_completed', { game: 'SHELLS-FEATHERS', mode, outcome: outcome });
+    for (const item of unlocked) analytics?.capture('achievement_unlocked', { game: 'SHELLS-FEATHERS', achievement: item.id });
     if (winner !== null) {
       if (winner === match.player1Symbol) scores.player1++;
       else scores.player2++;

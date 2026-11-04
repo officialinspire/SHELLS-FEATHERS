@@ -802,6 +802,11 @@
           </div>
 
           <div class="panel" data-page-split>
+            <h3 class="panel-title">Anonymous usage</h3>
+            <label class="setting-row" for="analytics-toggle"><span class="setting-label">Share anonymous game statistics</span><span class="switch"><input type="checkbox" id="analytics-toggle" role="switch" aria-describedby="analytics-hint" /><span class="toggle-switch" aria-hidden="true"></span></span></label>
+            <p class="hint" id="analytics-hint">Help INSPIRE improve the games. No names, emails or recordings. Respects Do Not Track and Global Privacy Control.</p>
+          </div>
+          <div class="panel" data-page-split>
             <h3 class="panel-title">Saved data</h3>
             <p class="hint">Settings, records and achievements are kept in this browser only. To clear just one game’s progress, use the button at the end of that game in Your Path.</p>
             <button type="button" class="btn btn-danger danger-wide" data-action="delete-all-data">Delete all saved data…</button>
@@ -1236,7 +1241,7 @@
   <script type="importmap">
   {
     "imports": {
-      "./src/app/app.js": "./src/app/app.js?v=89571a9514",
+      "./src/app/app.js": "./src/app/app.js?v=c66fe481f7",
       "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
       "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
       "./src/app/hub-chooser.js": "./src/app/hub-chooser.js?v=911a709cf1",
@@ -1248,7 +1253,7 @@
       "./src/app/path-screen.js": "./src/app/path-screen.js?v=5ed64db792",
       "./src/app/resume-ui.js": "./src/app/resume-ui.js?v=2965e78509",
       "./src/app/router.js": "./src/app/router.js?v=cbc93752ac",
-      "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=c63f17cc7a",
+      "./src/app/settings-screen.js": "./src/app/settings-screen.js?v=69b2de6bca",
       "./src/app/sound-motion.js": "./src/app/sound-motion.js?v=84fd10d3e6",
       "./src/app/start-gate.js": "./src/app/start-gate.js?v=7f1003c308",
       "./src/app/toast.js": "./src/app/toast.js?v=8e6cb89471",
@@ -1260,7 +1265,7 @@
       "./src/games/acorns-leaves/fog.js": "./src/games/acorns-leaves/fog.js?v=c6a4aaa2c2",
       "./src/games/acorns-leaves/pieces.js": "./src/games/acorns-leaves/pieces.js?v=778ba9533a",
       "./src/games/acorns-leaves/resume.js": "./src/games/acorns-leaves/resume.js?v=05e5c19654",
-      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=7b874cc8f3",
+      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=149d24f8c2",
       "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=ce6b957d2b",
       "./src/games/acorns-leaves/text.js": "./src/games/acorns-leaves/text.js?v=5229e61624",
       "./src/games/acorns-leaves/turn.js": "./src/games/acorns-leaves/turn.js?v=4c32d00fbb",
@@ -1269,11 +1274,12 @@
       "./src/games/shells-feathers/match.js": "./src/games/shells-feathers/match.js?v=dd264e8ee4",
       "./src/games/shells-feathers/resume.js": "./src/games/shells-feathers/resume.js?v=4c5bdb2421",
       "./src/games/shells-feathers/rules.js": "./src/games/shells-feathers/rules.js?v=6f838579f5",
-      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=ce1c1c7cc8",
+      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=8fd1b22706",
       "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=059417c2b3",
       "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=381e9162aa",
       "./src/main.js": "./src/main.js?v=b0d0ca161a",
       "./src/shared/achievements.js": "./src/shared/achievements.js?v=92cf5030fc",
+      "./src/shared/analytics.js": "./src/shared/analytics.js?v=1a98c643b7",
       "./src/shared/audio.js": "./src/shared/audio.js?v=16bd81f2ed",
       "./src/shared/board-taps.js": "./src/shared/board-taps.js?v=0d80361510",
       "./src/shared/feedback.js": "./src/shared/feedback.js?v=3df2204922",
@@ -1289,7 +1295,7 @@
     }
   }
   </script>
-  <link rel="modulepreload" href="src/app/app.js?v=89571a9514" />
+  <link rel="modulepreload" href="src/app/app.js?v=c66fe481f7" />
   <link rel="modulepreload" href="src/app/confirm-dialog.js?v=fba3c17fca" />
   <link rel="modulepreload" href="src/app/dialog-focus.js?v=77ccee0736" />
   <link rel="modulepreload" href="src/app/hub-chooser.js?v=911a709cf1" />
@@ -1301,7 +1307,7 @@
   <link rel="modulepreload" href="src/app/path-screen.js?v=5ed64db792" />
   <link rel="modulepreload" href="src/app/resume-ui.js?v=2965e78509" />
   <link rel="modulepreload" href="src/app/router.js?v=cbc93752ac" />
-  <link rel="modulepreload" href="src/app/settings-screen.js?v=c63f17cc7a" />
+  <link rel="modulepreload" href="src/app/settings-screen.js?v=69b2de6bca" />
   <link rel="modulepreload" href="src/app/sound-motion.js?v=84fd10d3e6" />
   <link rel="modulepreload" href="src/app/start-gate.js?v=7f1003c308" />
   <link rel="modulepreload" href="src/app/toast.js?v=8e6cb89471" />
@@ -1313,7 +1319,7 @@
   <link rel="modulepreload" href="src/games/acorns-leaves/fog.js?v=c6a4aaa2c2" />
   <link rel="modulepreload" href="src/games/acorns-leaves/pieces.js?v=778ba9533a" />
   <link rel="modulepreload" href="src/games/acorns-leaves/resume.js?v=05e5c19654" />
-  <link rel="modulepreload" href="src/games/acorns-leaves/session.js?v=7b874cc8f3" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/session.js?v=149d24f8c2" />
   <link rel="modulepreload" href="src/games/acorns-leaves/setup.js?v=ce6b957d2b" />
   <link rel="modulepreload" href="src/games/acorns-leaves/text.js?v=5229e61624" />
   <link rel="modulepreload" href="src/games/acorns-leaves/turn.js?v=4c32d00fbb" />
@@ -1322,11 +1328,12 @@
   <link rel="modulepreload" href="src/games/shells-feathers/match.js?v=dd264e8ee4" />
   <link rel="modulepreload" href="src/games/shells-feathers/resume.js?v=4c5bdb2421" />
   <link rel="modulepreload" href="src/games/shells-feathers/rules.js?v=6f838579f5" />
-  <link rel="modulepreload" href="src/games/shells-feathers/session.js?v=ce1c1c7cc8" />
+  <link rel="modulepreload" href="src/games/shells-feathers/session.js?v=8fd1b22706" />
   <link rel="modulepreload" href="src/games/shells-feathers/setup.js?v=059417c2b3" />
   <link rel="modulepreload" href="src/games/shells-feathers/view.js?v=381e9162aa" />
   <link rel="modulepreload" href="src/main.js?v=b0d0ca161a" />
   <link rel="modulepreload" href="src/shared/achievements.js?v=92cf5030fc" />
+  <link rel="modulepreload" href="src/shared/analytics.js?v=1a98c643b7" />
   <link rel="modulepreload" href="src/shared/audio.js?v=16bd81f2ed" />
   <link rel="modulepreload" href="src/shared/board-taps.js?v=0d80361510" />
   <link rel="modulepreload" href="src/shared/feedback.js?v=3df2204922" />

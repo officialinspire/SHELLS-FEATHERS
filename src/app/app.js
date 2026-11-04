@@ -20,6 +20,7 @@
 // a window resize hides the control that has focus (the side panel's
 // buttons exist only on wide screens), focus moves to the match's Menu
 // button.
+import { createAnalytics } from '../shared/analytics.js';
 import { openStorage } from '../shared/storage.js';
 import { createProfile } from '../shared/profile.js';
 import { createAudio } from '../shared/audio.js';
@@ -55,6 +56,7 @@ const GAME_OF_SCREEN = { 'game-screen': 'shellsFeathers', 'al-game-screen': 'aco
 const RESUME_PATHS = { shellsFeathers: '/shells-feathers/resume', acornsLeaves: '/acorns-leaves/resume' };
 
 export function createApp({ doc, win }) {
+  const analytics = createAnalytics({ win, doc });
   const store = openStorage(() => win.localStorage);
   const profile = createProfile(store);
   // Unfinished matches, one per game (src/shared/resume.js).
@@ -87,11 +89,11 @@ export function createApp({ doc, win }) {
   const confirmDialog = createConfirmDialog(doc);
   const view = createShellsFeathersView(doc);
   const session = createSession({
-    view, audio, feedback, profile, clock: win, resume: resumeStore,
+    view, audio, feedback, profile, analytics, clock: win, resume: resumeStore,
   });
   const checkersView = createAcornsLeavesView(doc);
   const checkers = createAcornsLeavesSession({
-    view: checkersView, audio, feedback, profile, clock: win, resume: resumeStore, notify: (achievements) => toast.achievements('al', achievements),
+    view: checkersView, audio, feedback, profile, analytics, clock: win, resume: resumeStore, notify: (achievements) => toast.achievements('al', achievements),
   });
   const resumeUi = createResumeUi({ doc, resumeStore });
   // A new release waiting: Reload or Later (src/app/update-prompt.js). Reload
@@ -303,6 +305,7 @@ export function createApp({ doc, win }) {
   }
 
   function init() {
+    void analytics.init();
     doc.addEventListener('click', onClick);
     initHubChooser(doc, win, () => feedback.cue('button'));
     installDialogFocus(doc);
@@ -345,7 +348,7 @@ export function createApp({ doc, win }) {
     sfSetup = initShellsFeathersSetup({ doc, profile, feedback });
     alSetup = initAcornsLeavesSetup({ doc, profile, feedback });
     settingsScreen = initSettingsScreen({
-      doc, win, profile, audio, haptics, feedback, confirmDialog, onDeletedAll: deletedAll,
+      doc, win, profile, audio, haptics, feedback, analytics, confirmDialog, onDeletedAll: deletedAll,
     });
     feedback.setAnimator('sf', view.animator);
     feedback.setAnimator('al', checkersView.animator);

@@ -94,7 +94,7 @@ const FOG_RULES = {
 };
 
 export function createSession({
-  view, audio, profile, notify = () => {},
+  view, audio, analytics = null, profile, notify = () => {},
   clock = globalThis, rng = Math.random, delays = DELAYS, feedback = createFeedback({ audio, clock }),
   chooseMove = spiritChoice, chooseFogStep = fogSpiritChoice, initialState = createInitialState,
   resume = null,
@@ -201,6 +201,7 @@ export function createSession({
   function startMatch(restored = []) {
     teardownMatch();
     matchCount += 1;
+    analytics?.capture(restored.length ? 'game_resumed' : 'game_started', { game: 'acornsLeaves', mode, difficulty: config.difficulty, variant });
     const { difficulty, side } = config;
     match = {
       state: initialState(),
@@ -540,6 +541,9 @@ export function createSession({
     const unlocked = [...earlier, ...(profile.recordAcornsLeavesResult({
       mode, difficulty: match.difficulty, outcome: text.outcome, variant, side: match.humanSide,
     }) ?? [])];
+    analytics?.capture('round_completed', { game: 'acornsLeaves', mode, outcome: text.outcome });
+    analytics?.capture(text.outcome === 'loss' || text.outcome === 'draw' ? 'game_over' : 'game_completed', { game: 'acornsLeaves', mode, outcome: text.outcome });
+    for (const item of unlocked) analytics?.capture('achievement_unlocked', { game: 'acornsLeaves', achievement: item.id });
     saveProgress();
     view.showSet?.(setLine());
     if (text.outcome === 'loss') {

@@ -9,12 +9,16 @@
     "test:browser": "node --test tests/browser/*.test.mjs",
     "test:smoke": "node --test tests/browser/gameplay.smoke.test.mjs",
     "stamp": "node tools/stamp-assets.mjs",
-    "stamp:check": "node tools/stamp-assets.mjs --check"
+    "stamp:check": "node tools/stamp-assets.mjs --check",
+    "analytics:build": "node --env-file=.env.production tools/build-analytics.mjs"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
     "playwright": "1.63.0"
+  },
+  "dependencies": {
+    "posthog-js": "^1.445.3"
   }
 }

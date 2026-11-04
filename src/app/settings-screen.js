@@ -9,7 +9,7 @@ import { createSoundMotion, applyMotion } from './sound-motion.js';
 
 export { applyMotion };
 
-export function initSettingsScreen({
+export function initSettingsScreen({ analytics = null,
   doc, win, profile, audio, haptics, feedback, confirmDialog, onDeletedAll,
 }) {
   const byId = (id) => doc.getElementById(id);
@@ -20,7 +20,11 @@ export function initSettingsScreen({
     doc, root: byId('settings-screen'), win, profile, audio, haptics, feedback, onSaved: showStorage,
   });
 
+  const analyticsToggle = byId('analytics-toggle');
+  analyticsToggle?.addEventListener('change', () => analytics?.setEnabled(analyticsToggle.checked));
+
   function show() {
+    if (analyticsToggle) analyticsToggle.checked = analytics?.enabled() ?? false;
     controls.show();
     showStorage();
   }
@@ -39,6 +43,7 @@ export function initSettingsScreen({
       confirmLabel: 'Delete all saved data',
     });
     if (!agreed) return;
+    analytics?.clear();
     const ok = profile.deleteAllData();
     onDeletedAll(ok);
   }
