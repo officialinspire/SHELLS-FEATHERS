@@ -101,17 +101,17 @@ const match = async (game) => ({ cells: await game.cells(), turn: await game.tur
 
 test('an update: first install, decline, keep playing, relaunch, accept, resume, offline', { timeout: 180_000 }, async (t) => {
   const { a, b, dir } = builds();
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
   assert.notEqual(stampOf(a), stampOf(b), 'build B changes a module');
   assert.notEqual(releaseOf(a), releaseOf(b), 'and so is a release of its own');
   const site = { root: a, requests: [] };
   const server = await servePages(site);
-  const browser = await chromium.launch();
-  t.after(async () => {
-    await browser.close();
+  t.after(() => {
     server.closeAllConnections();
     server.close();
-    rmSync(dir, { recursive: true, force: true });
   });
+  const browser = await chromium.launch();
+  t.after(() => browser.close());
   const url = `http://localhost:${server.address().port}/SHELLS-FEATHERS/`;
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'allow' });
   await context.addInitScript({ content: INIT });
