@@ -37,6 +37,7 @@ import { createTutorial, SETUP_PATHS } from './tutorial.js';
 import { createResumeStore } from '../shared/resume.js';
 import { createStartGate } from './start-gate.js';
 import { createHubLeaves } from './hub-leaves.js';
+import { createUpdatePrompt } from './update-prompt.js';
 import { createConfirmDialog } from './confirm-dialog.js';
 import { createToast } from './toast.js';
 import { installDialogFocus } from './dialog-focus.js';
@@ -92,6 +93,23 @@ export function createApp({ doc, win }) {
     view: checkersView, audio, feedback, profile, clock: win, resume: resumeStore, notify: (achievements) => toast.achievements('al', achievements),
   });
   const resumeUi = createResumeUi({ doc, resumeStore });
+  // A new release waiting: Reload or Later (src/app/update-prompt.js). Reload
+  // holds and saves both matches first; a match on screen resumes on the
+  // same turn after the refresh (the router's resume, below).
+  const updates = createUpdatePrompt({
+    doc,
+    win,
+    busy: () => session.midMove() || checkers.midMove(),
+    beforeReload() {
+      for (const game of [session, checkers]) {
+        game.pause('update');
+        game.saveNow();
+      }
+      toast.hold('update');
+      audio.stopMusic();
+    },
+    onLaterFocus: () => focusScreen(nav.current),
+  });
   const tutorial = createTutorial({ doc, profile, feedback });
   let sfSetup = null;
   let alSetup = null;
@@ -128,6 +146,7 @@ export function createApp({ doc, win }) {
       enter: () => {
         resumeUi.renderHub();
         leaves.enterHub();
+        updates.hubShown();
         if (!firstRoute) audio.startMusic();
       },
       leave: () => leaves.leaveHub(),
@@ -246,6 +265,12 @@ export function createApp({ doc, win }) {
     'al-take-control': () => checkers.takeControl(),
     'reset-al-stats': () => path.resetAcornsLeaves(),
     'delete-all-data': () => settingsScreen.deleteAll(),
+    // From the banner, or a match menu's row: a move half made is finished
+    // on the board first, so a menu closes to let it be.
+    'update-reload': () => {
+      if (updates.reload() === 'after-move') doc.querySelector('.match-menu.active [data-menu-close]')?.click();
+    },
+    'update-later': () => updates.later(),
   };
 
   // After "Delete all saved data": start again from a fresh page, or say
@@ -363,6 +388,7 @@ export function createApp({ doc, win }) {
     });
     gate.show();
     router.start();
+    updates.register();
     for (const note of profile.notes) console.info(`Spirit of the Woods: ${note}`);
   }
 

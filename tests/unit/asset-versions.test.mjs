@@ -5,11 +5,15 @@
 // (tools/stamp-assets.mjs).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import {
+  readFileSync, readdirSync, existsSync, mkdtempSync, cpSync, writeFileSync, rmSync,
+} from 'node:fs';
+import os from 'node:os';
+import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { stampedIndex } from '../../tools/stamp-assets.mjs';
+import { stampedIndex, stampedServiceWorker, shellFiles } from '../../tools/stamp-assets.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const html = readFileSync(path.join(ROOT, 'index.html'), 'utf8');
@@ -40,6 +44,46 @@ test('index.html carries the current asset versions (run npm run stamp after cha
   // And the tool agrees.
   const { current, expected } = stampedIndex(ROOT);
   assert.ok(current === expected, 'tools/stamp-assets.mjs would change index.html');
+});
+
+test('sw.js carries the current release (run npm run stamp)', () => {
+  const { current, expected, release } = stampedServiceWorker(ROOT);
+  assert.ok(current === expected, 'tools/stamp-assets.mjs would change sw.js');
+  assert.match(current, new RegExp(`const RELEASE = '${release}';`));
+  assert.match(release, /^[0-9a-f]{12}$/);
+  for (const file of shellFiles(current)) assert.ok(existsExactly(file), `sw.js precaches ${file}, which is missing`);
+});
+
+// A copy of the site (the files the stamp reads) in a temporary folder.
+function siteCopy() {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'sotw-stamp-'));
+  for (const item of ['index.html', 'sw.js', 'styles.css', 'src', ...shellFiles(readFileSync(path.join(ROOT, 'sw.js'), 'utf8'))]) {
+    cpSync(path.join(ROOT, item), path.join(dir, item), { recursive: true });
+  }
+  return dir;
+}
+
+test('every changed release gets its own release id, and so its own cache: a change to one module only too', (t) => {
+  const dir = siteCopy();
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const before = stampedServiceWorker(ROOT).release;
+  assert.equal(stampedServiceWorker(dir).release, before, 'the same files, the same release');
+  const releaseAfter = (file, change) => {
+    writeFileSync(path.join(dir, file), change(readFileSync(path.join(dir, file))));
+    const index = stampedIndex(dir);
+    return stampedServiceWorker(dir, index.expected).release;
+  };
+  const seen = new Set([before]);
+  // Only an app module, deep in the import graph.
+  const moduleOnly = releaseAfter('src/app/toast.js', (b) => `${b}\n// changed\n`);
+  assert.ok(!seen.has(moduleOnly), 'a module-only change is a new release');
+  seen.add(moduleOnly);
+  // Only the stylesheet; only a short sound effect.
+  const styleOnly = releaseAfter('styles.css', (b) => `${b}\n/* changed */\n`);
+  assert.ok(!seen.has(styleOnly));
+  seen.add(styleOnly);
+  const soundOnly = releaseAfter('sounds/select.wav', (b) => Buffer.concat([b, Buffer.from([0])]));
+  assert.ok(!seen.has(soundOnly));
 });
 
 test('the stamp tool replaces an existing stamp (not only the first one)', () => {

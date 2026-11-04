@@ -33,10 +33,12 @@ const PASS_START_GATE = `(() => {
 // `storage` seeds localStorage before the game's first load; `initScript`
 // runs before the page's own scripts on every load; `fakeClock` gives the
 // page Playwright's controllable clock (timers run only on page.clock.runFor).
+// The service worker (sw.js) is blocked unless `serviceWorkers: 'allow'`:
+// tests about the game see the page exactly as served.
 export async function openGame({ base, browser }, {
-  viewport = { width: 390, height: 844 }, device, storage, initScript, fakeClock = false, gate = false,
+  viewport = { width: 390, height: 844 }, device, storage, initScript, fakeClock = false, gate = false, serviceWorkers = 'block',
 } = {}) {
-  const context = await browser.newContext(device ?? { viewport });
+  const context = await browser.newContext({ ...(device ?? { viewport }), serviceWorkers });
   const page = await context.newPage();
   const game = new GamePage(page, base, { touch: Boolean(device?.hasTouch) });
 

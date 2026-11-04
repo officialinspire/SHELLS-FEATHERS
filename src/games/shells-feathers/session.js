@@ -342,6 +342,10 @@ export function createSession({
 
   return {
     enter, resumeFrom, leave, restart, playAgain, switchSides, selectCell, pause, resume: resumeMatch,
+    // Saves the match now (it is already saved after every move); a move here
+    // is a single placement, never half made.
+    saveNow: saveProgress,
+    midMove: () => false,
     get set() { return set; },
   };
 }

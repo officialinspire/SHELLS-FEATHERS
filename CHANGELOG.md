@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.0.2: Updates offered, never forced (unreleased)
+
+- **Update prompt:** when a new release is published, an installed game downloads it in the background and then offers **Reload** or **Later**, in a bar at the top of the page. The bar takes its own room, so it never covers the board or its controls. The first install shows no prompt and never refreshes.
+  - **Later:** the match goes on, on the release it started with. The offer comes back the next time the hub shows, and each match menu keeps a "Reload to Update" row.
+  - **Reload:** if a chain of jumps is under way, the update waits for that move to end. Both matches are then saved, the new release takes over, and the page refreshes once. The match resumes on the same turn.
+  - **Already waiting:** an update that was waiting from an earlier visit is offered as the game starts. Until then, that visit still runs the release it had.
+- **Service worker:**
+  - every release, including one that changes only an app module, gets its own cache, named from a release id that `npm run stamp` writes into `sw.js`;
+  - installing no longer takes over at once (no install-time `skipWaiting`): the new worker waits for the player's Reload;
+  - the page is served from the running release's own cache, online or off, and once a new release takes over, older caches are deleted;
+  - short effects stay cached; the long music, the intro video and range requests stream as before.
+- **Tests:**
+  - a two-build browser test under `/SHELLS-FEATHERS/` on localhost: first install, decline, keep playing, relaunch, accept, resume the same turn, then launch offline;
+  - unit tests for the worker, the release stamp and the prompt.
+  - Browser tests now block the service worker unless a test asks for it.
+
 ## 2.0.1: Social preview and installable app
 
 - New wide social banner shows both games and the INSPIRE wordmark. The game's Open Graph and Twitter metadata point to its absolute GitHub Pages image URL.

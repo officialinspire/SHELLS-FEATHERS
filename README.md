@@ -6,7 +6,7 @@ Two peaceful board games from the forest, played in the browser: **Shells & Feat
 
 **Play:** https://officialinspire.github.io/SHELLS-FEATHERS/
 
-**Install:** On a compatible mobile or desktop browser, use its Install/Add to Home Screen action. The app uses an acorn icon and a standalone window. Its game code, boards, and short effects are available offline after the service worker finishes installing; the long music track and INSPIRE intro video use the network. The game remains playable if those optional media files are unavailable.
+**Install:** On a compatible mobile or desktop browser, use its Install/Add to Home Screen action. The app uses an acorn icon and a standalone window. Its game code, boards, and short effects are available offline after the service worker finishes installing; the long music track and INSPIRE intro video use the network. The game remains playable if those optional media files are unavailable. When a new version is published, an installed game offers **Reload** or **Later**. It never refreshes by itself, and Reload resumes your match on the same turn.
 
 **Share preview:** The social card is `assets/spirit-of-the-woods-social.jpg`. Open Graph and Twitter metadata in `index.html` use its absolute GitHub Pages URL so link previews resolve the image.
 
@@ -125,6 +125,8 @@ npm test                            # = npm run test:unit && npm run test:browse
 **After changing anything in `src/` or `styles.css`, run `npm run stamp`** (`node tools/stamp-assets.mjs`).
 
 GitHub Pages caches every file for ten minutes and can't be told otherwise. The stamp gives the stylesheet and every module a content-hashed URL (through an import map in `index.html`), so after a deploy no browser mixes old and new files. A unit test fails while the stamp is out of date.
+
+The stamp also writes a release id into `sw.js`, made from the stamped `index.html` and every file the worker precaches. Any change to the offline shell, even to one module, is then a new worker with a cache of its own. Installed players are offered it with Reload or Later (`src/app/update-prompt.js`). `node tools/stamp-assets.mjs --root <dir>` stamps another copy of the site, as the update test does for its second build.
 
 **Layout**
 

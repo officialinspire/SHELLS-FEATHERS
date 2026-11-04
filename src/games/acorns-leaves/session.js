@@ -710,8 +710,14 @@ export function createSession({
     if (!holds.size) timers?.resume();
   }
 
+  // A move half made: a piece part way through a chain of jumps (the
+  // player's or the Spirit's). Saved progress holds whole moves only, so an
+  // update waits for the move to end (src/app/update-prompt.js).
+  const midMove = () => Boolean(match && !match.result && match.turn && rules.inChain(match.turn));
+
   return {
     enter, resumeFrom, leave, restart, playAgain, switchSides, selectSquare, cancelSelection, takeControl, pause, resume: resumeMatch,
+    saveNow: saveProgress, midMove,
     get set() { return set; },
   };
 }

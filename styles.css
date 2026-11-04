@@ -2,6 +2,8 @@
    base, layout, controls, each game, Settings and Your Path. */
 
 :root {
+    /* The update banner's room at the top of the page (src/app/update-prompt.js). */
+    --update-room: 0px;
     /* ------------------------------------------------------------------
        Design tokens. A woodland tabletop: forest greens around warm wood,
        pearl shells, soft feathers, readable acorns and leaves, and a little
@@ -1572,7 +1574,7 @@ h2[tabindex="-1"]:focus {
     /* The board has first claim on the width: its smallest size is as big
        as it can be while the side column keeps its minimum. */
     .match-screen {
-        --board-max: min(100vh - 16px, 450px);
+        --board-max: min(100vh - 16px - var(--update-room), 450px);
         --side-min: 220px;
         --board-side: minmax(var(--side-min), 330px);
         --board-min: max(200px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--side-min) - 16px));
@@ -1580,7 +1582,7 @@ h2[tabindex="-1"]:focus {
 
     @supports (height: 100dvh) {
         .match-screen {
-            --board-max: min(100dvh - 16px, 450px);
+            --board-max: min(100dvh - 16px - var(--update-room), 450px);
         }
     }
 
@@ -1640,22 +1642,22 @@ h2[tabindex="-1"]:focus {
         --panel-gap: 28px;
         --panel-min: 280px;
         --panel-max: 24rem;
-        --board-max: min(100vh - 48px, 640px);
+        --board-max: min(100vh - 48px - var(--update-room), 640px);
         --board-min: max(260px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--panel-min) - var(--panel-gap)));
     }
 
     .match-screen.al-match-screen {
-        --board-max: min(100vh - 48px, 860px);
+        --board-max: min(100vh - 48px - var(--update-room), 860px);
         --board-min: max(304px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--panel-min) - var(--panel-gap)));
     }
 
     @supports (height: 100dvh) {
         .match-screen {
-            --board-max: min(100dvh - 48px, 640px);
+            --board-max: min(100dvh - 48px - var(--update-room), 640px);
         }
 
         .match-screen.al-match-screen {
-            --board-max: min(100dvh - 48px, 860px);
+            --board-max: min(100dvh - 48px - var(--update-room), 860px);
         }
     }
 
@@ -1860,7 +1862,7 @@ kbd {
    board's size is worked out from the viewport instead. */
 @supports not (container-type: size) {
     .board-well > * {
-        --board-size: min(var(--board-max), max(var(--board-min), 100vh - 300px));
+        --board-size: min(var(--board-max), max(var(--board-min), 100vh - 300px - var(--update-room)));
     }
 
     @media (orientation: landscape) and (max-height: 540px) {
@@ -2599,7 +2601,7 @@ kbd {
    left; here the board's largest size follows the height alone. */
 @media (orientation: landscape) and (max-height: 540px) {
     .al-match-screen {
-        --board-max: min(100vh - 16px, 578px);
+        --board-max: min(100vh - 16px - var(--update-room), 578px);
         --side-min: 224px;
         --board-side: minmax(var(--side-min), 340px);
         --board-min: max(200px, min(var(--board-max), 100vw - 2 * var(--board-gutter) - var(--side-min) - 16px));
@@ -2607,7 +2609,7 @@ kbd {
 
     @supports (height: 100dvh) {
         .al-match-screen {
-            --board-max: min(100dvh - 16px, 578px);
+            --board-max: min(100dvh - 16px - var(--update-room), 578px);
         }
     }
 }
@@ -3704,5 +3706,116 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
     :root:not([data-motion="full"]) .hub-leaves {
         display: none;
+    }
+}
+
+/* An update waiting (src/app/update-prompt.js): a bar at the top of the
+   page with Reload and Later. It is part of the page, not over it, so it
+   covers nothing: while it shows, every screen is that much shorter (a
+   match's board shrinks to fit below it), and a screen that can't fit
+   scrolls. Under a dialog, and behind the start screen and intro, it isn't
+   shown. */
+.update-banner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 12px;
+    width: min(100% - 16px, 34rem);
+    margin: max(8px, env(safe-area-inset-top)) auto 0;
+    padding: 6px 8px 6px 14px;
+    border: 2px solid var(--wood-950);
+    border-radius: var(--radius-md);
+    background: linear-gradient(160deg, var(--forest-700), var(--forest-900));
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(214, 236, 196, 0.15);
+    color: var(--text);
+}
+
+.update-banner[hidden],
+:root:not([data-gate="ready"]) .update-banner,
+body:has(.modal.active, .handoff:not([hidden])) .update-banner {
+    display: none;
+}
+
+.update-text {
+    flex: 1 1 9rem;
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    line-height: 1.3;
+}
+
+.update-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.update-btn {
+    min-height: 44px;
+    padding: 6px 14px;
+    font-size: 0.98rem;
+}
+
+.update-btn[hidden] {
+    display: none;
+}
+
+/* The screens fit in what the banner leaves (--update-room: its height and
+   margin; the margin stays inside the page instead of moving it down). */
+:root.has-update body {
+    display: flow-root;
+}
+
+:root.has-update .screen.active {
+    min-height: calc(100vh - var(--update-room));
+    min-height: calc(100dvh - var(--update-room));
+}
+
+:root.has-update .match-screen.active {
+    height: calc(100vh - var(--update-room));
+    height: calc(100dvh - var(--update-room));
+    min-height: fit-content; /* and grows (the page scrolls) when it must */
+}
+
+/* The match menu's own Reload row, while an update waits. */
+.menu-update {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 12px;
+    margin-top: var(--space-4);
+    padding: 8px 10px;
+    border: 1px solid rgba(214, 236, 196, 0.3);
+    border-radius: var(--radius-md);
+    background: rgba(15, 33, 23, 0.45);
+}
+
+.menu-update[hidden] {
+    display: none;
+}
+
+.menu-update-text {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    color: var(--text-muted);
+}
+
+/* Short screens: the button says it all, and the banner is slimmer. */
+@media (max-height: 420px) {
+    .menu-update-text {
+        display: none;
+    }
+
+    .update-banner {
+        margin-top: max(4px, env(safe-area-inset-top));
+        padding-block: 3px;
+    }
+
+    .update-text {
+        font-size: 0.88rem;
     }
 }

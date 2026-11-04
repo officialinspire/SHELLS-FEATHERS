@@ -27,7 +27,7 @@
   <meta name="twitter:title" content="Spirit of the Woods | Two woodland games" />
   <meta name="twitter:description" content="Shells & Feathers tic-tac-toe and Acorns & Leaves checkers, including Fog of War." />
   <meta name="twitter:image" content="https://officialinspire.github.io/SHELLS-FEATHERS/assets/spirit-of-the-woods-social.jpg" />
-  <link rel="stylesheet" href="styles.css?v=0534a11648" />
+  <link rel="stylesheet" href="styles.css?v=6c688f4887" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
@@ -250,6 +250,14 @@
   <!-- Leaves drifting behind the hub (src/app/hub-leaves.js): decorative,
        filled only while the hub is showing. -->
   <div id="hub-leaves" class="hub-leaves" aria-hidden="true" hidden></div>
+  <!-- A new release waiting (src/app/update-prompt.js): Reload or Later. -->
+  <div id="update-banner" class="update-banner" role="region" aria-label="Update" hidden>
+    <p id="update-banner-text" class="update-text" role="status" aria-live="polite"></p>
+    <div class="update-buttons">
+      <button type="button" class="btn btn-primary update-btn" data-action="update-reload">Reload</button>
+      <button type="button" class="btn update-btn" data-action="update-later">Later</button>
+    </div>
+  </div>
 
   <main id="game-container">
     <!-- Hub: choose a game -->
@@ -897,6 +905,10 @@
             <a class="btn modal-btn" href="#/shells-feathers" data-up>Change Mode</a>
             <a class="btn modal-btn" href="#/" data-up>All Games</a>
           </div>
+          <div class="menu-update" data-update-row hidden>
+            <p class="menu-update-text">An update is ready. Your match is kept.</p>
+            <button type="button" class="btn modal-btn" data-action="update-reload">Reload to Update</button>
+          </div>
           <p id="sf-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
         </div>
         <div class="menu-view" data-menu-view="settings" hidden>
@@ -974,6 +986,10 @@
             <button type="button" class="btn modal-btn" data-action="al-restart">Restart</button>
             <a class="btn modal-btn" href="#/acorns-leaves" data-up>Change Mode</a>
             <a class="btn modal-btn" href="#/" data-up>All Games</a>
+          </div>
+          <div class="menu-update" data-update-row hidden>
+            <p class="menu-update-text">An update is ready. Your match is kept.</p>
+            <button type="button" class="btn modal-btn" data-action="update-reload">Reload to Update</button>
           </div>
           <p id="al-menu-note" class="menu-note">Restarting or leaving ends this game, and it isn’t recorded.</p>
         </div>
@@ -1082,7 +1098,7 @@
   <script type="importmap">
   {
     "imports": {
-      "./src/app/app.js": "./src/app/app.js?v=6ff24469ad",
+      "./src/app/app.js": "./src/app/app.js?v=8c17c2ed76",
       "./src/app/confirm-dialog.js": "./src/app/confirm-dialog.js?v=fba3c17fca",
       "./src/app/dialog-focus.js": "./src/app/dialog-focus.js?v=77ccee0736",
       "./src/app/hub-chooser.js": "./src/app/hub-chooser.js?v=911a709cf1",
@@ -1098,13 +1114,14 @@
       "./src/app/start-gate.js": "./src/app/start-gate.js?v=7f1003c308",
       "./src/app/toast.js": "./src/app/toast.js?v=8e6cb89471",
       "./src/app/tutorial.js": "./src/app/tutorial.js?v=7d842e314f",
+      "./src/app/update-prompt.js": "./src/app/update-prompt.js?v=c22aa6d0d9",
       "./src/games/acorns-leaves/ai.js": "./src/games/acorns-leaves/ai.js?v=ec51e2bd96",
       "./src/games/acorns-leaves/engine.js": "./src/games/acorns-leaves/engine.js?v=f4ae64291c",
       "./src/games/acorns-leaves/fog-ai.js": "./src/games/acorns-leaves/fog-ai.js?v=9792d8c2f9",
       "./src/games/acorns-leaves/fog.js": "./src/games/acorns-leaves/fog.js?v=c6a4aaa2c2",
       "./src/games/acorns-leaves/pieces.js": "./src/games/acorns-leaves/pieces.js?v=778ba9533a",
       "./src/games/acorns-leaves/resume.js": "./src/games/acorns-leaves/resume.js?v=05e5c19654",
-      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=32d26f8842",
+      "./src/games/acorns-leaves/session.js": "./src/games/acorns-leaves/session.js?v=9d4fcda01c",
       "./src/games/acorns-leaves/setup.js": "./src/games/acorns-leaves/setup.js?v=ce6b957d2b",
       "./src/games/acorns-leaves/text.js": "./src/games/acorns-leaves/text.js?v=5229e61624",
       "./src/games/acorns-leaves/turn.js": "./src/games/acorns-leaves/turn.js?v=4c32d00fbb",
@@ -1113,10 +1130,10 @@
       "./src/games/shells-feathers/match.js": "./src/games/shells-feathers/match.js?v=dd264e8ee4",
       "./src/games/shells-feathers/resume.js": "./src/games/shells-feathers/resume.js?v=4c5bdb2421",
       "./src/games/shells-feathers/rules.js": "./src/games/shells-feathers/rules.js?v=6f838579f5",
-      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=e47624754e",
+      "./src/games/shells-feathers/session.js": "./src/games/shells-feathers/session.js?v=995a1be935",
       "./src/games/shells-feathers/setup.js": "./src/games/shells-feathers/setup.js?v=059417c2b3",
       "./src/games/shells-feathers/view.js": "./src/games/shells-feathers/view.js?v=381e9162aa",
-      "./src/main.js": "./src/main.js?v=bb0d4beebf",
+      "./src/main.js": "./src/main.js?v=b0d0ca161a",
       "./src/shared/achievements.js": "./src/shared/achievements.js?v=ebc7788204",
       "./src/shared/audio.js": "./src/shared/audio.js?v=1d1539e3ec",
       "./src/shared/board-taps.js": "./src/shared/board-taps.js?v=0d80361510",
@@ -1133,7 +1150,7 @@
     }
   }
   </script>
-  <link rel="modulepreload" href="src/app/app.js?v=6ff24469ad" />
+  <link rel="modulepreload" href="src/app/app.js?v=8c17c2ed76" />
   <link rel="modulepreload" href="src/app/confirm-dialog.js?v=fba3c17fca" />
   <link rel="modulepreload" href="src/app/dialog-focus.js?v=77ccee0736" />
   <link rel="modulepreload" href="src/app/hub-chooser.js?v=911a709cf1" />
@@ -1149,13 +1166,14 @@
   <link rel="modulepreload" href="src/app/start-gate.js?v=7f1003c308" />
   <link rel="modulepreload" href="src/app/toast.js?v=8e6cb89471" />
   <link rel="modulepreload" href="src/app/tutorial.js?v=7d842e314f" />
+  <link rel="modulepreload" href="src/app/update-prompt.js?v=c22aa6d0d9" />
   <link rel="modulepreload" href="src/games/acorns-leaves/ai.js?v=ec51e2bd96" />
   <link rel="modulepreload" href="src/games/acorns-leaves/engine.js?v=f4ae64291c" />
   <link rel="modulepreload" href="src/games/acorns-leaves/fog-ai.js?v=9792d8c2f9" />
   <link rel="modulepreload" href="src/games/acorns-leaves/fog.js?v=c6a4aaa2c2" />
   <link rel="modulepreload" href="src/games/acorns-leaves/pieces.js?v=778ba9533a" />
   <link rel="modulepreload" href="src/games/acorns-leaves/resume.js?v=05e5c19654" />
-  <link rel="modulepreload" href="src/games/acorns-leaves/session.js?v=32d26f8842" />
+  <link rel="modulepreload" href="src/games/acorns-leaves/session.js?v=9d4fcda01c" />
   <link rel="modulepreload" href="src/games/acorns-leaves/setup.js?v=ce6b957d2b" />
   <link rel="modulepreload" href="src/games/acorns-leaves/text.js?v=5229e61624" />
   <link rel="modulepreload" href="src/games/acorns-leaves/turn.js?v=4c32d00fbb" />
@@ -1164,10 +1182,10 @@
   <link rel="modulepreload" href="src/games/shells-feathers/match.js?v=dd264e8ee4" />
   <link rel="modulepreload" href="src/games/shells-feathers/resume.js?v=4c5bdb2421" />
   <link rel="modulepreload" href="src/games/shells-feathers/rules.js?v=6f838579f5" />
-  <link rel="modulepreload" href="src/games/shells-feathers/session.js?v=e47624754e" />
+  <link rel="modulepreload" href="src/games/shells-feathers/session.js?v=995a1be935" />
   <link rel="modulepreload" href="src/games/shells-feathers/setup.js?v=059417c2b3" />
   <link rel="modulepreload" href="src/games/shells-feathers/view.js?v=381e9162aa" />
-  <link rel="modulepreload" href="src/main.js?v=bb0d4beebf" />
+  <link rel="modulepreload" href="src/main.js?v=b0d0ca161a" />
   <link rel="modulepreload" href="src/shared/achievements.js?v=ebc7788204" />
   <link rel="modulepreload" href="src/shared/audio.js?v=1d1539e3ec" />
   <link rel="modulepreload" href="src/shared/board-taps.js?v=0d80361510" />
@@ -1181,7 +1199,7 @@
   <link rel="modulepreload" href="src/shared/save-data.js?v=e19049cace" />
   <link rel="modulepreload" href="src/shared/storage.js?v=40ebff7603" />
   <link rel="modulepreload" href="src/shared/timers.js?v=22efd36a1d" />
-  <script type="module" src="src/main.js?v=bb0d4beebf"></script>
+  <script type="module" src="src/main.js?v=b0d0ca161a"></script>
   <!-- /asset versions -->
 </body>
 </html>
