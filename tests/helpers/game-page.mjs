@@ -11,12 +11,12 @@ import { MIX } from '../../src/shared/audio.js';
 export async function startHarness(t) {
   const server = await serveRepo();
   const base = `http://127.0.0.1:${server.address().port}`;
-  const browser = await chromium.launch();
-  t.after(async () => {
-    await browser.close();
+  t.after(() => {
     server.closeAllConnections();
     server.close();
   });
+  const browser = await chromium.launch();
+  t.after(() => browser.close());
   return { base, browser };
 }
 
