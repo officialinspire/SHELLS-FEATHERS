@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.0.3: Sound, music and vibration polish (unreleased)
+
+- **Balance:** the shipped sounds are reused, with a fixed gain for each (`MIX`, measured from the files). Taps, events and big moments now each sit at their own level, and the music, mastered far louder than any effect, sits under them. Crowning, a loss, a draw and an achievement briefly dip the music. Details are in docs/assets.md.
+- **Smooth starts and stops:**
+  - music fades follow the clock along an S-curve, so they always finish;
+  - stopping an effect fades it out over 120 ms instead of cutting it;
+  - a sound asked for again while it still rings plays on a second voice (up to three) instead of restarting with a click.
+- **iPhone and iPad:** Safari ignores an element's volume. Before, the music's fade never finished there, so a win never paused the music, and a timer ran on for good. Fades now end on time, and volumes go through Web Audio gain nodes, so the mix and the sliders work there too. The audio context wakes on every tap and when the page is shown again.
+- **Independent settings:** turning sound effects off now stops only sounds. Vibration and animations follow their own settings.
+- **Achievement chime:** it waits 0.6 s, so it doesn't land on top of the crowning bell or capture that earned it.
+- **Tests:** a new browser test, `tests/browser/audio.test.mjs`, covers:
+  - one music element: silent under the intro, never started twice, through hiding the page, switching games and Play Again;
+  - effects, music and vibration each following their own saved setting, in Settings and a match menu, across a reload;
+  - rapid taps, a silent resume, and two-player Fog;
+  - missing sound files with no vibration;
+  - an emulated iPhone, where volume is fixed and levels go through gain nodes.
+
+  New unit tests cover the mix, ducking, voices, effect fade-outs, iOS fades and gain routing, and the feedback mapping.
+
 ## 2.0.2: Updates offered, never forced (unreleased)
 
 - **Update prompt:** when a new release is published, an installed game downloads it in the background and then offers **Reload** or **Later**, in a bar at the top of the page. The bar takes its own room, so it never covers the board or its controls. The first install shows no prompt and never refreshes.

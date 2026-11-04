@@ -12,7 +12,7 @@ import { openStorage } from '../../src/shared/storage.js';
 import { createSession, DELAYS } from '../../src/games/acorns-leaves/session.js';
 import { positionFromRows, legalMoves, squareAt } from '../../src/games/acorns-leaves/engine.js';
 import { createToast, NOTICE } from '../../src/app/toast.js';
-import { createFeedback } from '../../src/shared/feedback.js';
+import { createFeedback, CUES } from '../../src/shared/feedback.js';
 import { progressText, stateText } from '../../src/app/journal-screen.js';
 import {
   createFakeClock, createFakeAudio, createFakeCheckersView, createMemoryStorage,
@@ -336,20 +336,23 @@ test('notices: one at a time in the match line\'s place, read out in full, one c
   toast.achievements('al', []);
   assert.deepEqual(audio.calls, [], 'nothing to say, no chime');
   toast.achievements('al', [CROWNED, DOUBLE]);
-  assert.deepEqual(audio.calls, ['sfx:achievement-sound']);
   assert.equal(showing(), 'Unlocked: Crowned');
+  assert.deepEqual(audio.calls, [], 'the chime waits for the move\'s own sound');
+  clock.tick(CUES.achievement.delay);
+  assert.deepEqual(audio.calls, ['sfx:achievement-sound']);
   assert.equal(nodes['al-notice-icon'].attrs.href, '#ach-crown');
   assert.ok(nodes['al-notice-slot'].classList.contains('is-noticing'), 'the match line makes way');
   assert.equal(nodes['notice-status'].textContent, 'Achievement unlocked: Crowned. Crown one of your own pieces.');
-  clock.tick(NOTICE.SHOW_MS);
+  clock.tick(NOTICE.SHOW_MS - CUES.achievement.delay);
   assert.equal(showing(), null);
   assert.ok(!nodes['al-notice-slot'].classList.contains('is-noticing'), 'the match line is back between notices');
   clock.tick(NOTICE.GAP_MS);
   assert.equal(showing(), 'Unlocked: Double Jump');
   toast.achievements('al', [{ ...CROWNED, title: 'Late' }]);
   assert.equal(showing(), 'Unlocked: Double Jump', 'a new batch waits its turn');
+  clock.tick(CUES.achievement.delay);
   assert.equal(audio.calls.length, 2);
-  clock.tick(NOTICE.SHOW_MS + NOTICE.GAP_MS);
+  clock.tick(NOTICE.SHOW_MS + NOTICE.GAP_MS - CUES.achievement.delay);
   assert.equal(showing(), 'Unlocked: Late');
   clock.tick(NOTICE.SHOW_MS);
   assert.equal(showing(), null);

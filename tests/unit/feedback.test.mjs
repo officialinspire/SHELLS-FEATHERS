@@ -169,3 +169,45 @@ test('feedback: without haptics (unsupported) everything else still works', () =
   assert.deepEqual(audio.calls, ['sfx:player-select']);
   assert.deepEqual(animations, [['place', 4]]);
 });
+
+test('feedback: one distinct, restrained sound per kind of event', () => {
+  const events = ['select', 'invalid', 'place', 'move', 'capture', 'multi', 'crown', 'reveal', 'win', 'loss', 'draw', 'achievement'];
+  const sounds = events.map((name) => CUES[name].sfx);
+  assert.equal(new Set(sounds).size, events.length, `distinct: ${sounds}`);
+  // Only the big moments dip the music; the victory theme plays with the
+  // music stopped; taps and moves never do.
+  const ducking = Object.keys(CUES).filter((name) => CUES[name].duck);
+  assert.deepEqual(ducking.sort(), ['achievement', 'crown', 'draw', 'loss']);
+  // Vibrations stay short (haptics drops anything longer).
+  for (const [name, def] of Object.entries(CUES)) {
+    const steps = [def.haptic ?? []].flat();
+    const total = steps.filter((_, i) => i % 2 === 0).reduce((a, b) => a + b, 0);
+    assert.ok(total <= HAPTICS.MAX_TOTAL_MS, name);
+  }
+});
+
+test('feedback: big moments ask the music to dip; an achievement waits for the move\'s own sound', () => {
+  const { feedback, audio, clock } = setup();
+  feedback.cue('crown', { key: 1 });
+  feedback.cue('achievement', { key: 'Crowned' });
+  assert.deepEqual(audio.calls, ['sfx:crown-sound']);
+  clock.tick(CUES.achievement.delay);
+  assert.deepEqual(audio.calls, ['sfx:crown-sound', 'sfx:achievement-sound']);
+  assert.deepEqual(audio.ducked, ['crown-sound', 'achievement-sound']);
+  feedback.cue('move', { key: 2 });
+  feedback.cue('win', { key: 3 });
+  assert.deepEqual(audio.ducked, ['crown-sound', 'achievement-sound']);
+});
+
+test('feedback: silence() (effects switched off) stops sounds only; vibration and animations are settings of their own', () => {
+  const { feedback, audio, nav, animations, clock } = setup();
+  feedback.cue('capture', { at: { game: 'al', square: 19 }, key: 1 });
+  feedback.cue('multi', { key: 1 });
+  const vibes = nav.calls.length;
+  feedback.silence();
+  clock.tick(1000);
+  assert.ok(!audio.calls.includes('sfx:multi-sound'), 'the queued chirp never plays');
+  assert.ok(audio.calls.includes('stop:capture-sound'));
+  assert.equal(nav.calls.length, vibes, 'no vibrate(0)');
+  assert.ok(!animations.some(([m]) => m === 'clear'), 'animations left alone');
+});

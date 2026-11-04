@@ -141,9 +141,14 @@ export function createFakeCheckersView() {
 // Records audio calls in order, e.g. ['sfx:victory-sound', 'music:stop'].
 export function createFakeAudio() {
   const calls = [];
+  const ducked = []; // sounds asked to dip the music
   return {
     calls,
-    playSfx: (id) => calls.push(`sfx:${id}`),
+    ducked,
+    playSfx: (id, { duck = false } = {}) => {
+      calls.push(`sfx:${id}`);
+      if (duck) ducked.push(id);
+    },
     stopSfx: (id) => calls.push(`stop:${id}`),
     startMusic: () => calls.push('music:start'),
     stopMusic: () => calls.push('music:stop'),

@@ -39,6 +39,14 @@ Every file, font and picture the site uses, where it came from, and the terms it
 
 All audio together is 7.9 MB, down from 15.4 MB. The music, at 7.2 MB, is fetched only when it first plays. The eleven original effects are 22,050 Hz mono WAV, 278 KB together (the three added in Stage 13 are 28 KB of that): short enough that a compressed format would save little, and with no encoder delay before the sound. `tools/make-sounds.py` gives byte-identical files on every run (fixed seed), so anyone can check they are made from scratch. `tools/prepare-audio.sh` rebuilds the MP3s from the originals in git history.
 
+**The mix** (`MIX` in `src/shared/audio.js`). The files are shipped unchanged. Measured at their loudest 100 ms, they range from −14 dB (the menu click) to −32 dB (the checker pick-up), while the music sits at a −14 dB median. Each sound therefore has a fixed gain at playback:
+- taps (picks, refusals, placements and moves) land near −26 dB at full volume;
+- events (captures, the multi-jump chirp, a Fog reveal, a new game) land near −22 dB;
+- big moments (crowning, results, achievements) land near −19 dB;
+- the music is brought down 8 dB (×0.4), under the taps at the default volumes.
+
+A sound already quieter than its level keeps a gain of 1: nothing is boosted. Crowning, a loss, a draw and an achievement also dip the music by half while they sound. The victory theme plays with the music stopped. The player's sliders scale all of this. On iPhone and iPad, where a page can't set an element's volume, the same levels go through Web Audio gain nodes.
+
 ## In the repository but not used
 
 | Asset | What it is | Source | Note |
