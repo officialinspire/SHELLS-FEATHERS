@@ -1,8 +1,10 @@
+import { createAttribution } from './attribution.js';
 // Optional anonymous product analytics. Gameplay never waits for this service.
 const PREFERENCE = 'spirit-woods-analytics';
 const EVENTS = new Set(['game_opened', 'game_started', 'game_resumed', 'round_completed', 'game_completed', 'game_over', 'achievement_unlocked']);
 const FIELDS = ['game', 'mode', 'difficulty', 'variant', 'outcome', 'achievement'];
 export function createAnalytics({ win, doc, loadSDK, loadConfig } = {}) {
+  const attributionProperties = createAttribution(win);
   let sdk, loading, pending = [], opened = false;
   const blocked = () => win.navigator.doNotTrack === '1' || win.doNotTrack === '1' || win.navigator.globalPrivacyControl === true;
   let preference = true;
@@ -19,6 +21,7 @@ export function createAnalytics({ win, doc, loadSDK, loadConfig } = {}) {
     if (!allowed() || !EVENTS.has(event)) return;
     try {
       const safe = { brand: 'INSPIRE', suite: 'spirit_of_the_woods', game: 'SHELLS-FEATHERS', game_version: '2', source: source(), $geoip_disable: true, $process_person_profile: false };
+      Object.assign(safe, attributionProperties(), { game_id: 'SHELLS-FEATHERS' });
       for (const field of FIELDS) if (typeof props[field] === 'string' && /^[\w .:-]{1,80}$/.test(props[field])) safe[field] = props[field];
       if (sdk) sdk.capture(event, safe);
       else if (pending.length < 50) pending.push([event, safe]);
@@ -52,7 +55,7 @@ export function createAnalytics({ win, doc, loadSDK, loadConfig } = {}) {
             if (!allowed() || !EVENTS.has(event.event)) return null;
             // Drop automatic URLs, query strings, referrers and SDK metadata.
             const p = event.properties || {};
-            event.properties = Object.fromEntries(['token', 'distinct_id', '$device_id', '$insert_id', '$session_id', '$lib', '$lib_version', 'brand', 'suite', 'game_version', 'source', '$geoip_disable', '$process_person_profile', ...FIELDS].filter(k => k in p).map(k => [k, p[k]]));
+            event.properties = Object.fromEntries(['launch_id', 'attribution_version', 'game_id', 'cta_location', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'token', 'distinct_id', '$device_id', '$insert_id', '$session_id', '$lib', '$lib_version', 'brand', 'suite', 'game_version', 'source', '$geoip_disable', '$process_person_profile', ...FIELDS].filter(k => k in p).map(k => [k, p[k]]));
             return event;
           },
           loaded(instance) {
